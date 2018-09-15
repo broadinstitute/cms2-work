@@ -10,5 +10,9 @@ RUN mkdir pipelines
 WORKDIR pipelines
 
 COPY ./app-config /app-config
+COPY run.sh /run.sh
 
 ENTRYPOINT ["/bin/sh", "-c"]
+#CMD ["/run.sh"]
+#ENTRYPOINT ["/bin/bash", "/run.sh"]
+

@@ -1,0 +1,25 @@
+version: '3'
+services:
+  # cromwell:
+  #   #image: "quay.io/comp-bio-aging/cromwell:latest"
+  #   build:
+  #     context: ./cromwell
+  #   volumes:
+  #     - /data/pipelines:/pipelines
+  #     - /data/pipelines/cromwell-executions:/cromwell-executions
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   command: ["/run.sh"]
+  #   links:
+  #     - mysql-db
+  #   ports:
+  #     - "8000:8000"
+  mysql-db:
+    image: "mysql:5.7"
+    environment:
+      - MYSQL_ROOT_PASSWORD=cromwell
+      - MYSQL_DATABASE=cromwell_db
+    volumes:
+      - ./mysql/init:/docker-entrypoint-initdb.d
+      - /data/ilya-work/pipelines/data/mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
