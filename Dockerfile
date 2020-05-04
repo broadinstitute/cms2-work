@@ -3,14 +3,14 @@
 #############################################################
 
 # Set the base image to Ubuntu
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 
 # File Author / Maintainer
-MAINTAINER Brian OConnor <briandoconnor@gmail.com>
+MAINTAINER Ilya Shlyakhter <ilya_shl@alum.mit.edu>
 
 # Setup packages
 USER root
-RUN apt-get -m update && apt-get install -y wget unzip openjdk-7-jre zip
+RUN apt-get -m update && apt-get install -y wget unzip openjdk-8-jre zip
 
 # get the tool and install it in /usr/local/bin
 RUN wget -q http://downloads.sourceforge.net/project/bamstats/BAMStats-1.25.zip

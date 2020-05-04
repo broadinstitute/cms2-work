@@ -8,19 +8,19 @@ env:
   - LANGUAGE=wdl
   - LANGUAGE=nfl
 
-notifications:
-  slack: 
-    on_success: never
-    on_failure: always
-    rooms:
-      - oicr:S9k4EowgQv9AnbCfEZHSzCsg
+# notifications:
+#   slack: 
+#     on_success: never
+#     on_failure: always
+#     rooms:
+#       - oicr:S9k4EowgQv9AnbCfEZHSzCsg
 
 language: java
 jdk: 
-  - oraclejdk8
+  - openjdk8
 
 before_install:
-  - docker build -t quay.io/collaboratory/dockstore-tool-bamstats .
+  - docker build -t quay.io/ilya_broad/dockstore-tool-cosi2 .
   - pyenv global 3.6
 
 install: 
