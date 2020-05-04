@@ -112,3 +112,4 @@ The workflow can be run using the following command:
 ```
 $> nextflow run main.nf
 ```
+
