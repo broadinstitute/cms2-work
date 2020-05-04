@@ -8,7 +8,7 @@ task cosi2_run_one_sim {
     File         recombFile
     String       simId
     Int          maxAttempts = 10000000
-    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2:latest"
+    String       cosi2_docker = "quay.io/ilya_broad/docker-tool-cosi2:latest"
   }
 
   command {
@@ -42,7 +42,7 @@ workflow run_sims_cosi2 {
       Array[File] paramFiles
       File recombFile
       Int nreps
-      String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2:latest"
+      String       cosi2_docker = "quay.io/ilya_broad/docker-tool-cosi2:latest"
     }
 
     scatter(paramFile in paramFiles) {
