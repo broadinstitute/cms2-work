@@ -10,18 +10,20 @@ MAINTAINER Ilya Shlyakhter <ilya_shl@alum.mit.edu>
 
 # Setup packages
 USER root
-RUN apt-get -m update && apt-get install -y wget unzip curl openjdk-8-jre zip build-essential
+RUN apt-get -m update && apt-get install -y wget unzip curl zip build-essential python3
 
 # get the tool and install it in /usr/local/bin
-RUN wget -q http://downloads.sourceforge.net/project/bamstats/BAMStats-1.25.zip
-RUN unzip BAMStats-1.25.zip && \
-    rm BAMStats-1.25.zip && \
-    mv BAMStats-1.25 /opt/
-COPY bin/bamstats /usr/local/bin/
-RUN chmod a+x /usr/local/bin/bamstats
+# RUN wget -q http://downloads.sourceforge.net/project/bamstats/BAMStats-1.25.zip
+# RUN unzip BAMStats-1.25.zip && \
+#     rm BAMStats-1.25.zip && \
+#     mv BAMStats-1.25 /opt/
+# COPY bin/bamstats /usr/local/bin/
+# RUN chmod a+x /usr/local/bin/bamstats
 
 RUN wget -q https://github.com/broadinstitute/cosi2/archive/v2.3.1.zip
 RUN unzip v2.3.1.zip && rm v2.3.1.zip && cd cosi2-2.3.1 && ./configure && make install
+RUN cd cosi2-2.3.1 && VERBOSE=1 make check && cd .. && rm -rf cosi2-2.3.1
+RUN apt-get remove -y wget unzip zip curl build-essential python3 && apt-get autoremove -y
 
 # RUN curl -S https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh && \
 #     chmod u+x miniconda.sh && \

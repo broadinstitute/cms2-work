@@ -4,9 +4,9 @@ services:
   - docker
 
 env:
-  - LANGUAGE=cwl
+#  - LANGUAGE=cwl
   - LANGUAGE=wdl
-  - LANGUAGE=nfl
+#  - LANGUAGE=nfl
 
 # notifications:
 #   slack: 

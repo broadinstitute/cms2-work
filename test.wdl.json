@@ -1,4 +1,5 @@
 {
-  "bamstatsWorkflow.bam_input": "rna.SRR948778.bam",
-  "bamstatsWorkflow.mem_gb": "4"
+  "run_sims_cosi2.nreps": 1,
+  "run_sims_cosi2.paramFiles": ["test.cosiParams"],
+  "run_sims_cosi2.recombFile": "test_recom.recom"
 }
