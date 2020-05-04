@@ -10,7 +10,7 @@ MAINTAINER Ilya Shlyakhter <ilya_shl@alum.mit.edu>
 
 # Setup packages
 USER root
-RUN apt-get -m update && apt-get install -y wget unzip curl openjdk-8-jre zip
+RUN apt-get -m update && apt-get install -y wget unzip curl openjdk-8-jre zip build-essential
 
 # get the tool and install it in /usr/local/bin
 RUN wget -q http://downloads.sourceforge.net/project/bamstats/BAMStats-1.25.zip
@@ -20,9 +20,16 @@ RUN unzip BAMStats-1.25.zip && \
 COPY bin/bamstats /usr/local/bin/
 RUN chmod a+x /usr/local/bin/bamstats
 
-RUN curl -S https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh && \
-    chmod u+x miniconda.sh && \
-    bash miniconda.sh -b -p /usr/local/miniconda
+RUN wget -q https://github.com/broadinstitute/cosi2/archive/v2.3.1.zip
+RUN unzip v2.3.1.zip && rm v2.3.1.zip && cd cosi2-2.3.1 && ./configure && make install
+
+# RUN curl -S https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh && \
+#     chmod u+x miniconda.sh && \
+#     bash miniconda.sh -b -p /usr/local/miniconda && \
+#     conda config --set always_yes yes --set changeps1 no --set remote_max_retries 6 && \
+#     conda config --add channels defaults && \
+#     conda config --add channels bioconda && \
+#     conda config --add channels conda-forge
 
 # switch back to the ubuntu user so this tool (and the files written) are not owned by root
 RUN groupadd -r -g 1000 ubuntu && useradd -r -g ubuntu -u 1000 -m ubuntu
