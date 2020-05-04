@@ -10,7 +10,7 @@ MAINTAINER Ilya Shlyakhter <ilya_shl@alum.mit.edu>
 
 # Setup packages
 USER root
-RUN apt-get -m update && apt-get install -y wget unzip openjdk-8-jre zip
+RUN apt-get -m update && apt-get install -y wget unzip curl openjdk-8-jre zip
 
 # get the tool and install it in /usr/local/bin
 RUN wget -q http://downloads.sourceforge.net/project/bamstats/BAMStats-1.25.zip
@@ -19,6 +19,10 @@ RUN unzip BAMStats-1.25.zip && \
     mv BAMStats-1.25 /opt/
 COPY bin/bamstats /usr/local/bin/
 RUN chmod a+x /usr/local/bin/bamstats
+
+RUN curl -S https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh && \
+    chmod u+x miniconda.sh && \
+    bash miniconda.sh -b -p /usr/local/miniconda
 
 # switch back to the ubuntu user so this tool (and the files written) are not owned by root
 RUN groupadd -r -g 1000 ubuntu && useradd -r -g ubuntu -u 1000 -m ubuntu
