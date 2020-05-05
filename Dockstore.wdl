@@ -12,10 +12,9 @@ task cosi2_run_one_sim {
   }
 
   command {
-    
-    grep -v "recomb_file" "${paramFile}" > ${paramFile}.fixed.par
-    echo "recomb_file ${recombFile}" >> ${paramFile}.fixed.par
-    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=${maxAttempts} coalescent -p ${paramFile}.fixed.par --genmapRandomRegions --drop-singletons .25 --output-gen-map --tped "${simId}"
+    grep -v "recomb_file" "${paramFile}" > ${simId}.fixed.par
+    echo "recomb_file ${recombFile}" >> ${simId}.fixed.par
+    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=${maxAttempts} coalescent -p ${simId}.fixed.par --genmapRandomRegions --drop-singletons .25 --output-gen-map --tped "${simId}"
     tar cvfz "${simId}.tpeds.tar.gz" *.tped
   }
 
