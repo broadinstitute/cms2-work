@@ -65,6 +65,7 @@ workflow run_sims_cosi2 {
     }
 
     meta {
+      author: "Ilya Shlyakhter"
       email: "ilya_shl@alum.mit.edu"
       description: "Run a set of cosi2 simulations for one or more demographic models."
     }
