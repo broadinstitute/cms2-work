@@ -39,9 +39,9 @@ task cosi2_run_one_sim {
 
 workflow run_sims_cosi2 {
     input {
-      Array[File] paramFiles
+      Array[File]+ paramFiles
       File recombFile
-      Int nreps
+      Int nreps = 1
       String       cosi2_docker = "quay.io/ilya_broad/docker-tool-cosi2:latest"
     }
 
