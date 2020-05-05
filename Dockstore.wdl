@@ -15,11 +15,12 @@ task cosi2_run_one_sim {
     
     grep -v "recomb_file" "${paramFile}" > ${paramFile}.fixed.par
     echo "recomb_file ${recombFile}" >> ${paramFile}.fixed.par
-    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=${maxAttempts} coalescent -p ${paramFile}.fixed.par --genmapRandomRegions --drop-singletons .25 --output-gen-map --tped "${simId}.tped"
+    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=${maxAttempts} coalescent -p ${paramFile}.fixed.par --genmapRandomRegions --drop-singletons .25 --output-gen-map --tped "${simId}"
+    tar cvfz "${simId}.tpeds.tar.gz" *.tped
   }
 
   output {
-    Array[File]        tped = glob("*.tped")
+    File        tpeds = "${simId}.tpeds.tar.gz"
 #    String      cosi2_docker_used = ""
   }
   runtime {
@@ -36,7 +37,6 @@ task cosi2_run_one_sim {
   }
 }
 
-
 workflow run_sims_cosi2 {
     input {
       Array[File] paramFiles
@@ -52,6 +52,10 @@ workflow run_sims_cosi2 {
                    paramFile = paramFile, recombFile=recombFile, simId=basename(paramFile, ".par")+"_"+rep, cosi2_docker=cosi2_docker
             }
         }
+    }
+
+    output {
+      Array[File] tpeds = flatten(cosi2_run_one_sim.tpeds)
     }
 
     parameter_meta {
