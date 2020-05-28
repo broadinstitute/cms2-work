@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e -o pipefail -u -x
+
+womtool validate Dockstore.wdl
+time cromwell run -i test.wdl.json Dockstore.wdl 
