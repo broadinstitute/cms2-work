@@ -40,24 +40,34 @@ task cosi2_run_one_sim_block {
     String       cosi2_docker = "quay.io/ilya_broad/docker-tool-cosi2:latest"
   }
 
-  command {
+  command <<<
     grep -v "recomb_file" "~{paramFile}" > ~{simBlockId}.fixed.par
     echo "recomb_file ~{recombFile}" >> ~{simBlockId}.fixed.par
 
-    if [ "${randomSeed}" -eq "0" ]; then
+    if [ "~{randomSeed}" -eq "0" ]; then
        cat /dev/urandom | od -vAn -N4 -tu4 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | sed 's/.$//' > cosi2.randseed
     else
-       echo "${randomSeed}" > cosi2.randseed
+       echo "~{randomSeed}" > cosi2.randseed
     fi
     
-    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} coalescent -p ~{simBlockId}.fixed.par -r $(cat "cosi2.randseed") -n ~{nSimsInBlock} --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" 2> ~{simBlockId}.err.txt
+    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj"  coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") -n ~{nSimsInBlock} --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" 
+    cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $4;}' > sel_mut_born_pop.txt
+    cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $5;}' > sel_mut_born_gen.txt
+    cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $6;}' > sel_coeff.txt
+    cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $9;}' > sel_beg_gen.txt
 
     tar cvfz "~{simBlockId}.tpeds.tar.gz" *.tped
-  }
+  >>>
 
   output {
     File        tpeds = "${simBlockId}.tpeds.tar.gz"
+    File        traj = "${simBlockId}.traj"
     Int         randomSeedUsed = read_int("cosi2.randseed")
+    Int         sel_mut_born_pop = read_int("sel_mut_born_pop.txt")
+    Int         sel_mut_born_gen = read_int("sel_mut_born_gen.txt")
+    Float         sel_coeff = read_float("sel_coeff.txt")
+    Int         sel_beg_gen = read_int("sel_beg_gen.txt")
+
 #    String      cosi2_docker_used = ""
   }
   runtime {
