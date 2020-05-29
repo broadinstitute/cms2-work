@@ -37,5 +37,10 @@ RUN apt-get remove -y wget unzip zip curl build-essential python3 && apt-get aut
 RUN groupadd -r -g 1000 ubuntu && useradd -r -g ubuntu -u 1000 -m ubuntu
 USER ubuntu
 
+VOLUME ["/user-data"]
+ENV \
+    COSI2_DOCKER_DATA_PATH="/user-data" \
+    COSI_NEWSIM=1
+
 # by default /bin/bash is executed
 CMD ["/bin/bash"]
