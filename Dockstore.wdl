@@ -63,7 +63,6 @@ task cosi2_run_one_sim_block {
 
   output {
     File        tpeds = "${simBlockId}.tpeds.tar.gz"
-    File        traj = "${simBlockId}.traj"
     Int         randomSeedUsed = read_int("cosi2.randseed")
     Object      sweepInfo = read_object("sweepinfo.full.tsv")
 
