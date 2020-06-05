@@ -37,7 +37,7 @@ task cosi2_run_one_sim_block {
     Int          nSimsInBlock = 1
     Int          maxAttempts = 10000000
     Int          randomSeed = 0
-    String       cosi2_docker = "quay.io/ilya_broad/docker-tool-cosi2:latest"
+    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2:latest"
   }
 
   command <<<
@@ -97,7 +97,7 @@ workflow run_sims_cosi2 {
       File recombFile
       Int nreps = 1
       Int nSimsPerBlock = 1
-      String       cosi2_docker = "quay.io/ilya_broad/docker-tool-cosi2:latest"
+      String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2:latest"
     }
     Int nBlocks = nreps / nSimsPerBlock
     #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
