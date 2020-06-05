@@ -21,7 +21,7 @@ task cosi2_run_one_sim_block {
 
   parameter_meta {
     # Inputs
-    paramFile: "cosi2 parameter file"
+    paramFileParts: "parts cosi2 parameter file (concatenated to form the parameter file)"
     recombFile: "recombination map"
     simBlockId: "an ID of this simulation block (e.g. block number in a list of blocks)."
     nSimsInBlock: "number of simulations in this block"
@@ -81,8 +81,6 @@ task cosi2_run_one_sim_block {
 }
 
 
-
-
 workflow run_sims_cosi2 {
     meta {
       description: "Run a set of cosi2 simulations for one or more demographic models."
@@ -91,12 +89,14 @@ workflow run_sims_cosi2 {
     }
 
     parameter_meta {
-      paramFiles: "cosi2 parameter files specifying the demographic model"
+      paramFileCommon: "cosi2 parameter file giving parameters common to all models"
+      paramFiles: "cosi2 parameter files specifying the demographic model (paramFileCommon is prepended to each)"
       recombFile: "Recombination map from which map of each simulated region is sampled"
       nreps: "Number of replicates for _each_ demographic model."
     }
 
     input {
+      File paramFileCommon
       Array[File]+ paramFiles
       File recombFile
       Int nreps = 1
@@ -104,12 +104,14 @@ workflow run_sims_cosi2 {
       String       cosi2_docker = "quay.io/ilya_broad/docker-tool-cosi2:latest"
     }
     Int nBlocks = nreps / nSimsPerBlock
+    Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
 
     scatter(paramFile in paramFiles) {
         scatter(blockNum in range(nBlocks)) {
             call cosi2_run_one_sim_block {
                 input:
-                   paramFile = paramFile, recombFile=recombFile,
+                   paramFile = write_lines(flatten([paramFileCommonLines, read_lines(paramFileExtra)])),
+	           ]recombFile=recombFile,
 	           simBlockId=basename(paramFile, ".par")+"_"+blockNum,
 	           nSimsInBlock=nSimsPerBlock,
 	           cosi2_docker=cosi2_docker
@@ -119,6 +121,9 @@ workflow run_sims_cosi2 {
 
     output {
       Array[File] tpeds = flatten(cosi2_run_one_sim_block.tpeds)
+      Array[Int] randomSeedUsed = flatten(cosi2_run_one_sim_block.randomSeedUsed)
+      Array[Int] sel_mut_born_pop = flatten(cosi2_run_one_sim_block.sel_mut_born_pop)
+      Array[Float] sel_coeff = flatten(cosi2_run_one_sim_block.sel_coeff)
+      Array[Int] sel_beg_gen = flatten(cosi2_run_one_sim_block.sel_beg_gen)
     }
-
 }

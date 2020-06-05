@@ -31,7 +31,7 @@ pop_event bottleneck "african bottleneck" 1 1997 .008
 pop_event exp_change_size "testing african expansion" 1 17100 19000 16000 12500 
 
 #pop_event sweep "selective sweep" 1 1.0 0.028500 0.45 .55
-pop_event sweep_mult_standing "selective_sweep" 1 200 0.04 0.5 .1-1.0 1 200
+#pop_event sweep_mult_standing "selective_sweep" 1 200 0.04 0.5 .1-1.0 1 200
 #random_seed 4466223233
 
 
