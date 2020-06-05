@@ -20,9 +20,9 @@ RUN apt-get -m update && apt-get install -y wget unzip curl zip build-essential 
 # COPY bin/bamstats /usr/local/bin/
 # RUN chmod a+x /usr/local/bin/bamstats
 
-RUN wget -q https://github.com/broadinstitute/cosi2/archive/v2.3.2rc1.zip
-RUN unzip v2.3.2rc1.zip && rm v2.3.2rc1.zip && cd cosi2-2.3.2rc1 && ./configure && make install
-RUN cd cosi2-2.3.2rc1 && VERBOSE=1 make check && cd .. && rm -rf cosi2-2.3.2rc1
+RUN wget -q https://github.com/broadinstitute/cosi2/archive/v2.3.2rc2.zip
+RUN unzip v2.3.2rc2.zip && rm v2.3.2rc2.zip && cd cosi2-2.3.2rc2 && ./configure && make install
+RUN cd cosi2-2.3.2rc2 && VERBOSE=1 make check && cd .. && rm -rf cosi2-2.3.2rc2
 RUN apt-get remove -y wget unzip zip curl build-essential python3 && apt-get autoremove -y
 
 # RUN curl -S https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh && \
