@@ -37,7 +37,7 @@ task cosi2_run_one_sim_block {
     Int          nSimsInBlock = 1
     Int          maxAttempts = 10000000
     Int          randomSeed = 0
-    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2:latest"
+    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:d00da9c93fba843ae9e516230d03a7a8263295773da836c166c93d1532920441"
   }
 
   command <<<
@@ -50,7 +50,7 @@ task cosi2_run_one_sim_block {
        echo "~{randomSeed}" > cosi2.randseed
     fi
     
-    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj" COSI_SAVE_SWEEP_INFO="sweeepinfo.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") -n ~{nSimsInBlock} --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" 
+    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj" COSI_SAVE_SWEEP_INFO="sweepinfo.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") -n ~{nSimsInBlock} --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" 
     #cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $4;}' > sel_mut_born_pop.txt
     #cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $5;}' > sel_mut_born_gen.txt
     #cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $6;}' > sel_coeff.txt
@@ -97,7 +97,7 @@ workflow run_sims_cosi2 {
       File recombFile
       Int nreps = 1
       Int nSimsPerBlock = 1
-      String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2:latest"
+      String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:d00da9c93fba843ae9e516230d03a7a8263295773da836c166c93d1532920441"
     }
     Int nBlocks = nreps / nSimsPerBlock
     #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
