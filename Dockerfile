@@ -23,6 +23,9 @@ RUN apt-get -m update && apt-get install -y wget unzip curl zip build-essential 
 RUN wget -q https://github.com/broadinstitute/cosi2/archive/v2.3.2rc4.zip
 RUN unzip v2.3.2rc4.zip && rm v2.3.2rc4.zip && cd cosi2-2.3.2rc4 && ./configure && make install
 RUN cd cosi2-2.3.2rc4 && VERBOSE=1 make check && cd .. && rm -rf cosi2-2.3.2rc4
+RUN strip /usr/local/bin/coalescent && rm /usr/local/bin/sample_stats_extra \
+    && rm /usr/local/bin/get_recomap && rm /usr/local/bin/recomap_hapmap2 && rm /usr/local/bin/recosimulate \
+    && rm /usr/local/lib/libcosi*
 RUN apt-get remove -y wget unzip zip curl build-essential python3 && apt-get autoremove -y
 
 # RUN curl -S https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh && \
