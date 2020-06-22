@@ -13,6 +13,12 @@ version 1.0
 #   figure out how to enable result caching without 
 #
 
+struct ReplicaInfo {
+    File        tpeds
+    Int         randomSeedUsed
+    Object      sweepInfo
+}
+
 task cosi2_run_one_sim_block {
   meta {
     description: "Run one block of cosi2 simulations for one demographic model."
@@ -31,7 +37,7 @@ task cosi2_run_one_sim_block {
     maxAttempts: ""
 
     # Outputs
-    tpeds: ".tar.gz file containing simulated samples for each population"
+    replicaInfos: "array of replica infos"
   }
 
   input {
@@ -56,14 +62,14 @@ task cosi2_run_one_sim_block {
     
     ( env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj" COSI_SAVE_SWEEP_INFO="sweepinfo.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") -n ~{nSimsInBlock} --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" ) || ( touch sim_failed  )
 
-    if [[ -f sim_failed ]]
-    then
-      echo "Simulation failed!"
-      echo "false" > sim_succeeded
-      touch "~{simBlockId}"
-    else
+    # if [[ -f sim_failed ]]
+    # then
+    #   echo "Simulation failed!"
+    #   echo "false" > sim_succeeded
+    #   touch "~{simBlockId}"
+    # else
       
-    fi
+    # fi
 
     echo -e 'simNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq' > sweepinfo.full.tsv
     cat sweepinfo.tsv >> sweepinfo.full.tsv
@@ -72,9 +78,9 @@ task cosi2_run_one_sim_block {
   >>>
 
   output {
-    File        tpeds = "${simBlockId}.tpeds.tar.gz"
-    Int         randomSeedUsed = read_int("cosi2.randseed")
-    Object      sweepInfo = read_object("sweepinfo.full.tsv")
+    Array[ReplicaInfo] replicaInfos = [object {tpeds: "${simBlockId}.tpeds.tar.gz",
+                                       randomSeedUsed: read_int("cosi2.randseed"),
+                                       sweepInfo: read_object("sweepinfo.full.tsv")}]
 
 #    String      cosi2_docker_used = ""
   }
@@ -126,8 +132,6 @@ workflow run_sims_cosi2 {
     }
 
     output {
-      Array[File] tpeds = flatten(cosi2_run_one_sim_block.tpeds)
-      Array[Int] randomSeedUsed = flatten(cosi2_run_one_sim_block.randomSeedUsed)
-      Array[Object] sweepInfo = flatten(cosi2_run_one_sim_block.sweepInfo)
+      Array[ReplicaInfo] replicaInfos = flatten(flatten(cosi2_run_one_sim_block.replicaInfos))
     }
 }
