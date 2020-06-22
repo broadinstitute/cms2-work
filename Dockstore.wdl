@@ -14,10 +14,13 @@ version 1.0
 #
 
 struct ReplicaInfo {
+  String modelId
+  String blockNum
+  Int replicaNum
   Int succeeded
     Int         randomSeed
     File        tpeds
-    Int  simNum
+  File traj
   Int  selPop
   Float selGen
   Int selBegPop
@@ -51,6 +54,8 @@ task cosi2_run_one_sim_block {
     File         paramFile
     File         recombFile
     String       simBlockId
+    String       modelId
+    Int          blockNum
     Int          nSimsInBlock = 1
     Int          maxAttempts = 10000000
     Int          randomSeed = 0
@@ -58,7 +63,7 @@ task cosi2_run_one_sim_block {
   }
 
   command <<<
-    echo -e "succeeded\trandomSeed\ttpeds\tsimNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq" > allinfo.full.tsv
+    echo -e "modelId\tblockNum\treplicaNum\tsucceeded\trandomSeed\ttpeds\ttraj\tsimNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq" > allinfo.full.tsv
 
     grep -v "recomb_file" "~{paramFile}" > ~{simBlockId}.fixed.par
     echo "recomb_file ~{recombFile}" >> ~{simBlockId}.fixed.par
@@ -67,18 +72,18 @@ task cosi2_run_one_sim_block {
     do
 
       if [ "~{randomSeed}" -eq "0" ]; then
-         cat /dev/urandom | od -vAn -N4 -tu4 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | sed 's/.$//' > cosi2.randseed
+         cat /dev/urandom | od -vAn -N4 -tu4 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | sed 's/.$//' > "cosi2.${rep}.randseed"
       else
-         echo "~{randomSeed}" > cosi2.randseed
+         echo "~{randomSeed}" > cosi2.${rep}.randseed
       fi
       
-      ( env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj" COSI_SAVE_SWEEP_INFO="sweepinfo.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" ) || ( touch sim_failed  )
+      ( env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.${rep}.traj" COSI_SAVE_SWEEP_INFO="sweepinfo.${rep}.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.${rep}.randseed") --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}_${rep}_" ) || ( touch "${rep}.sim_failed"  )
 
       #echo -e 'simNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq' > sweepinfo.full.tsv
       #cat sweepinfo.tsv >> sweepinfo.full.tsv
 
-      tar cvfz "~{simBlockId}.${rep}.tpeds.tar.gz" *.tped *.traj
-      echo -e "1\t$(cat cosi2.randseed)\t~{simBlockId}.${rep}.tpeds.tar.gz\t$(cat sweepinfo.tsv)" >> allinfo.full.tsv
+      tar cvfz "~{simBlockId}.${rep}.tpeds.tar.gz" ~{simBlockId}_${rep}_*.tped
+      echo -e "~{modelId}\t~{blockNum}\t${rep}\t1\t$(cat cosi2.${rep}.randseed)\t~{simBlockId}.${rep}.tpeds.tar.gz\t~{simBlockId}.${rep}.traj\t$(cat sweepinfo.${rep}.tsv)" >> allinfo.full.tsv
    done 
   >>>
 
@@ -127,7 +132,9 @@ workflow run_sims_cosi2 {
                 input:
                    paramFile = paramFile,
 	           recombFile=recombFile,
+                   modelId=basename(paramFile, ".par"),
 	           simBlockId=basename(paramFile, ".par")+"_"+blockNum,
+	           blockNum=blockNum,
 	           nSimsInBlock=nSimsPerBlock,
 	           cosi2_docker=cosi2_docker
             }
