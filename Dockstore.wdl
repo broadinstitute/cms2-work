@@ -51,6 +51,7 @@ task cosi2_run_one_sim_block {
   }
 
   input {
+    File         paramFileCommon
     File         paramFile
     File         recombFile
     String       simBlockId
@@ -65,7 +66,8 @@ task cosi2_run_one_sim_block {
   command <<<
     echo -e "modelId\tblockNum\treplicaNum\tsucceeded\trandomSeed\ttpeds\ttraj\tsimNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq" > allinfo.full.tsv
 
-    grep -v "recomb_file" "~{paramFile}" > ~{simBlockId}.fixed.par
+    cat ~{paramFileCommon} ~{paramFile} > paramFileCombined
+    grep -v "recomb_file" "paramFileCombined" > ~{simBlockId}.fixed.par
     echo "recomb_file ~{recombFile}" >> ~{simBlockId}.fixed.par
 
     for rep in `seq 1 ~{nSimsInBlock}`;
@@ -117,6 +119,7 @@ workflow run_sims_cosi2 {
     }
 
     input {
+      File paramFileCommon
       Array[File] paramFiles
       File recombFile
       Int nreps = 1
@@ -130,6 +133,7 @@ workflow run_sims_cosi2 {
         scatter(blockNum in range(nBlocks)) {
             call cosi2_run_one_sim_block {
                 input:
+                   paramFileCommon = paramFileCommon,
                    paramFile = paramFile,
 	           recombFile=recombFile,
                    modelId=basename(paramFile, ".par"),

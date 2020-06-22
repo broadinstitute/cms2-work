@@ -1,6 +1,7 @@
 {
   "run_sims_cosi2.nreps": 4,
   "run_sims_cosi2.nSimsPerBlock": 2,
-  "run_sims_cosi2.paramFiles": ["test.cosiParams"],
+  "run_sims_cosi2.paramFileCommon": "test.cosiParams",
+  "run_sims_cosi2.paramFiles": ["test.sweep.cosiParams"],
   "run_sims_cosi2.recombFile": "test_recom.recom"
 }
