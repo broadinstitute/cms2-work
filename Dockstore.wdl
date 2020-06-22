@@ -14,9 +14,16 @@ version 1.0
 #
 
 struct ReplicaInfo {
+  Int succeeded
+    Int         randomSeed
     File        tpeds
-    Int         randomSeedUsed
-    Object      sweepInfo
+    Int  simNum
+  Int  selPop
+  Float selGen
+  Int selBegPop
+  Float selBegGen
+  Float selCoeff
+  Float selFreq
 }
 
 task cosi2_run_one_sim_block {
@@ -47,40 +54,36 @@ task cosi2_run_one_sim_block {
     Int          nSimsInBlock = 1
     Int          maxAttempts = 10000000
     Int          randomSeed = 0
-    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:d00da9c93fba843ae9e516230d03a7a8263295773da836c166c93d1532920441"
+    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
   }
 
   command <<<
+    echo -e "succeeded\trandomSeed\ttpeds\tsimNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq" > allinfo.full.tsv
+
     grep -v "recomb_file" "~{paramFile}" > ~{simBlockId}.fixed.par
     echo "recomb_file ~{recombFile}" >> ~{simBlockId}.fixed.par
 
-    if [ "~{randomSeed}" -eq "0" ]; then
-       cat /dev/urandom | od -vAn -N4 -tu4 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | sed 's/.$//' > cosi2.randseed
-    else
-       echo "~{randomSeed}" > cosi2.randseed
-    fi
-    
-    ( env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj" COSI_SAVE_SWEEP_INFO="sweepinfo.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") -n ~{nSimsInBlock} --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" ) || ( touch sim_failed  )
+    for rep in `seq 1 ~{nSimsInBlock}`;
+    do
 
-    # if [[ -f sim_failed ]]
-    # then
-    #   echo "Simulation failed!"
-    #   echo "false" > sim_succeeded
-    #   touch "~{simBlockId}"
-    # else
+      if [ "~{randomSeed}" -eq "0" ]; then
+         cat /dev/urandom | od -vAn -N4 -tu4 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | sed 's/.$//' > cosi2.randseed
+      else
+         echo "~{randomSeed}" > cosi2.randseed
+      fi
       
-    # fi
+      ( env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj" COSI_SAVE_SWEEP_INFO="sweepinfo.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" ) || ( touch sim_failed  )
 
-    echo -e 'simNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq' > sweepinfo.full.tsv
-    cat sweepinfo.tsv >> sweepinfo.full.tsv
+      #echo -e 'simNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq' > sweepinfo.full.tsv
+      #cat sweepinfo.tsv >> sweepinfo.full.tsv
 
-    tar cvfz "~{simBlockId}.tpeds.tar.gz" *.tped *.traj
+      tar cvfz "~{simBlockId}.${rep}.tpeds.tar.gz" *.tped *.traj
+      echo -e "1\t$(cat cosi2.randseed)\t~{simBlockId}.${rep}.tpeds.tar.gz\t$(cat sweepinfo.tsv)" >> allinfo.full.tsv
+   done 
   >>>
 
   output {
-    Array[ReplicaInfo] replicaInfos = [object {tpeds: "${simBlockId}.tpeds.tar.gz",
-                                       randomSeedUsed: read_int("cosi2.randseed"),
-                                       sweepInfo: read_object("sweepinfo.full.tsv")}]
+    Array[ReplicaInfo] replicaInfos = read_objects("allinfo.full.tsv")
 
 #    String      cosi2_docker_used = ""
   }
@@ -113,7 +116,7 @@ workflow run_sims_cosi2 {
       File recombFile
       Int nreps = 1
       Int nSimsPerBlock = 1
-      String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:d00da9c93fba843ae9e516230d03a7a8263295773da836c166c93d1532920441"
+      String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     }
     Int nBlocks = nreps / nSimsPerBlock
     #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
