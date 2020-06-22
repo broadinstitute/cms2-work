@@ -21,10 +21,14 @@ task cosi2_run_one_sim_block {
 
   parameter_meta {
     # Inputs
+    ## required
     paramFile: "parts cosi2 parameter file (concatenated to form the parameter file)"
     recombFile: "recombination map"
     simBlockId: "an ID of this simulation block (e.g. block number in a list of blocks)."
+
+    ## optional
     nSimsInBlock: "number of simulations in this block"
+    maxAttempts: ""
 
     # Outputs
     tpeds: ".tar.gz file containing simulated samples for each population"
@@ -50,15 +54,21 @@ task cosi2_run_one_sim_block {
        echo "~{randomSeed}" > cosi2.randseed
     fi
     
-    env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj" COSI_SAVE_SWEEP_INFO="sweepinfo.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") -n ~{nSimsInBlock} --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" 
-    #cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $4;}' > sel_mut_born_pop.txt
-    #cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $5;}' > sel_mut_born_gen.txt
-    #cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $6;}' > sel_coeff.txt
-    #cat ~{simBlockId}.fixed.par | grep sweep_mult_standing | awk '{print $9;}' > sel_beg_gen.txt
+    ( env COSI_NEWSIM=1 COSI_MAXATTEMPTS=~{maxAttempts} COSI_SAVE_TRAJ="~{simBlockId}.traj" COSI_SAVE_SWEEP_INFO="sweepinfo.tsv" coalescent -p ~{simBlockId}.fixed.par -v -g -r $(cat "cosi2.randseed") -n ~{nSimsInBlock} --genmapRandomRegions --drop-singletons .25 --tped "~{simBlockId}" ) || ( touch sim_failed  )
+
+    if [[ -f sim_failed ]]
+    then
+      echo "Simulation failed!"
+      echo "false" > sim_succeeded
+      touch "~{simBlockId}"
+    else
+      
+    fi
+
     echo -e 'simNum\tselPop\tselGen\tselBegPop\tselBegGen\tselCoeff\tselFreq' > sweepinfo.full.tsv
     cat sweepinfo.tsv >> sweepinfo.full.tsv
 
-    tar cvfz "~{simBlockId}.tpeds.tar.gz" *.tped
+    tar cvfz "~{simBlockId}.tpeds.tar.gz" *.tped *.traj
   >>>
 
   output {

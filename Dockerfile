@@ -20,9 +20,9 @@ RUN apt-get -m update && apt-get install -y wget unzip curl zip build-essential 
 # COPY bin/bamstats /usr/local/bin/
 # RUN chmod a+x /usr/local/bin/bamstats
 
-RUN wget -q https://github.com/broadinstitute/cosi2/archive/v2.3.2rc4.zip
-RUN unzip v2.3.2rc4.zip && rm v2.3.2rc4.zip && cd cosi2-2.3.2rc4 && ./configure && make install
-RUN cd cosi2-2.3.2rc4 && VERBOSE=1 make check && cd .. && rm -rf cosi2-2.3.2rc4
+RUN wget -q https://github.com/broadinstitute/cosi2/archive/v2.3.2rc5.zip
+RUN unzip v2.3.2rc5.zip && rm v2.3.2rc5.zip && cd cosi2-2.3.2rc5 && ./configure && make install
+RUN cd cosi2-2.3.2rc5 && VERBOSE=1 make check && cd .. && rm -rf cosi2-2.3.2rc5
 RUN strip /usr/local/bin/coalescent && rm /usr/local/bin/sample_stats_extra \
     && rm /usr/local/bin/get_recomap && rm /usr/local/bin/recomap_hapmap2 && rm /usr/local/bin/recosimulate \
     && rm /usr/local/lib/libcosi*
