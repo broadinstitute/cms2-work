@@ -18,7 +18,7 @@ struct ReplicaInfo {
   String blockNum
   Float duration
   Int replicaNum
-  Boolean succeeded
+  Int succeeded
   Int         randomSeed
   File        tpeds
   File traj
@@ -70,11 +70,11 @@ task cosi2_run_one_sim_block {
 
   command <<<
     python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
-      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --outJson out.json
+      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --outTsv replicaInfos.tsv
   >>>
 
   output {
-    Array[ReplicaInfo] replicaInfos = read_json("out.json").replicaInfos
+    Array[ReplicaInfo] replicaInfos = read_objects("replicaInfos.tsv")
 
 #    String      cosi2_docker_used = ""
   }

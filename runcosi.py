@@ -9,9 +9,11 @@ __author__="ilya_shl@alum.mit.edu"
 # * imports
 
 import argparse
+import csv
 import collections
 import concurrent.futures
 import contextlib
+import copy
 import functools
 import gzip
 import io
@@ -170,14 +172,14 @@ def run_one_replica(replicaNum, args, paramFile):
                     selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
 
     replicaInfo = dict(modelId=args.modelId, blockNum=args.blockNum,
-                       replicaNum=replicaNum, succeeded=False, randomSeed=randomSeed,
+                       replicaNum=replicaNum, succeeded=1, randomSeed=randomSeed,
                        tpeds=emptyFile, traj=emptyFile, selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.)
     try:
         _run(cosi2_cmd)
         # TODO: parse param file for list of pops, and check that we get all the files.
         tpeds_tar_gz = f"{blkStr}.tpeds.tar.gz"
         _run(f'tar cvfz {tpeds_tar_gz} {tpedPrefix}_*.tped', timeout=args.repTimeoutSeconds)
-        replicaInfo.update(succeeded=True, tpeds=tpeds_tar_gz, traj=trajFile, **_load_sweep_info())
+        replicaInfo.update(succeeded=0, tpeds=tpeds_tar_gz, traj=trajFile, **_load_sweep_info())
     except subprocess.SubprocessError as subprocessError:
         _log.warning(f'command "{cosi2_cmd}" failed with {subprocessError}')
 
@@ -201,7 +203,7 @@ def parse_args():
                         help='max # of times to try simulating forward frequency trajectory before giving up')
     parser.add_argument('--repTimeoutSeconds', type=int, required=True, help='max time per replica')
 
-    parser.add_argument('--outJson', required=True, help='write output json to this file')
+    parser.add_argument('--outTsv', required=True, help='write output objects to this file')
     return parser.parse_args()
 
 def constructParamFile(args):
@@ -210,6 +212,14 @@ def constructParamFile(args):
     paramFileCombined = 'paramFileCombined.par'
     dump_file(fname=paramFileCombined, value=slurp_file(args.paramFileCommon)+slurp_file(args.paramFile))
     return paramFileCombined
+
+def writeOutput(outTsv, replicaInfos):
+    with open(outTsv, 'w', newline='') as tsvfile:
+        fieldnames = list(replicaInfos[0].keys())
+        writer = csv.DictWriter(tsvfile, fieldnames=fieldnames, delimiter='\t')
+        writer.writeheader()
+        for replicaInfo in replicaInfos:
+            writer.writerow(replicaInfo)
 
 def do_main():
     """Parse args and run cosi"""
@@ -221,7 +231,8 @@ def do_main():
                                                                                                   available_cpu_count())))
         replicaInfos = list(executor.map(functools.partial(run_one_replica, args=args, paramFile=constructParamFile(args)),
                                          range(args.numRepsPerBlock)))
-    _write_json(args.outJson, dict(replicaInfos=replicaInfos))
+
+    writeOutput(args.outTsv, replicaInfos)
     
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)s - %(module)s:%(lineno)d:%(funcName)s - %(levelname)s - %(message)s")
