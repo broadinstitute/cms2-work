@@ -57,6 +57,7 @@ task cosi2_run_one_sim_block {
     String       simBlockId
     String       modelId
     Int          blockNum
+    Int          numBlocks
     Int          numRepsPerBlock = 1
     Int          numCpusPerBlock = numRepsPerBlock
     Int          maxAttempts = 10000000
@@ -101,7 +102,9 @@ workflow run_sims_cosi2 {
     }
 
     input {
+      String experimentId = 'default'
       File paramFileCommon
+      String modelId = basename(paramFileCommon, ".par")
       Array[File] paramFiles
       File recombFile
       Int nreps = 1
@@ -123,9 +126,10 @@ workflow run_sims_cosi2 {
                    paramFileCommon = paramFileCommon,
                    paramFile = paramFile,
 	           recombFile=recombFile,
-                   modelId=basename(paramFile, ".par"),
-	           simBlockId=basename(paramFile, ".par")+"_"+blockNum,
+                   modelId=modelId,
+	           simBlockId=modelId+"_"+blockNum,
 	           blockNum=blockNum,
+	           numBlocks=numBlocks,
 	           maxAttempts=maxAttempts,
 	           repTimeoutSeconds=repTimeoutSeconds,
 	           numRepsPerBlock=numRepsPerBlock,
