@@ -204,6 +204,7 @@ def parse_args():
     parser.add_argument('--repTimeoutSeconds', type=int, required=True, help='max time per replica')
 
     parser.add_argument('--outTsv', required=True, help='write output objects to this file')
+    parser.add_argument('--outTpeds', required=True, help='write list of tpeds')
     return parser.parse_args()
 
 def constructParamFile(args):
@@ -213,13 +214,15 @@ def constructParamFile(args):
     dump_file(fname=paramFileCombined, value=slurp_file(args.paramFileCommon)+slurp_file(args.paramFile))
     return paramFileCombined
 
-def writeOutput(outTsv, replicaInfos):
+def writeOutput(outTsv, outTpeds, replicaInfos):
     with open(outTsv, 'w', newline='') as tsvfile:
         fieldnames = list(replicaInfos[0].keys())
         writer = csv.DictWriter(tsvfile, fieldnames=fieldnames, delimiter='\t')
         writer.writeheader()
         for replicaInfo in replicaInfos:
             writer.writerow(replicaInfo)
+
+    dump_file(outTpeds, '\n'.join([r['tpeds'] for r in replicaInfos]))
 
 def do_main():
     """Parse args and run cosi"""
@@ -232,7 +235,7 @@ def do_main():
         replicaInfos = list(executor.map(functools.partial(run_one_replica, args=args, paramFile=constructParamFile(args)),
                                          range(args.numRepsPerBlock)))
 
-    writeOutput(args.outTsv, replicaInfos)
+    writeOutput(args.outTsv, args.outTpeds, replicaInfos)
     
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)s - %(module)s:%(lineno)d:%(funcName)s - %(levelname)s - %(message)s")

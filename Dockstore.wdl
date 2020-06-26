@@ -70,11 +70,12 @@ task cosi2_run_one_sim_block {
 
   command <<<
     python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
-      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --outTsv replicaInfos.tsv
+      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --outTsv replicaInfos.tsv --outTpeds tpeds.txt
   >>>
 
   output {
     Array[ReplicaInfo] replicaInfos = read_objects("replicaInfos.tsv")
+    Array[File] tpeds = read_lines("tpeds.txt")
 
 #    String      cosi2_docker_used = ""
   }
@@ -120,29 +121,30 @@ workflow run_sims_cosi2 {
     Int numBlocks = nreps / numRepsPerBlock
     #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
 
-    scatter(paramFile in paramFiles) {
-        scatter(blockNum in range(numBlocks)) {
-            call cosi2_run_one_sim_block {
-                input:
-                   paramFileCommon = paramFileCommon,
-                   paramFile = paramFile,
-	           recombFile=recombFile,
-                   modelId=modelId,
-	           simBlockId=modelId+"_"+blockNum,
-	           blockNum=blockNum,
-	           numBlocks=numBlocks,
-	           maxAttempts=maxAttempts,
-	           repTimeoutSeconds=repTimeoutSeconds,
-	           numRepsPerBlock=numRepsPerBlock,
-	           numCpusPerBlock=numCpusPerBlock,
-	           memoryPerBlock=memoryPerBlock,
-	           cosi2_docker=cosi2_docker,
-	           taskScript=taskScript
-            }
-        }
+    scatter(paramFile_blockNum in cross(paramFiles, range(numBlocks))) {
+      call cosi2_run_one_sim_block {
+        input:
+        paramFileCommon = paramFileCommon,
+        paramFile = paramFile_blockNum.left,
+	recombFile=recombFile,
+        modelId=modelId,
+	blockNum=paramFile_blockNum.right,
+	simBlockId=modelId+"_"+paramFile_blockNum.right,
+	numBlocks=numBlocks,
+	maxAttempts=maxAttempts,
+	repTimeoutSeconds=repTimeoutSeconds,
+	numRepsPerBlock=numRepsPerBlock,
+	numCpusPerBlock=numCpusPerBlock,
+	memoryPerBlock=memoryPerBlock,
+	cosi2_docker=cosi2_docker,
+	taskScript=taskScript
+	
+      }
     }
 
     output {
-      Array[ReplicaInfo] replicaInfos = flatten(flatten(cosi2_run_one_sim_block.replicaInfos))
+      Array[ReplicaInfo] replicaInfos = flatten(cosi2_run_one_sim_block.replicaInfos)
+      Array[File] tpeds = flatten(cosi2_run_one_sim_block.tpeds)
     }
 }
+
