@@ -13,21 +13,22 @@ version 1.0
 #   figure out how to enable result caching without 
 #
 
-# struct ReplicaInfo {
-#   String modelId
-#   String blockNum
-#   Int replicaNum
-#   Int succeeded
-#   Int         randomSeed
-#   File        tpeds
-#   File traj
-#   Int  selPop
-#   Float selGen
-#   Int selBegPop
-#   Float selBegGen
-#   Float selCoeff
-#   Float selFreq
-# }
+struct ReplicaInfo {
+  String modelId
+  String blockNum
+  Float duration
+  Int replicaNum
+  Boolean succeeded
+  Int         randomSeed
+  File        tpeds
+  File traj
+  Int  selPop
+  Float selGen
+  Int selBegPop
+  Float selBegGen
+  Float selCoeff
+  Float selFreq
+}
 
 task cosi2_run_one_sim_block {
   meta {
@@ -73,7 +74,7 @@ task cosi2_run_one_sim_block {
   >>>
 
   output {
-    Array[Object] replicaInfos = read_json("out.json").replicaInfos
+    Array[ReplicaInfo] replicaInfos = read_json("out.json").replicaInfos
 
 #    String      cosi2_docker_used = ""
   }
@@ -142,6 +143,6 @@ workflow run_sims_cosi2 {
     }
 
     output {
-      Array[Object] replicaInfos = flatten(flatten(cosi2_run_one_sim_block.replicaInfos))
+      Array[ReplicaInfo] replicaInfos = flatten(flatten(cosi2_run_one_sim_block.replicaInfos))
     }
 }
