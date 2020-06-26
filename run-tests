@@ -2,7 +2,8 @@
 
 set -e -o pipefail -u -x
 
-TEST_INPUTS="test.wdl.json"
+#TEST_INPUTS="test.wdl.json"
+TEST_INPUTS="bug.json"
 
 womtool validate -i ${TEST_INPUTS} Dockstore.wdl
 time cromwell run -i ${TEST_INPUTS} Dockstore.wdl 
