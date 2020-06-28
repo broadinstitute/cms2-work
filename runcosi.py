@@ -21,6 +21,7 @@ import json
 import logging
 import multiprocessing
 import os
+import os.path
 import random
 import re
 import subprocess
@@ -157,7 +158,7 @@ def run_one_replica(replicaNum, args, paramFile):
     trajFile = f"{blkStr}.traj"
     sweepInfoFile = f"{blkStr}.sweepinfo.tsv"
     _run = functools.partial(subprocess.check_call, shell=True)
-    emptyFile = f"{blkStr}.empty"
+    emptyFile = os.path.abspath(f"{blkStr}.empty")
     dump_file(emptyFile, '')
     cosi2_cmd = (
         f'(env COSI_NEWSIM=1 COSI_MAXATTEMPTS={args.maxAttempts} COSI_SAVE_TRAJ={trajFile} '
@@ -179,7 +180,7 @@ def run_one_replica(replicaNum, args, paramFile):
         # TODO: parse param file for list of pops, and check that we get all the files.
         tpeds_tar_gz = f"{blkStr}.tpeds.tar.gz"
         _run(f'tar cvfz {tpeds_tar_gz} {tpedPrefix}_*.tped', timeout=args.repTimeoutSeconds)
-        replicaInfo.update(succeeded=0, tpeds=tpeds_tar_gz, traj=trajFile, **_load_sweep_info())
+        replicaInfo.update(succeeded=0, tpeds=os.path.abspath(tpeds_tar_gz), traj=os.path.abspath(trajFile), **_load_sweep_info())
     except subprocess.SubprocessError as subprocessError:
         _log.warning(f'command "{cosi2_cmd}" failed with {subprocessError}')
 

@@ -76,6 +76,7 @@ task cosi2_run_one_sim_block {
   output {
     Array[ReplicaInfo] replicaInfos = read_objects("replicaInfos.tsv")
     Array[File] tpeds = read_lines("tpeds.txt")
+    Array[File] trajs = glob("*.traj")
 
 #    String      cosi2_docker_used = ""
   }
@@ -143,8 +144,9 @@ workflow run_sims_cosi2 {
     }
 
     output {
-      Array[ReplicaInfo] replicaInfos = flatten(cosi2_run_one_sim_block.replicaInfos)
-      Array[File] tpeds = flatten(cosi2_run_one_sim_block.tpeds)
+      Array[Array[ReplicaInfo]] replicaInfos = cosi2_run_one_sim_block.replicaInfos
+      Array[Array[File]] tpeds = cosi2_run_one_sim_block.tpeds
+      Array[Array[File]] trajs = cosi2_run_one_sim_block.trajs
     }
 }
 
