@@ -75,7 +75,7 @@ task cosi2_run_one_sim_block {
 
   output {
     Array[ReplicaInfo] replicaInfos = read_objects("replicaInfos.tsv")
-    Array[File] tpeds = read_lines("tpeds.txt")
+    Array[File] tpeds = glob("*.tar.gz")
     Array[File] trajs = glob("*.traj")
 
 #    String      cosi2_docker_used = ""

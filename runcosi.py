@@ -173,14 +173,14 @@ def run_one_replica(replicaNum, args, paramFile):
                     selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
 
     replicaInfo = dict(modelId=args.modelId, blockNum=args.blockNum,
-                       replicaNum=replicaNum, succeeded=1, randomSeed=randomSeed,
+                       replicaNum=replicaNum, succeeded=0, randomSeed=randomSeed,
                        tpeds=emptyFile, traj=emptyFile, selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.)
     try:
         _run(cosi2_cmd)
         # TODO: parse param file for list of pops, and check that we get all the files.
         tpeds_tar_gz = f"{blkStr}.tpeds.tar.gz"
         _run(f'tar cvfz {tpeds_tar_gz} {tpedPrefix}_*.tped', timeout=args.repTimeoutSeconds)
-        replicaInfo.update(succeeded=0, tpeds=os.path.abspath(tpeds_tar_gz), traj=os.path.abspath(trajFile), **_load_sweep_info())
+        replicaInfo.update(succeeded=1, tpeds=os.path.abspath(tpeds_tar_gz), traj=os.path.abspath(trajFile), **_load_sweep_info())
     except subprocess.SubprocessError as subprocessError:
         _log.warning(f'command "{cosi2_cmd}" failed with {subprocessError}')
 
