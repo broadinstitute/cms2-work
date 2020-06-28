@@ -157,9 +157,8 @@ def run_one_replica(replicaNum, args, paramFile):
     tpedPrefix = f"{blkStr}"
     trajFile = f"{blkStr}.traj"
     sweepInfoFile = f"{blkStr}.sweepinfo.tsv"
+    tpeds_tar_gz = f"{args.tpedPrefix}{replicaNum}"
     _run = functools.partial(subprocess.check_call, shell=True)
-    emptyFile = os.path.abspath(f"{blkStr}.empty")
-    dump_file(emptyFile, '')
     cosi2_cmd = (
         f'(env COSI_NEWSIM=1 COSI_MAXATTEMPTS={args.maxAttempts} COSI_SAVE_TRAJ={trajFile} '
         f'COSI_SAVE_SWEEP_INFO={sweepInfoFile} coalescent -R {args.recombFile} -p {paramFile} '
@@ -174,19 +173,20 @@ def run_one_replica(replicaNum, args, paramFile):
 
     replicaInfo = dict(modelId=args.modelId, blockNum=args.blockNum,
                        replicaNum=replicaNum, succeeded=0, randomSeed=randomSeed,
-                       tpeds=emptyFile, traj=emptyFile, selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.)
+                       tpeds_tar_gz=tpeds_tar_gz, selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.)
     try:
-        _run(cosi2_cmd)
+        _run(cosi2_cmd, timeout=args.repTimeoutSeconds)
         # TODO: parse param file for list of pops, and check that we get all the files.
-        tpeds_tar_gz = f"{blkStr}.tpeds.tar.gz"
-        _run(f'tar cvfz {tpeds_tar_gz} {tpedPrefix}_*.tped', timeout=args.repTimeoutSeconds)
-        replicaInfo.update(succeeded=1, tpeds=os.path.abspath(tpeds_tar_gz), traj=os.path.abspath(trajFile), **_load_sweep_info())
+        _run(f'tar cvfz {tpeds_tar_gz} {tpedPrefix}_*.tped {trajFile}')
+        replicaInfo.update(succeeded=1, **_load_sweep_info())
     except subprocess.SubprocessError as subprocessError:
         _log.warning(f'command "{cosi2_cmd}" failed with {subprocessError}')
+        dump_file(tpeds_tar_gz, '')
 
     replicaInfo.update(duration=time.time()-time_beg)
 
     return replicaInfo
+# end: def run_one_replica(replicaNum, args, paramFile)
 
 # * main
 
@@ -205,7 +205,7 @@ def parse_args():
     parser.add_argument('--repTimeoutSeconds', type=int, required=True, help='max time per replica')
 
     parser.add_argument('--outTsv', required=True, help='write output objects to this file')
-    parser.add_argument('--outTpeds', required=True, help='write list of tpeds')
+    parser.add_argument('--tpedPrefix', required=True, help='prefix for tpeds')
     return parser.parse_args()
 
 def constructParamFile(args):
@@ -215,15 +215,13 @@ def constructParamFile(args):
     dump_file(fname=paramFileCombined, value=slurp_file(args.paramFileCommon)+slurp_file(args.paramFile))
     return paramFileCombined
 
-def writeOutput(outTsv, outTpeds, replicaInfos):
+def writeOutput(outTsv, replicaInfos):
     with open(outTsv, 'w', newline='') as tsvfile:
         fieldnames = list(replicaInfos[0].keys())
         writer = csv.DictWriter(tsvfile, fieldnames=fieldnames, delimiter='\t')
         writer.writeheader()
         for replicaInfo in replicaInfos:
             writer.writerow(replicaInfo)
-
-    dump_file(outTpeds, '\n'.join([r['tpeds'] for r in replicaInfos]))
 
 def do_main():
     """Parse args and run cosi"""
@@ -236,7 +234,7 @@ def do_main():
         replicaInfos = list(executor.map(functools.partial(run_one_replica, args=args, paramFile=constructParamFile(args)),
                                          range(args.numRepsPerBlock)))
 
-    writeOutput(args.outTsv, args.outTpeds, replicaInfos)
+    writeOutput(args.outTsv, replicaInfos)
     
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)s - %(module)s:%(lineno)d:%(funcName)s - %(levelname)s - %(message)s")

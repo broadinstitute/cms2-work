@@ -20,8 +20,7 @@ struct ReplicaInfo {
   Int replicaNum
   Int succeeded
   Int         randomSeed
-  File        tpeds
-  File traj
+  File        tpeds_tar_gz
   Int  selPop
   Float selGen
   Int selBegPop
@@ -68,15 +67,16 @@ task cosi2_run_one_sim_block {
     File         taskScript
   }
 
+  String tpedPrefix = "tpeds_${simBlockId}_tar_gz_"
+
   command <<<
     python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
-      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --outTsv replicaInfos.tsv --outTpeds tpeds.txt
+      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --outTsv replicaInfos.tsv --tpedPrefix ~{tpedPrefix}
   >>>
 
   output {
     Array[ReplicaInfo] replicaInfos = read_objects("replicaInfos.tsv")
-    Array[File] tpeds = glob("*.tar.gz")
-    Array[File] trajs = glob("*.traj")
+    Array[File] tpeds_tar_gz = prefix(tpedPrefix, range(numBlocks))
 
 #    String      cosi2_docker_used = ""
   }
@@ -144,9 +144,7 @@ workflow run_sims_cosi2 {
     }
 
     output {
-      Array[Array[ReplicaInfo]] replicaInfos = cosi2_run_one_sim_block.replicaInfos
-      Array[Array[File]] tpeds = cosi2_run_one_sim_block.tpeds
-      Array[Array[File]] trajs = cosi2_run_one_sim_block.trajs
+      Array[Pair[ReplicaInfo,File]] replicaInfos = zip(flatten(cosi2_run_one_sim_block.replicaInfos), flatten(cosi2_run_one_sim_block.tpeds_tar_gz))
     }
 }
 
