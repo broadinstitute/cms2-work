@@ -15,18 +15,21 @@ version 1.0
 
 struct ReplicaInfo {
   String modelId
-  String blockNum
-  Float duration
+  Int blockNum
   Int replicaNum
-  Int succeeded
-  Int         randomSeed
-  File        tpeds_tar_gz
+  Int randomSeed
+
   Int  selPop
   Float selGen
   Int selBegPop
   Float selBegGen
   Float selCoeff
   Float selFreq
+
+  File        tpeds_tar_gz
+
+  Int succeeded
+  Float duration
 }
 
 task cosi2_run_one_sim_block {
@@ -76,7 +79,7 @@ task cosi2_run_one_sim_block {
 
   output {
     Array[ReplicaInfo] replicaInfos = read_objects("replicaInfos.tsv")
-    Array[File] tpeds_tar_gz = prefix(tpedPrefix, range(numBlocks))
+    Array[File] tpeds_tar_gz = prefix(tpedPrefix, range(numRepsPerBlock))
 
 #    String      cosi2_docker_used = ""
   }
