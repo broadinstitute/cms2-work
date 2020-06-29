@@ -177,7 +177,7 @@ def run_one_replica(replicaNum, args, paramFile):
     try:
         _run(cosi2_cmd, timeout=args.repTimeoutSeconds)
         # TODO: parse param file for list of pops, and check that we get all the files.
-        _run(f'tar cvfz {tpeds_tar_gz} {tpedPrefix}_*.tped {trajFile}')
+        _run(f'tar cvfz {tpeds_tar_gz} {tpedPrefix}_*.tped {trajFile} {paramFile}')
         replicaInfo.update(succeeded=1, **_load_sweep_info())
     except subprocess.SubprocessError as subprocessError:
         _log.warning(f'command "{cosi2_cmd}" failed with {subprocessError}')
