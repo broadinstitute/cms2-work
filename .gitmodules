@@ -1,3 +1,7 @@
 [submodule "dockstore-tool-cosi2"]
 	path = dockstore-tool-cosi2
 	url = git@github.com:broadinstitute/dockstore-tool-cosi2.git
+[submodule "cosi2"]
+	path = cosi2
+	url = git@github.com:broadinstitute/cosi2.git
+	branch = is-add-output-of-params
