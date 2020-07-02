@@ -1,0 +1,3 @@
+[submodule "dockstore-tool-cosi2"]
+	path = dockstore-tool-cosi2
+	url = git@github.com:broadinstitute/dockstore-tool-cosi2.git
