@@ -5,3 +5,6 @@
 	path = cosi2
 	url = git@github.com:broadinstitute/cosi2.git
 	branch = is-add-output-of-params
+[submodule "dockstore-tool-selscan"]
+	path = dockstore-tool-selscan
+	url = git@github.com:broadinstitute/dockstore-tool-selscan.git
