@@ -26,6 +26,9 @@ struct ReplicaInfo {
   Float selCoeff
   Float selFreq
 
+  Array[Int] pops
+  Array[File] tpeds
+
   File        tpeds_tar_gz
 
   Int succeeded
@@ -57,6 +60,8 @@ task cosi2_run_one_sim_block {
     File         paramFileCommon
     File         paramFile
     File         recombFile
+    Array[Int]   pops
+    Array[String] repPopSuffixes
     String       simBlockId
     String       modelId
     Int          blockNum
@@ -75,12 +80,13 @@ task cosi2_run_one_sim_block {
 
   command <<<
     python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
-      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --outTsv replicaInfos.tsv --tpedPrefix ~{tpedPrefix}
+      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --pops ~{sep=' ' pops } --outJson replicaInfos.json --tpedPrefix ~{tpedPrefix}
   >>>
 
   output {
-    Array[ReplicaInfo] replicaInfos = read_objects("replicaInfos.tsv")
+    Array[ReplicaInfo] replicaInfos = read_json("replicaInfos.json").replicaInfos
     Array[File] tpeds_tar_gz = prefix(tpedPrefix, range(numRepsPerBlock))
+    Array[File] tpeds = prefix("${simBlockId}.rep", repPopSuffixes)
 
 #    String      cosi2_docker_used = ""
   }
@@ -92,6 +98,36 @@ task cosi2_run_one_sim_block {
     dx_instance_type: "mem1_ssd1_v2_x4"
     preemptible: preemptible
     volatile: true  # FIXME: not volatile if random seeds specified
+  }
+}
+
+task get_pops_from_cosi2_param_file {
+  meta {
+    description: "Get list of population IDs from cosi2 parameter file"
+  }
+
+  input {
+    File paramFileCommon
+    Int numRepsPerBlock
+    String cosi2_docker
+  }
+
+  command <<<
+    grep ^pop_define ~{paramFileCommon} | awk '{print $2;}' | tee pops.txt
+    python3 <<CODE
+    with open('pops.txt') as pops_in:
+        pops = pops_in.read().strip().split()
+    with open('suffixes.txt', 'w') as out:
+        for rep, pop in zip(range(~{numRepsPerBlock}), pops):
+            out.write(f"{rep}_0_{pop}.tped\n")
+    CODE
+  >>>
+  output {
+    Array[Int] popIds = read_lines(stdout())
+    Array[String] repPopSuffixes = read_lines('suffixes.txt')
+  }
+  runtime {
+    docker: cosi2_docker
   }
 }
 
@@ -125,6 +161,17 @@ workflow run_sims_cosi2 {
       Int preemptible = 3
       File         taskScript
     }
+
+    Array[Int] pops = get_pops_from_cosi2_param_file.popIds
+    Array[String] repPopSuffixes = get_pops_from_cosi2_param_file.repPopSuffixes
+
+    call get_pops_from_cosi2_param_file { 
+      input: 
+        paramFileCommon=paramFileCommon,
+        numRepsPerBlock=numRepsPerBlock,
+        cosi2_docker=cosi2_docker
+    }
+
     Int numBlocks = nreps / numRepsPerBlock
     #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
 
@@ -134,6 +181,8 @@ workflow run_sims_cosi2 {
         paramFileCommon = paramFileCommon,
         paramFile = paramFile_blockNum.left,
 	recombFile=recombFile,
+	pops=pops,
+	repPopSuffixes=repPopSuffixes,
         modelId=modelId,
 	blockNum=paramFile_blockNum.right,
 	simBlockId=modelId+"_"+paramFile_blockNum.right,
@@ -151,6 +200,9 @@ workflow run_sims_cosi2 {
 
     output {
       Array[Pair[ReplicaInfo,File]] replicaInfos = zip(flatten(cosi2_run_one_sim_block.replicaInfos), flatten(cosi2_run_one_sim_block.tpeds_tar_gz))
+      Array[Array[File]] tpeds = cosi2_run_one_sim_block.tpeds
+      Array[Int] popsUsed = pops
     }
 }
+
 

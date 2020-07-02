@@ -173,7 +173,9 @@ def run_one_replica(replicaNum, args, paramFile):
 
     replicaInfo = dict(modelId=args.modelId, blockNum=args.blockNum,
                        replicaNum=replicaNum, succeeded=0, randomSeed=randomSeed,
-                       tpeds_tar_gz=tpeds_tar_gz, selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.)
+                       tpeds_tar_gz=tpeds_tar_gz, pops=args.pops,
+                       tpeds=[f"{args.simBlockId}.rep{replicaNum}_0_{pop}.tped" for pop in args.pops],
+                       selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.)
     try:
         _run(cosi2_cmd, timeout=args.repTimeoutSeconds)
         # TODO: parse param file for list of pops, and check that we get all the files.
@@ -204,7 +206,8 @@ def parse_args():
                         help='max # of times to try simulating forward frequency trajectory before giving up')
     parser.add_argument('--repTimeoutSeconds', type=int, required=True, help='max time per replica')
 
-    parser.add_argument('--outTsv', required=True, help='write output objects to this file')
+    parser.add_argument('--pops', required=True, type=int, nargs='+', help='the pops')
+    parser.add_argument('--outJson', required=True, help='write output objects to this file')
     parser.add_argument('--tpedPrefix', required=True, help='prefix for tpeds')
     return parser.parse_args()
 
@@ -223,6 +226,8 @@ def writeOutput(outTsv, replicaInfos):
         for replicaInfo in replicaInfos:
             writer.writerow(replicaInfo)
 
+    
+
 def do_main():
     """Parse args and run cosi"""
 
@@ -234,7 +239,7 @@ def do_main():
         replicaInfos = list(executor.map(functools.partial(run_one_replica, args=args, paramFile=constructParamFile(args)),
                                          range(args.numRepsPerBlock)))
 
-    writeOutput(args.outTsv, replicaInfos)
+    _write_json(args.outJson, dict(replicaInfos=replicaInfos))
     
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)s - %(module)s:%(lineno)d:%(funcName)s - %(levelname)s - %(message)s")
