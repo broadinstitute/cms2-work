@@ -8,3 +8,7 @@
 [submodule "dockstore-tool-selscan"]
 	path = dockstore-tool-selscan
 	url = git@github.com:broadinstitute/dockstore-tool-selscan.git
+[submodule "cms"]
+	path = cms
+	url = git@github.com:broadinstitute/cms.git
+	branch = is-cms2-new
