@@ -1,3 +1,8 @@
 
 #+TITLE: Repos and files related to CMS2.0, gathered in one place.
 
+* Directories here
+
+  - [[./component_stats][./component_stats]] :: Docker image definition for computing CMS component statistics
+  - [[./terra][./terra]] :: Utilities for running CMS2 analyses on [[https://app.terra.bio/][Terra]]
+    
