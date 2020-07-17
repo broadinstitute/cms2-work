@@ -2,7 +2,7 @@
 
 # * Preamble
 
-"""Run cosi2 simulation for one block"""
+"""Run cosi2 simulation for one block of replicas."""
 
 __author__="ilya_shl@alum.mit.edu"
 
@@ -24,6 +24,7 @@ import os
 import os.path
 import random
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -150,6 +151,20 @@ def run_one_replica(replicaNum, args, paramFile):
 
     time_beg = time.time()
 
+    def getPopsFromParamFile(paramFile):
+        pop_ids = []
+        pop_names = []
+        with open(paramFile) as paramFileHandle:
+            for line in paramFileHandle:
+                if line.startswith('pop_define'):
+                    pop_define, pop_id, pop_name = line.strip().split()
+                    pop_ids.append(int(pop_id))
+                    pop_names.append(pop_name)
+        return pop_ids, pop_names
+
+    popIds, popNames = getPopsFromParamFile(paramFile)
+    _log.debug(f'popIds={popIds} popNames={popNames}')
+
     randomSeed = random.SystemRandom().randint(0, MAX_INT32)
 
     repStr = f"rep{replicaNum}"
@@ -158,6 +173,8 @@ def run_one_replica(replicaNum, args, paramFile):
     trajFile = f"{blkStr}.traj"
     sweepInfoFile = f"{blkStr}.sweepinfo.tsv"
     tpeds_tar_gz = f"{args.tpedPrefix}{replicaNum}"
+    replicaInfoJsonFile =f'{tpedPrefix}.replicaInfo.json'
+    paramFileCopyFile =f'{tpedPrefix}.cosiParams.par'
     _run = functools.partial(subprocess.check_call, shell=True)
     cosi2_cmd = (
         f'(env COSI_NEWSIM=1 COSI_MAXATTEMPTS={args.maxAttempts} COSI_SAVE_TRAJ={trajFile} '
@@ -172,13 +189,29 @@ def run_one_replica(replicaNum, args, paramFile):
                     selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
 
     replicaInfo = dict(modelId=args.modelId, blockNum=args.blockNum,
-                       replicaNum=replicaNum, succeeded=0, randomSeed=randomSeed,
-                       tpeds_tar_gz=tpeds_tar_gz, selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.)
+                       replicaNum=replicaNum, succeeded=False, randomSeed=randomSeed,
+                       tpeds_tar_gz=tpeds_tar_gz,
+                       sweepInfo=dict(selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.,),
+                       popIds=popIds, popNames=popNames)
     try:
         _run(cosi2_cmd, timeout=args.repTimeoutSeconds)
         # TODO: parse param file for list of pops, and check that we get all the files.
-        _run(f'tar cvfz {tpeds_tar_gz} {tpedPrefix}_*.tped {trajFile} {paramFile}')
-        replicaInfo.update(succeeded=1, **_load_sweep_info())
+        sweepInfo = _load_sweep_info()
+        replicaInfo.update(sweepInfo=sweepInfo)
+        tpedFiles = [f'{tpedPrefix}_0_{popId}.tped' for popId in popIds]
+        replicaInfoCopy = replicaInfo.copy()
+        replicaInfoCopy.update(succeeded=True)
+        _write_json(fname=replicaInfoJsonFile,
+                    json_val=dict(replicaInfo=replicaInfoCopy,
+                                  cosi2Cmd=cosi2_cmd,
+                                  popIds=popIds, popNames=popNames,
+                                  tpedFiles=tpedFiles,
+                                  trajFile=trajFile,
+                                  paramFile=paramFileCopyFile))
+        shutil.copyfile(src=paramFile, dst=paramFileCopyFile)
+        tpedFilesJoined = " ".join(tpedFiles)
+        _run(f'tar cvfz {tpeds_tar_gz} {tpedFilesJoined} {trajFile} {paramFileCopyFile} {replicaInfoJsonFile}')
+        replicaInfo.update(succeeded=True)
     except subprocess.SubprocessError as subprocessError:
         _log.warning(f'command "{cosi2_cmd}" failed with {subprocessError}')
         dump_file(tpeds_tar_gz, '')
@@ -204,16 +237,18 @@ def parse_args():
                         help='max # of times to try simulating forward frequency trajectory before giving up')
     parser.add_argument('--repTimeoutSeconds', type=int, required=True, help='max time per replica')
 
-    parser.add_argument('--outTsv', required=True, help='write output objects to this file')
     parser.add_argument('--tpedPrefix', required=True, help='prefix for tpeds')
+    #parser.add_argument('--outTsv', help='write output objects to this file')
+    parser.add_argument('--outJson', required=True, help='write output objects to this file')
     return parser.parse_args()
 
-def constructParamFile(args):
+def constructParamFileCombined(paramFileCommon, paramFileVarying):
     """Combine common and variable pars of cosi2 param file"""
 
     paramFileCombined = 'paramFileCombined.par'
-    dump_file(fname=paramFileCombined, value=slurp_file(args.paramFileCommon)+slurp_file(args.paramFile))
+    dump_file(fname=paramFileCombined, value=slurp_file(paramFileCommon)+slurp_file(paramFileVarying))
     return paramFileCombined
+
 
 def writeOutput(outTsv, replicaInfos):
     with open(outTsv, 'w', newline='') as tsvfile:
@@ -231,10 +266,16 @@ def do_main():
     with contextlib.ExitStack() as exit_stack:
         executor = exit_stack.enter_context(concurrent.futures.ThreadPoolExecutor(max_workers=min(args.numRepsPerBlock,
                                                                                                   available_cpu_count())))
-        replicaInfos = list(executor.map(functools.partial(run_one_replica, args=args, paramFile=constructParamFile(args)),
+        paramFileCombined=constructParamFileCombined(paramFileCommon=args.paramFileCommon, paramFileVarying=args.paramFile)
+        replicaInfos = list(executor.map(functools.partial(run_one_replica, args=args, paramFile=paramFileCombined),
                                          range(args.numRepsPerBlock)))
 
-    writeOutput(args.outTsv, replicaInfos)
+    if args.outJson:
+        _write_json(fname=args.outJson,
+                    json_val=dict(replicaInfos=replicaInfos))
+        
+    #if args.outTsv:
+    #    writeOutput(args.outTsv, replicaInfos)
     
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)s - %(module)s:%(lineno)d:%(funcName)s - %(levelname)s - %(message)s")

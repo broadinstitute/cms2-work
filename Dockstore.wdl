@@ -13,22 +13,29 @@ version 1.0
 #   figure out how to enable result caching without 
 #
 
-struct ReplicaInfo {
-  String modelId
-  Int blockNum
-  Int replicaNum
-  Int randomSeed
-
+struct SweepInfo {
   Int  selPop
   Float selGen
   Int selBegPop
   Float selBegGen
   Float selCoeff
   Float selFreq
+}
+
+struct ReplicaInfo {
+  String modelId
+  Array[Int] popIds
+  Array[String] popNames
+
+  Int blockNum
+  Int replicaNum
+  Int randomSeed
+
+  SweepInfo sweepInfo
 
   File        tpeds_tar_gz
 
-  Int succeeded
+  Boolean succeeded
   Float duration
 }
 
@@ -75,11 +82,11 @@ task cosi2_run_one_sim_block {
 
   command <<<
     python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
-      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --outTsv replicaInfos.tsv --tpedPrefix ~{tpedPrefix}
+      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --tpedPrefix ~{tpedPrefix} --outJson replicaInfos.json
   >>>
 
   output {
-    Array[ReplicaInfo] replicaInfos = read_objects("replicaInfos.tsv")
+    Array[ReplicaInfo] replicaInfos = read_json("replicaInfos.json").replicaInfos
     Array[File] tpeds_tar_gz = prefix(tpedPrefix, range(numRepsPerBlock))
 
 #    String      cosi2_docker_used = ""
