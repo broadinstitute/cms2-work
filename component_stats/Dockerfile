@@ -42,11 +42,14 @@ RUN /opt/docker/install-miniconda.sh
 
 ENV PATH="$MINICONDA_PATH/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-RUN conda install numpy scipy matplotlib
+RUN conda install numpy scipy matplotlib selscan=1.2.0a
 
 # switch back to the ubuntu user so this tool (and the files written) are not owned by root
 RUN groupadd -r -g 1000 ubuntu && useradd -r -g ubuntu -u 1000 -m ubuntu
 USER ubuntu
+
+COPY cms .
+COPY sim_generation .
 
 
 VOLUME ["/user-data"]

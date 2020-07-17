@@ -14,9 +14,11 @@ rm /tmp/${MINICONDA_INSTALLER}
 PATH="$MINICONDA_PATH/bin:$PATH"
 hash -r
 conda config --set always_yes yes --set changeps1 no
+conda config --set channel_priority strict
 conda config --add channels r
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
 conda config --set auto_update_conda false
+conda init bash
 conda clean -y --all
