@@ -167,12 +167,12 @@ def run_one_replica(replicaNum, args, paramFile):
 
     randomSeed = random.SystemRandom().randint(0, MAX_INT32)
 
-    repStr = f"rep{replicaNum}"
-    blkStr = f"{args.simBlockId}.{repStr}"
+    repStr = f"rep_{replicaNum}"
+    blkStr = f"{args.simBlockId}__{repStr}"
     tpedPrefix = f"{blkStr}"
     trajFile = f"{blkStr}.traj"
     sweepInfoFile = f"{blkStr}.sweepinfo.tsv"
-    tpeds_tar_gz = f"{args.tpedPrefix}{replicaNum}"
+    tpeds_tar_gz = f"{args.tpedPrefix}__tar_gz__{repStr}"
     replicaInfoJsonFile =f'{tpedPrefix}.replicaInfo.json'
     paramFileCopyFile =f'{tpedPrefix}.cosiParams.par'
     _run = functools.partial(subprocess.check_call, shell=True)
@@ -188,16 +188,21 @@ def run_one_replica(replicaNum, args, paramFile):
         return dict(selPop=int(selPop), selGen=selGen, selBegPop=int(selBegPop), 
                     selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
 
-    replicaInfo = dict(modelId=args.modelId, blockNum=args.blockNum,
-                       replicaNum=replicaNum, succeeded=False, randomSeed=randomSeed,
+    replicaInfo = dict(replicaId=dict(blockNum=args.blockNum,
+                                      replicaNum=replicaNum,
+                                      replicaNumGlobal=args.blockNum * args.numRepsPerBlock + replicaNum,
+                                      replicaNumGlobalOutOf=args.numBlocks*args.numRepsPerBlock,
+                                      randomSeed=randomSeed),
+                       succeeded=False,
                        tpeds_tar_gz=tpeds_tar_gz,
-                       sweepInfo=dict(selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.,),
-                       popIds=popIds, popNames=popNames)
+                       modelInfo=dict(modelId=args.modelId,
+                                      popIds=popIds, popNames=popNames,
+                                      sweepInfo=dict(selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.,)))
     try:
         _run(cosi2_cmd, timeout=args.repTimeoutSeconds)
         # TODO: parse param file for list of pops, and check that we get all the files.
         sweepInfo = _load_sweep_info()
-        replicaInfo.update(sweepInfo=sweepInfo)
+        replicaInfo['modelInfo'].update(sweepInfo=sweepInfo)
         tpedFiles = [f'{tpedPrefix}_0_{popId}.tped' for popId in popIds]
         replicaInfoCopy = replicaInfo.copy()
         replicaInfoCopy.update(succeeded=True)
@@ -216,7 +221,7 @@ def run_one_replica(replicaNum, args, paramFile):
         _log.warning(f'command "{cosi2_cmd}" failed with {subprocessError}')
         dump_file(tpeds_tar_gz, '')
 
-    replicaInfo.update(duration=time.time()-time_beg)
+    replicaInfo.update(durationSeconds=round(time.time()-time_beg, 2))
 
     return replicaInfo
 # end: def run_one_replica(replicaNum, args, paramFile)
@@ -232,6 +237,7 @@ def parse_args():
     parser.add_argument('--modelId', required=True, help='demographic model id')
     parser.add_argument('--simBlockId', required=True, help='string ID of the simulation block')
     parser.add_argument('--blockNum', type=int, required=True, help='number of the block of simulations')
+    parser.add_argument('--numBlocks', type=int, required=True, help='total number of blocks in the simulations')
     parser.add_argument('--numRepsPerBlock', type=int, required=True, help='number of replicas in the block')
     parser.add_argument('--maxAttempts', type=int, default=10000000,
                         help='max # of times to try simulating forward frequency trajectory before giving up')

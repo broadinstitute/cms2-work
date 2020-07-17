@@ -22,21 +22,29 @@ struct SweepInfo {
   Float selFreq
 }
 
-struct ReplicaInfo {
+struct ModelInfo {
   String modelId
   Array[Int] popIds
   Array[String] popNames
+  SweepInfo sweepInfo
+}
 
+struct ReplicaId {
+  Int replicaNumGlobal
+  Int replicaNumGlobalOutOf
   Int blockNum
   Int replicaNum
   Int randomSeed
+}
 
-  SweepInfo sweepInfo
+struct ReplicaInfo {
+  ReplicaId replicaId
+  ModelInfo modelInfo
 
   File        tpeds_tar_gz
 
   Boolean succeeded
-  Float duration
+  Float durationSeconds
 }
 
 task cosi2_run_one_sim_block {
@@ -78,16 +86,16 @@ task cosi2_run_one_sim_block {
     File         taskScript
   }
 
-  String tpedPrefix = "tpeds_${simBlockId}_tar_gz_"
+  String tpedPrefix = "tpeds__${simBlockId}"
 
   command <<<
     python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
-      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --tpedPrefix ~{tpedPrefix} --outJson replicaInfos.json
+      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --numBlocks ~{numBlocks} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --tpedPrefix ~{tpedPrefix} --outJson replicaInfos.json
   >>>
 
   output {
     Array[ReplicaInfo] replicaInfos = read_json("replicaInfos.json").replicaInfos
-    Array[File] tpeds_tar_gz = prefix(tpedPrefix, range(numRepsPerBlock))
+    Array[File] tpeds_tar_gz = prefix(tpedPrefix + "__tar_gz__rep_", range(numRepsPerBlock))
 
 #    String      cosi2_docker_used = ""
   }
@@ -143,7 +151,7 @@ workflow run_sims_cosi2 {
 	recombFile=recombFile,
         modelId=modelId,
 	blockNum=paramFile_blockNum.right,
-	simBlockId=modelId+"_"+paramFile_blockNum.right,
+	simBlockId="model_"+modelId+"__block_"+paramFile_blockNum.right+"__of_"+numBlocks,
 	numBlocks=numBlocks,
 	maxAttempts=maxAttempts,
 	repTimeoutSeconds=repTimeoutSeconds,
@@ -157,7 +165,7 @@ workflow run_sims_cosi2 {
     }
 
     output {
-      Array[Pair[ReplicaInfo,File]] replicaInfos = zip(flatten(cosi2_run_one_sim_block.replicaInfos), flatten(cosi2_run_one_sim_block.tpeds_tar_gz))
+      Array[ReplicaInfo] replicaInfos = flatten(cosi2_run_one_sim_block.replicaInfos)
+      Array[File] tpeds_tar_gz = flatten(cosi2_run_one_sim_block.tpeds_tar_gz)
     }
 }
-
