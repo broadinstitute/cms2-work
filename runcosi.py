@@ -189,13 +189,15 @@ def run_one_replica(replicaNum, args, paramFile):
                     selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
 
     replicaInfo = dict(replicaId=dict(blockNum=args.blockNum,
-                                      replicaNum=replicaNum,
+                                      replicaNumInBlock=replicaNum,
                                       replicaNumGlobal=args.blockNum * args.numRepsPerBlock + replicaNum,
                                       replicaNumGlobalOutOf=args.numBlocks*args.numRepsPerBlock,
                                       randomSeed=randomSeed),
                        succeeded=False,
                        tpeds_tar_gz=tpeds_tar_gz,
                        modelInfo=dict(modelId=args.modelId,
+                                      modelIdParts=[os.path.basename(args.paramFileCommon),
+                                                    os.path.basename(args.paramFile)],
                                       popIds=popIds, popNames=popNames,
                                       sweepInfo=dict(selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.,)))
     try:

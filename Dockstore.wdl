@@ -24,6 +24,7 @@ struct SweepInfo {
 
 struct ModelInfo {
   String modelId
+  Array[String] modelIdParts
   Array[Int] popIds
   Array[String] popNames
   SweepInfo sweepInfo
@@ -33,7 +34,7 @@ struct ReplicaId {
   Int replicaNumGlobal
   Int replicaNumGlobalOutOf
   Int blockNum
-  Int replicaNum
+  Int replicaNumInBlock
   Int randomSeed
 }
 
@@ -127,7 +128,7 @@ workflow run_sims_cosi2 {
     input {
       String experimentId = 'default'
       File paramFileCommon
-      String modelId = basename(paramFileCommon, ".par")
+      String modelId = "model_"+basename(paramFileCommon, ".par")
       Array[File] paramFiles
       File recombFile
       Int nreps = 1
@@ -149,9 +150,9 @@ workflow run_sims_cosi2 {
         paramFileCommon = paramFileCommon,
         paramFile = paramFile_blockNum.left,
 	recombFile=recombFile,
-        modelId=modelId,
+        modelId=modelId+"_"+paramFile_blockNum.left,
 	blockNum=paramFile_blockNum.right,
-	simBlockId="model_"+modelId+"__block_"+paramFile_blockNum.right+"__of_"+numBlocks,
+	simBlockId=modelId+"_"+paramFile_blockNum.left+"__block_"+paramFile_blockNum.right+"__of_"+numBlocks,
 	numBlocks=numBlocks,
 	maxAttempts=maxAttempts,
 	repTimeoutSeconds=repTimeoutSeconds,
