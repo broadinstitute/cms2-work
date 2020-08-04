@@ -11,7 +11,6 @@ import tempfile
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('model')
-    parser.add_argument('regime')
     parser.add_argument('selpop', type=int)
     parser.add_argument('irep', type=int)
     parser.add_argument('--cmsdir', required=True)
@@ -126,6 +125,7 @@ def orig_main(args):
 def compute_component_scores(tpeds_tar_gz):
     with tempfile.TemporaryDirectory() as tdir:
         execute('tar xvfz ' + os.path.abspath(tpeds_tar_gz), cwd=tdir)
+        
         
 
 if __name__=='__main__':
