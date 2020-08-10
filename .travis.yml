@@ -1,12 +1,13 @@
-language: cpp
 #sudo: required
 dist: bionic
-compiler:
-- gcc
-os:
-- linux
-script:
-- if [ $TRAVIS_OS_NAME == linux ]; then ./build.sh; fi
+os: linux
+
+git:
+  submodules: false
+  depth: 10
+
+#script:
+#- ./build.sh
 #- if [ $TRAVIS_OS_NAME == osx ]; then ./build.sh --with-include-dir=$OPENSSL_DIR/include --with-lib-dir=$OPENSSL_DIR/lib --llvm-config=llvm-config-3.8 --cc=clang-3.8 --cxx=clang++-3.8; fi
 #after_success:
 #- if [ $TRAVIS_OS_NAME == linux ]; then ./scripts/build_support.sh archive_codedb; fi
@@ -17,6 +18,29 @@ script:
 env:
   global:
   - LANG="en_US.UTF-8"
+  - QUAY_DOCKER_USER=ilya_broad
+  # QUAY_DOCKER_PASSWORD
+  - secure: "RT71y8CEgxQa5e7P5PejKO+TIdYS0cfntR5YGBZMcUNYLP/9Ws+Gd14UKseB/82Wp09CTw2IZ3rEdNGZyt8Jen9xl5zhWgCI+7XzmQTxnRQLJSpXJRAMBTUo9IIbvpBHbA+lDvHQ+HOlDRIeccdvzmDemVY2iZhpucku0CYbjMYV8NXNhnGJcCvNrOLToOMEpba8PJXsPFod9A+nDT4tXPiia8LsF5YiRFCgOfBEL1GeUimEfKfE0BmGkbMbf5weNkqGPgQa/Pas04NZBxo7TxgriwV0q8pfENXQ9nHqZKvb0tsIRRUg3Ybc8P8EBzsDnmJxquRUwJ9StX01gNHQLr99HAkSln/d620UgmQ4LiuP31+BMLEE+4+vgmF665xdZEJn6Mn+5+1z9g75BnKRrS/afOQIasKV10v0OH4OfbwsjD4P0lpb6KlUEJdnLmRaqo3vI00h3ZNSG7WKwm4jKeqoHZlGCKMymaxqMVC05WNzQ9UeTp8YzwxNFjvxpk0n/Wudp1NfU11bGnjeR9gsBZjtB4PQLcfl/O/5VbZ4YXFJ+Ocofyk0LkBfOtUa/icrI/wOsrd0d3xdPN+0zA9WHKocW7NdVlTXky/GqD5pSE7flIqFXY72H7Gsa94f9NKPLHjI25Pg0/MlYi4YQ8bjKcMJg+koZ1+Xseq/Xo9KIDg="
 
-git:
-  submodules: false
+services:
+  - docker
+
+stages:
+  - main
+
+jobs:
+  fast_finish: true
+  include:
+    - language: python
+      stage: main
+      python: "3.8"
+      
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get -y install shellcheck
+      install:
+        - pip3 -q install miniwdl
+      script:
+        - ./build.sh
+
+
