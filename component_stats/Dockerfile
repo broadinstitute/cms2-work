@@ -12,7 +12,7 @@ MAINTAINER Ilya Shlyakhter <ilya_shl@alum.mit.edu>
 
 # Setup packages
 USER root
-RUN apt-get -m update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales wget unzip curl zip #python3
+RUN apt-get -m update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales wget unzip curl zip python3
 
 # Set default locale to en_US.UTF-8
 #ENV LANG="en_US.UTF-8" LANGUAGE="en_US:en" LC_ALL="en_US.UTF-8"
@@ -50,7 +50,6 @@ USER ubuntu
 
 COPY cms .
 COPY sim_generation .
-
 
 VOLUME ["/user-data"]
 ENV \
