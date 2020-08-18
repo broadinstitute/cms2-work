@@ -263,6 +263,7 @@ def orig_main(args):
 def compute_component_scores(args):
     replicaInfo = _json_loadf(args.replica_info)
     execute(f'selscan --ihh12 --tped {replicaInfo["tpedFiles"][0]} --out {args.replica_id_string} ')
+    execute(f'selscan --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][0]} --out {args.replica_id_string} ')
 
 if __name__=='__main__':
   compute_component_scores(parse_args())

@@ -59,6 +59,7 @@ task compute_ihh12_for_one_replica {
   >>>
   output {
     File ihh12 = replicaIdString + ".ihh12.out"
+    File ihs = replicaIdString + ".ihs.out"
   }
   runtime {
     docker: "quay.io/broadinstitute/cms2@sha256:aa2311202d138770abaf15cfa50e26cef29e95dcf8fbc81b75bfc751f9d8b74d"
@@ -81,7 +82,6 @@ workflow compute_ihh12 {
   }
   output {
     Array[File] ihh12out = compute_ihh12_for_one_replica.ihh12
+    Array[File] ihsout = compute_ihh12_for_one_replica.ihs
   }
 }
-
-
