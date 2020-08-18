@@ -1,0 +1,45 @@
+{
+    "compute_ihh12.replicaInfos": [
+            {
+                "durationSeconds": 24.49,
+                "modelInfo": {
+                    "modelId": "model_default_112115_825am__demography_sel1_origin1",
+                    "modelIdParts": [
+                        "default_112115_825am__demography.par",
+                        "sel1_origin1.par"
+                    ],
+                    "popIds": [
+                        1,
+                        2,
+                        3,
+                        4
+                    ],
+                    "popNames": [
+                        "YRI",
+                        "CEU",
+                        "CHB",
+                        "BEB"
+                    ],
+                    "sweepInfo": {
+                        "selBegGen": 3710.49237996,
+                        "selBegPop": 1,
+                        "selCoeff": 0.00614853105525,
+                        "selFreq": 0.249465,
+                        "selGen": 2669.80378795,
+                        "selPop": 1
+                    }
+                },
+                "replicaId": {
+                    "blockNum": 0,
+                    "randomSeed": 1377555631,
+                    "replicaNumGlobal": 0,
+                    "replicaNumGlobalOutOf": 16,
+                    "replicaNumInBlock": 0
+                },
+                "succeeded": true,
+                "tpeds_tar_gz": "tpeds__model_default_112115_825am__demography_sel1_origin1__block_0__of_4__tar_gz__rep_0"
+            }
+    ],
+    "compute_ihh12.sel_pop": 1,
+    "compute_ihh12.script": "/data/ilya-work/proj/cms2-work/component_stats/sim_generation/remodel_components.py"
+}
