@@ -50,13 +50,38 @@ task compute_ihh12_for_one_replica {
   input {
     ReplicaInfo replicaInfo
     Int sel_pop
+    File script
   }
   String replicaIdString = "model_" + replicaInfo.modelInfo.modelId + "__rep_" + replicaInfo.replicaId.replicaNumGlobal
   command <<<
-    python3 remodel_components.py --tpeds-tar-gz ~{tpeds_tar_gz} --sel-pop ~{sel_pop} --ihh12-unnormedfileprefix 
+    tar xvfz ~{replicaInfo.tpeds_tar_gz}
+    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replicaIdString}
   >>>
   output {
-    File ihh12
+    File ihh12 = replicaIdString + ".ihh12.out"
+  }
+  runtime {
+    docker: "quay.io/broadinstitute/cms2@sha256:aa2311202d138770abaf15cfa50e26cef29e95dcf8fbc81b75bfc751f9d8b74d"
   }
 }
+
+workflow compute_ihh12 {
+  input {
+    Array[ReplicaInfo] replicaInfos
+    Int sel_pop
+    File script
+  }
+  scatter(replica_info in replicaInfos) {
+    call compute_ihh12_for_one_replica {
+      input:
+      replicaInfo=replica_info,
+      sel_pop=sel_pop,
+      script=script
+    }
+  }
+  output {
+    Array[File] ihh12out = compute_ihh12_for_one_replica.ihh12
+  }
+}
+
 
