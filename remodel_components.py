@@ -262,8 +262,20 @@ def orig_main(args):
 
 def compute_component_scores(args):
     replicaInfo = _json_loadf(args.replica_info)
-    execute(f'selscan --ihh12 --tped {replicaInfo["tpedFiles"][0]} --out {args.replica_id_string} ')
-    execute(f'selscan --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][0]} --out {args.replica_id_string} ')
+    pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in replicaInfo['popIds']])
+    this_pop_idx = pop_id_to_idx[args.sel_pop]
+    execute(f'selscan --ihh12 --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+            f'--out {args.replica_id_string} ')
+    execute(f'selscan --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+            f'--out {args.replica_id_string} ')
+    execute(f'selscan --nsl --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+            f'--out {args.replica_id_string} ')
+    for alt_pop in replicaInfo['popIds']:
+        if alt_pop == args.sel_pop: continue
+        alt_pop_idx = pop_id_to_idx[alt_pop]
+        execute(f'selscan --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+                f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
+                f'--out {args.replica_id_string}__altpop_{alt_pop} ')
 
 if __name__=='__main__':
   compute_component_scores(parse_args())
