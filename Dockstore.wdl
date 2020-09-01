@@ -56,7 +56,7 @@ task compute_cms2_components_for_one_replica {
 #  String modelId = replicaInfo.modelInfo.modelId
 #  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
 #  String replica_id_string = "model_" + modelId + "__rep_" + replicaNumGlobal + "__selpop_" + sel_pop
-  String replica_id_string = replica_output
+  String replica_id_string = basename(replica_output)
   command <<<
     tar xvfz ~{replica_output}
     python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop}
