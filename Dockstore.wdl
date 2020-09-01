@@ -42,27 +42,30 @@ struct ReplicaInfo {
 }
 
 
-task compute_ihh12_for_one_replica {
+task compute_cms2_components_for_one_replica {
   meta {
-    description: "Compute iHH12 scores"
+    description: "Compute CMS2 component scores"
     email: "ilya_shl@alum.mit.edu"
   }
   input {
-    #ReplicaInfo replicaInfo
-    File tpeds_tar_gz
+#    ReplicaInfo replicaInfo
+    File replica_output
     Int sel_pop
     File script
   }
-  String replicaIdString = "model_" + replicaInfo.modelInfo.modelId + "__rep_" + replicaInfo.replicaId.replicaNumGlobal + "__selpop_" + sel_pop
+#  String modelId = replicaInfo.modelInfo.modelId
+#  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
+#  String replica_id_string = "model_" + modelId + "__rep_" + replicaNumGlobal + "__selpop_" + sel_pop
+  String replica_id_string = replica_output
   command <<<
-    tar xvfz ~{tpeds_tar_gz}
-    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replicaIdString}
+    tar xvfz ~{replica_output}
+    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop}
   >>>
   output {
-    Object replicaInfo = read_json(glob("*.replicaInfo.json")[0])
-    File ihh12 = replicaIdString + ".ihh12.out"
-    File ihs = replicaIdString + ".ihs.out"
-    File nsl = replicaIdString + ".nsl.out"
+    Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
+    File ihh12 = replica_id_string + ".ihh12.out"
+    File ihs = replica_id_string + ".ihs.out"
+    File nsl = replica_id_string + ".nsl.out"
     Array[File] xpehh = glob("*.xpehh.out")
   }
   runtime {
@@ -70,25 +73,26 @@ task compute_ihh12_for_one_replica {
   }
 }
 
-workflow compute_ihh12 {
+workflow compute_cms2_components {
   input {
-    Array[ReplicaInfo] replicaInfos
+#    Array[ReplicaInfo] replicaInfos
+    Array[File] replica_outputs
     Int sel_pop
     File script
   }
-  scatter(replica_info in replicaInfos) {
-    call compute_ihh12_for_one_replica {
+  scatter(replica_output in replica_outputs) {
+    call compute_cms2_components_for_one_replica {
       input:
-      replicaInfo=replica_info,
+      replica_output=replica_output,
       sel_pop=sel_pop,
       script=script
     }
   }
   output {
-    Array[Object] replicaInfo_out = compute_ihh12_for_one_replica.replicaInfo
-    Array[File] ihh12out = compute_ihh12_for_one_replica.ihh12
-    Array[File] ihsout = compute_ihh12_for_one_replica.ihs
-    Array[File] nslout = compute_ihh12_for_one_replica.nsl
-    Array[Array[File]] xpehhout = compute_ihh12_for_one_replica.xpehh
+    Array[Object] replicaInfo_out = compute_cms2_components_for_one_replica.replicaInfo
+    Array[File] ihh12out = compute_cms2_components_for_one_replica.ihh12
+    Array[File] ihsout = compute_cms2_components_for_one_replica.ihs
+    Array[File] nslout = compute_cms2_components_for_one_replica.nsl
+    Array[Array[File]] xpehhout = compute_cms2_components_for_one_replica.xpehh
   }
 }

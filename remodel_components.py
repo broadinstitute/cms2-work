@@ -153,6 +153,7 @@ def parse_args():
     # parser.add_argument('--pops', nargs='+')
     parser.add_argument('--replica-info')
     parser.add_argument('--replica-id-string')
+    parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     
     return parser.parse_args()
 
@@ -261,8 +262,9 @@ def orig_main(args):
 # * compute_component_scores
 
 def compute_component_scores(args):
+    shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
     replicaInfo = _json_loadf(args.replica_info)
-    pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in replicaInfo['popIds']])
+    pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     this_pop_idx = pop_id_to_idx[args.sel_pop]
     execute(f'selscan --ihh12 --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
             f'--out {args.replica_id_string} ')
