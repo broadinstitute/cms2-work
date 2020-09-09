@@ -28,6 +28,8 @@ import time
 # * Utils
 
 _log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s %(message)s')
 
 MAX_INT32 = (2 ** 31)-1
 
@@ -138,7 +140,13 @@ def available_cpu_count():
     return min(cgroup_cpus, proc_cpus, multiprocessing.cpu_count())
 
 def execute(action, **kw):
-    subprocess.check_call(action, shell=True, **kw)
+    succeeded = False
+    try:
+        _log.debug('Running command: %s', action)
+        subprocess.check_call(action, shell=True, **kw)
+        succeeded = True
+    finally:
+        _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
 
 # * Parsing args
 
@@ -263,6 +271,7 @@ def orig_main(args):
 # * compute_component_scores
 
 def compute_component_scores(args):
+    args.threads = min(args.threads, available_cpu_count())
     shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
     replicaInfo = _json_loadf(args.replica_info)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])

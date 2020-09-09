@@ -63,9 +63,11 @@ task compute_cms2_components_for_one_replica {
 #  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
 #  String replica_id_string = "model_" + modelId + "__rep_" + replicaNumGlobal + "__selpop_" + sel_pop
   String replica_id_string = basename(replica_output)
+  String script_used_name = "script-used." + basename(script)
 
   command <<<
     tar xvfz ~{replica_output}
+    cp ~{script} ~{script_used_name}
     python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop} --threads ~{threads}
   >>>
 
@@ -76,7 +78,7 @@ task compute_cms2_components_for_one_replica {
     File nsl = replica_id_string + ".nsl.out"
     Array[File] xpehh = glob("*.xpehh.out")
     Int threads_used = threads
-    File script_used = basename(script)
+    File script_used = script_used_name
   }
 
   runtime {
@@ -120,6 +122,6 @@ workflow compute_cms2_components {
     Array[File] nslout = compute_cms2_components_for_one_replica.nsl
     Array[Array[File]] xpehhout = compute_cms2_components_for_one_replica.xpehh
     Int threads_used=threads
-    File script_used = compute_cms2_components_for_one_replica.script_used[0]
+    Array[File] script_used = compute_cms2_components_for_one_replica.script_used
   }
 }
