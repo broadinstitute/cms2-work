@@ -154,6 +154,7 @@ def parse_args():
     parser.add_argument('--replica-info')
     parser.add_argument('--replica-id-string')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
+    parser.add_argument('--threads', type=int, default=1, help='selscan threads')
     
     return parser.parse_args()
 
@@ -266,16 +267,16 @@ def compute_component_scores(args):
     replicaInfo = _json_loadf(args.replica_info)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     this_pop_idx = pop_id_to_idx[args.sel_pop]
-    execute(f'selscan --ihh12 --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+    execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
             f'--out {args.replica_id_string} ')
-    execute(f'selscan --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+    execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
             f'--out {args.replica_id_string} ')
-    execute(f'selscan --nsl --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+    execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
             f'--out {args.replica_id_string} ')
     for alt_pop in replicaInfo['popIds']:
         if alt_pop == args.sel_pop: continue
         alt_pop_idx = pop_id_to_idx[alt_pop]
-        execute(f'selscan --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+        execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
                 f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
                 f'--out {args.replica_id_string}__altpop_{alt_pop} ')
 
