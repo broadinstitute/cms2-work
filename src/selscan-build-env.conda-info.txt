@@ -1,0 +1,37 @@
+
+     active environment : selscan-build-env
+    active env location : /ilya/miniconda3/envs/selscan-build-env
+            shell level : 6
+       user config file : /home/ilya/.condarc
+ populated config files : /home/ilya/.condarc
+          conda version : 4.9.1
+    conda-build version : not installed
+         python version : 3.7.4.final.0
+       virtual packages : __glibc=2.26=0
+                          __unix=0=0
+                          __archspec=1=x86_64
+       base environment : /ilya/miniconda3  (writable)
+           channel URLs : https://conda.anaconda.org/broad-viral/linux-64
+                          https://conda.anaconda.org/broad-viral/noarch
+                          https://conda.anaconda.org/conda-forge/linux-64
+                          https://conda.anaconda.org/conda-forge/noarch
+                          https://conda.anaconda.org/bioconda/linux-64
+                          https://conda.anaconda.org/bioconda/noarch
+                          https://repo.anaconda.com/pkgs/main/linux-64
+                          https://repo.anaconda.com/pkgs/main/noarch
+                          https://repo.anaconda.com/pkgs/r/linux-64
+                          https://repo.anaconda.com/pkgs/r/noarch
+                          https://conda.anaconda.org/notestaff/linux-64
+                          https://conda.anaconda.org/notestaff/noarch
+                          https://conda.anaconda.org/r/linux-64
+                          https://conda.anaconda.org/r/noarch
+          package cache : /ilya/miniconda3/pkgs
+                          /home/ilya/.conda/pkgs
+       envs directories : /ilya/miniconda3/envs
+                          /home/ilya/.conda/envs
+               platform : linux-64
+             user-agent : conda/4.9.1 requests/2.24.0 CPython/3.7.4 Linux/4.14.200-155.322.amzn2.x86_64 amzn/2 glibc/2.26
+                UID:GID : 1002:1002
+             netrc file : None
+           offline mode : False
+

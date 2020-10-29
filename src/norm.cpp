@@ -24,15 +24,38 @@
 #include <cctype>
 #include <vector>
 #include <cstring>
+#include <fstream>
+#include <cassert>
+
+#include <cstdio>
+
+#include <boost/config.hpp>
+#if defined(BOOST_NO_STDC_NAMESPACE)
+namespace std{
+	using ::remove;
+}
+#endif
+
+#include <boost/archive/tmpdir.hpp>
+#include <boost/archive/xml_iarchive.hpp>
+#include <boost/archive/xml_oarchive.hpp>
+
+
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
+
+// include headers that implement a archive in simple text format
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include "param_t.h"
 
-using namespace std;
+//using namespace std;
 
-const string VERSION = "1.3.0";
+const std::string VERSION = "1.3.0";
 
-const string PREAMBLE = " -- a program for downstream analysis of selscan output\n\
+const std::string PREAMBLE = " -- a program for downstream analysis of selscan output\n\
 Source code and binaries can be found at\n\
 \t<https://www.github.com/szpiech/selscan>\n\
 \n\
@@ -56,13 +79,13 @@ extreme scores:\n\
 \n\
 ./norm [--ihs|--xpehh|--nsl|--xpnsl|--ihh12] --files <file1.*.out> ... <fileN.*.out> --bp-win\n";
 
-const string ARG_FREQ_BINS = "--bins";
+const std::string ARG_FREQ_BINS = "--bins";
 const int DEFAULT_FREQ_BINS = 100;
-const string HELP_FREQ_BINS = "The number of frequency bins in [0,1] for score normalization.";
+const std::string HELP_FREQ_BINS = "The number of frequency bins in [0,1] for score normalization.";
 
-const string ARG_FILES = "--files";
-const string DEFAULT_FILES = "infile";
-const string HELP_FILES = "A list of files delimited by whitespace for\n\
+const std::string ARG_FILES = "--files";
+const std::string DEFAULT_FILES = "infile";
+const std::string HELP_FILES = "A list of files delimited by whitespace for\n\
 \tjoint normalization.\n\
 \tExpected format for iHS or nSL files (no header):\n\
 \t<locus name> <physical pos> <freq> <ihh1/sL1> <ihh2/sL2> <ihs/nsl>\n\
@@ -71,69 +94,77 @@ const string HELP_FILES = "A list of files delimited by whitespace for\n\
 \tExpected format for iHH12 files (one line header):\n\
 \t<locus name> <physical pos> <freq1> <ihh12>";
 
-const string ARG_LOG = "--log";
-const string DEFAULT_LOG = "logfile";
-const string HELP_LOG = "The log file name.";
+const std::string ARG_LOG = "--log";
+const std::string DEFAULT_LOG = "logfile";
+const std::string HELP_LOG = "The log file name.";
 
-const string ARG_WINSIZE = "--winsize";
+const std::string ARG_SAVEBINS = "--save-bins";
+const std::string DEFAULT_SAVEBINS = "";
+const std::string HELP_SAVEBINS = "Save bins to this file.";
+
+const std::string ARG_LOADBINS = "--load-bins";
+const std::string DEFAULT_LOADBINS = "";
+const std::string HELP_LOADBINS = "Load bins from this file.";
+
+const std::string ARG_WINSIZE = "--winsize";
 const int DEFAULT_WINSIZE = 100000;
-const string HELP_WINSIZE = "The non-overlapping window size for calculating the percentage\n\
+const std::string HELP_WINSIZE = "The non-overlapping window size for calculating the percentage\n\
 \tof extreme SNPs.";
 
-const string ARG_QBINS = "--qbins";
+const std::string ARG_QBINS = "--qbins";
 const int DEFAULT_QBINS = 10;
-const string HELP_QBINS = "Outlying windows are binned by number of sites within each\n\
+const std::string HELP_QBINS = "Outlying windows are binned by number of sites within each\n\
 \twindow.  This is the number of quantile bins to use.";
 
-const string ARG_MINSNPS = "--min-snps";
+const std::string ARG_MINSNPS = "--min-snps";
 const int DEFAULT_MINSNPS = 10;
-const string HELP_MINSNPS = "Only consider a bp window if it has at least this many SNPs.";
+const std::string HELP_MINSNPS = "Only consider a bp window if it has at least this many SNPs.";
 
-const string ARG_SNPWIN = "--snp-win";
+const std::string ARG_SNPWIN = "--snp-win";
 const bool DEFAULT_SNPWIN = false;
-const string HELP_SNPWIN = "<not implemented> If set, will use windows of a constant\n\
+const std::string HELP_SNPWIN = "<not implemented> If set, will use windows of a constant\n\
 \tSNP size with varying bp length.";
 
-const string ARG_SNPWINSIZE = "--snp-win-size";
+const std::string ARG_SNPWINSIZE = "--snp-win-size";
 const int DEFAULT_SNPWINSIZE = 50;
-const string HELP_SNPWINSIZE = "<not implemented> The number of SNPs in a window.";
+const std::string HELP_SNPWINSIZE = "<not implemented> The number of SNPs in a window.";
 
-const string ARG_BPWIN = "--bp-win";
+const std::string ARG_BPWIN = "--bp-win";
 const bool DEFAULT_BPWIN = false;
-const string HELP_BPWIN = "If set, will use windows of a constant bp size with varying\n\
+const std::string HELP_BPWIN = "If set, will use windows of a constant bp size with varying\n\
 \tnumber of SNPs.";
 
-const string ARG_IHS = "--ihs";
+const std::string ARG_IHS = "--ihs";
 const bool DEFAULT_IHS = false;
-const string HELP_IHS = "Do iHS normalization.";
+const std::string HELP_IHS = "Do iHS normalization.";
 
-const string ARG_NSL = "--nsl";
+const std::string ARG_NSL = "--nsl";
 const bool DEFAULT_NSL = false;
-const string HELP_NSL = "Do nSL normalization.";
+const std::string HELP_NSL = "Do nSL normalization.";
 
-const string ARG_XPEHH = "--xpehh";
+const std::string ARG_XPEHH = "--xpehh";
 const bool DEFAULT_XPEHH = false;
-const string HELP_XPEHH = "Do XP-EHH normalization.";
+const std::string HELP_XPEHH = "Do XP-EHH normalization.";
 
-const string ARG_XPNSL = "--xpnsl";
+const std::string ARG_XPNSL = "--xpnsl";
 const bool DEFAULT_XPNSL = false;
-const string HELP_XPNSL = "Do XP-nSL normalization.";
+const std::string HELP_XPNSL = "Do XP-nSL normalization.";
 
-const string ARG_SOFT = "--ihh12";
+const std::string ARG_SOFT = "--ihh12";
 const bool DEFAULT_SOFT = false;
-const string HELP_SOFT = "Do ihh12 normalization.";
+const std::string HELP_SOFT = "Do ihh12 normalization.";
 
-const string ARG_FIRST = "--first";
+const std::string ARG_FIRST = "--first";
 const bool DEFAULT_FIRST = false;
-const string HELP_FIRST = "Output only the first file's normalization.";
+const std::string HELP_FIRST = "Output only the first file's normalization.";
 
-const string ARG_CRIT_NUM = "--crit-val";
+const std::string ARG_CRIT_NUM = "--crit-val";
 const double DEFAULT_CRIT_NUM = 2;
-const string HELP_CRIT_NUM = "Set the critical value such that a SNP with |iHS| > CRIT_VAL is marked as an extreme SNP.  Default as in Voight et al.";
+const std::string HELP_CRIT_NUM = "Set the critical value such that a SNP with |iHS| > CRIT_VAL is marked as an extreme SNP.  Default as in Voight et al.";
 
-const string ARG_CRIT_PERCENT = "--crit-percent";
+const std::string ARG_CRIT_PERCENT = "--crit-percent";
 const double DEFAULT_CRIT_PERCENT = -1;
-const string HELP_CRIT_PERCENT = "Set the critical value such that a SNP with iHS in the most extreme CRIT_PERCENT tails (two-tailed) is marked as an extreme SNP.\n\
+const std::string HELP_CRIT_PERCENT = "Set the critical value such that a SNP with iHS in the most extreme CRIT_PERCENT tails (two-tailed) is marked as an extreme SNP.\n\
 \tNot used by default.";
 
 
@@ -141,32 +172,75 @@ const int MISSING = -9999;
 
 //returns number of lines in file
 //throws 0 if the file fails
-int checkIHSfile(ifstream &fin);
-int checkXPEHHfile(ifstream &fin);
-int checkIHH12file(ifstream &fin);
+int checkIHSfile(std::ifstream &fin);
+int checkXPEHHfile(std::ifstream &fin);
+int checkIHH12file(std::ifstream &fin);
 
-void readAllIHS(vector<string> filename, int fileLoci[], int nfiles, double freq[], double score[]);
-void readAllXPEHH(vector<string> filename, int fileLoci[], int nfiles, double freq1[], double freq2[], double score[]);
-void readAllIHH12(vector<string> filename, int fileLoci[], int nfiles, double freq1[], double score[]);
+void readAllIHS(std::vector<std::string> filename, int fileLoci[], int nfiles, double freq[], double score[]);
+void readAllXPEHH(std::vector<std::string> filename, int fileLoci[], int nfiles, double freq1[], double freq2[], double score[]);
+void readAllIHH12(std::vector<std::string> filename, int fileLoci[], int nfiles, double freq1[], double score[]);
 
 void getMeanVarBins(double freq[], double data[], int nloci, double mean[], double variance[], int n[], int numBins, double threshold[]);
 
-void normalizeIHSDataByBins(string &filename, string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff);
-void normalizeXPEHHDataByBins(string &filename, string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff);
-void normalizeIHH12DataByBins(string &filename, string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff);
+void normalizeIHSDataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff);
+void normalizeXPEHHDataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff);
+void normalizeIHH12DataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff);
 
-void analyzeIHSBPWindows(string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs);
-void analyzeXPEHHBPWindows(string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs);
-void analyzeIHH12BPWindows(string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs);
+void saveIHSDataBins(std::string &binsOutfilename, double mean[], double variance[], int n[], int numBins, double threshold[],
+										 double upperCutoff, double lowerCutoff);
+void loadIHSDataBins(std::string &binsOutfilename, double mean[], double variance[], int n[], int &numBins, double threshold[],
+										 double &upperCutoff, double &lowerCutoff);
 
-int countCols(ifstream &fin);
-int colsToSkip(ifstream &fin, int numCols);
-void skipCols(ifstream &fin, int numCols);
+void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs);
+void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs);
+void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs);
 
-int countFields(const string &str);
-bool isint(string str);
+int countCols(std::ifstream &fin);
+int colsToSkip(std::ifstream &fin, int numCols);
+void skipCols(std::ifstream &fin, int numCols);
+
+int countFields(const std::string &str);
+bool isint(std::string str);
 
 ofstream flog;
+
+class BinsInfo {
+private:
+
+
+
+	std::vector<double> _mean;
+	std::vector<double> _variance;
+	std::vector<int> _n;
+	int _numBins;
+	std::vector<double> _threshold;
+	double _upperCutoff;
+	double _lowerCutoff;
+
+	friend class boost::serialization::access;
+	// When the class Archive corresponds to an output archive, the
+	// & operator is defined similar to <<.  Likewise, when the class Archive
+	// is a type of input archive the & operator is defined similar to >>.
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & BOOST_SERIALIZATION_NVP(_mean);
+		ar & BOOST_SERIALIZATION_NVP(_variance);
+		ar & BOOST_SERIALIZATION_NVP(_n);
+		ar & BOOST_SERIALIZATION_NVP(_numBins);
+		ar & BOOST_SERIALIZATION_NVP(_threshold);
+		ar & BOOST_SERIALIZATION_NVP(_upperCutoff);
+		ar & BOOST_SERIALIZATION_NVP(_lowerCutoff);
+	}
+
+public:
+	BinsInfo(double mean[], double variance[], int n[], int numBins, double threshold[],
+					 double upperCutoff, double lowerCutoff):
+		_mean(mean, mean+numBins), _variance(variance, variance+numBins), _n(n, n+numBins),
+		_numBins(numBins), _threshold(threshold, threshold+numBins), _upperCutoff(upperCutoff), _lowerCutoff(lowerCutoff) {}
+	
+};
+
 
 int main(int argc, char *argv[])
 {
@@ -176,6 +250,8 @@ int main(int argc, char *argv[])
     params.addFlag(ARG_FREQ_BINS, DEFAULT_FREQ_BINS, "", HELP_FREQ_BINS);
     params.addListFlag(ARG_FILES, DEFAULT_FILES, "", HELP_FILES);
     params.addFlag(ARG_LOG, DEFAULT_LOG, "", HELP_LOG);
+    params.addFlag(ARG_SAVEBINS, DEFAULT_SAVEBINS, "", HELP_SAVEBINS);
+    params.addFlag(ARG_LOADBINS, DEFAULT_LOADBINS, "", HELP_LOADBINS);
     params.addFlag(ARG_WINSIZE, DEFAULT_WINSIZE, "", HELP_WINSIZE);
     params.addFlag(ARG_QBINS, DEFAULT_QBINS, "", HELP_QBINS);
     params.addFlag(ARG_MINSNPS, DEFAULT_MINSNPS, "", HELP_MINSNPS);
@@ -202,10 +278,12 @@ int main(int argc, char *argv[])
     }
 
     int numBins = params.getIntFlag(ARG_FREQ_BINS);
-    vector<string> filename = params.getStringListFlag(ARG_FILES);
+    std::vector<std::string> filename = params.getStringListFlag(ARG_FILES);
     int nfiles = filename.size();
     int winSize = params.getIntFlag(ARG_WINSIZE);
-    string infoOutfile = params.getStringFlag(ARG_LOG);
+    std::string infoOutfile = params.getStringFlag(ARG_LOG);
+    std::string binsOutfile = params.getStringFlag(ARG_SAVEBINS);
+    std::string binsInfile = params.getStringFlag(ARG_LOADBINS);
     int numQBins = params.getIntFlag(ARG_QBINS);
     int minSNPs = params.getIntFlag(ARG_MINSNPS);
     int snpWinSize = params.getIntFlag(ARG_SNPWINSIZE);
@@ -259,13 +337,13 @@ int main(int argc, char *argv[])
     }
     cerr << "You have provided " << nfiles << " output files for joint normalization.\n";
 
-    string *outfilename = new string[nfiles];
+    std::string *outfilename = new std::string[nfiles];
     int *fileLoci = new int[nfiles];
 
-    //ifstream* fin = new ifstream[nfiles];
+    //std::ifstream* fin = new std::ifstream[nfiles];
     //ofstream* fout = new ofstream[nfiles];
 
-    ifstream fin;
+    std::ifstream fin;
 
     int totalLoci = 0;
 
@@ -393,6 +471,22 @@ int main(int argc, char *argv[])
             flog << threshold[i] << "\t" << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << endl;
         }
 
+				if (!binsOutfile.empty()) {
+					const BinsInfo binsInfo(mean, variance, n, numBins, threshold, upperCutoff, lowerCutoff);
+
+					// create and open a character archive for output
+					std::ofstream ofs(binsOutfile.c_str());
+
+					// save data to archive
+					{
+						assert(ofs.good());
+						boost::archive::xml_oarchive oa(ofs);
+						// write class instance to archive
+						oa << BOOST_SERIALIZATION_NVP(binsInfo);
+						// archive and stream closed when destructors are called
+					}
+				}
+				
 
         //Read each file and create normed files.
         if (FIRST) nfiles = 1;
@@ -511,12 +605,12 @@ int main(int argc, char *argv[])
 void analyzeSNPWindows(string normedfiles[],int fileLoci[], int nfiles, int snpWinSize)
 {
   cerr << "\nAnalyzing SNP windows:\n\n";
-  vector<int>* winStarts = new vector<int>[nfiles];
-  vector<int>* winEnds = new vector<int>[nfiles];
-  vector<string>* startSNP = new vector<int>[nfiles];
-  vector<string>* endSNP = new vector<int>[nfiles];
-  vector<double>* fracCrit = new vector<double>[nfiles];
-  ifstream fin;
+  std::vector<int>* winStarts = new std::vector<int>[nfiles];
+  std::vector<int>* winEnds = new std::vector<int>[nfiles];
+  std::vector<string>* startSNP = new std::vector<int>[nfiles];
+  std::vector<string>* endSNP = new std::vector<int>[nfiles];
+  std::vector<double>* fracCrit = new std::vector<double>[nfiles];
+  std::ifstream fin;
   ofstream fout;
   string* winfilename = new string[nfiles];
 
@@ -568,12 +662,12 @@ void analyzeSNPWindows(string normedfiles[],int fileLoci[], int nfiles, int snpW
 */
 
 // return number of columns in file
-int countCols(ifstream &fin)
+int countCols(std::ifstream &fin)
 {
     int current_cols = 0;
     int currentPos = fin.tellg();
 
-    string line;
+    std::string line;
     // read the rest of this line
     getline(fin, line);
     // read the next full line
@@ -590,13 +684,13 @@ int countCols(ifstream &fin)
     return current_cols;
 }
 
-int colsToSkip(ifstream &fin, int numCols)
+int colsToSkip(std::ifstream &fin, int numCols)
 {
     // determine the number of cols to skip 
     // (the number more than the number we care about: 6)
     int presentNumCols = countCols(fin);
     int numberColsToSkip = 0;
-    string junk;
+    std::string junk;
 
     if ( presentNumCols > numCols)
     {
@@ -606,9 +700,9 @@ int colsToSkip(ifstream &fin, int numCols)
     return numberColsToSkip;
 }
 
-void skipCols(ifstream &fin, int numCols)
+void skipCols(std::ifstream &fin, int numCols)
 {
-    string junk;
+    std::string junk;
     
     for(int i=0; i<numCols; i++)   
     {
@@ -616,24 +710,24 @@ void skipCols(ifstream &fin, int numCols)
     }
 }
 
-void analyzeIHSBPWindows(string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
+void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
 {
     cerr << "\nAnalyzing BP windows:\n\n";
     //int totalLoci = 0;
     //for (int i = 0; i < nfiles; i++) totalLoci+=fileLoci[i];
-    vector<int> *winStarts = new vector<int>[nfiles];
-    vector<int> *nSNPs = new vector<int>[nfiles];
-    vector<double> *fracCrit = new vector<double>[nfiles];
-    vector<double> *maxAbsScore = new vector<double>[nfiles];
+    std::vector<int> *winStarts = new std::vector<int>[nfiles];
+    std::vector<int> *nSNPs = new std::vector<int>[nfiles];
+    std::vector<double> *fracCrit = new std::vector<double>[nfiles];
+    std::vector<double> *maxAbsScore = new std::vector<double>[nfiles];
 
-    ifstream fin;
+    std::ifstream fin;
     ofstream fout;
-    string *winfilename = new string[nfiles];
+    std::string *winfilename = new std::string[nfiles];
 
     char str[10];
     sprintf(str, "%d", winSize / 1000);
 
-    string name;
+    std::string name;
     int pos;
     double freq, ihh1, ihh2, data, normedData;
     bool crit;
@@ -700,7 +794,7 @@ void analyzeIHSBPWindows(string normedfiles[], int fileLoci[], int nfiles, int w
     double *allSNPsPerWindow = new double[numWindows];
     double *allFracCritPerWindow = new double[numWindows];
     int k = 0;
-    //Load all num SNPs per window into a single double vector to determine quantile boundaries across
+    //Load all num SNPs per window into a single double std::vector to determine quantile boundaries across
     for (int i = 0; i < nfiles; i++)
     {
         for (int j = 0; j < nSNPs[i].size(); j++)
@@ -732,7 +826,7 @@ void analyzeIHSBPWindows(string normedfiles[], int fileLoci[], int nfiles, int w
     int b = 0;//quantileBoundary index
     int count = 0;//number in quantile, not necessarily equal across quantiles because of ties
     int start = 0;//starting index for the sort function
-    map<string, double> *topWindowBoundary = new map<string, double>[numQuantiles];
+    std::map<std::string, double> *topWindowBoundary = new std::map<std::string, double>[numQuantiles];
 
     //cerr << "\nnSNPs 0.1 0.5 1.0 5.0\n";
     //flog << "\nnSNPs 0.1 0.5 1.0 5.0\n";
@@ -857,26 +951,26 @@ void analyzeIHSBPWindows(string normedfiles[], int fileLoci[], int nfiles, int w
     return;
 }
 
-void analyzeXPEHHBPWindows(string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
+void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
 {
     cerr << "\nAnalyzing BP windows:\n\n";
     //int totalLoci = 0;
     //for (int i = 0; i < nfiles; i++) totalLoci+=fileLoci[i];
-    vector<int> *winStarts = new vector<int>[nfiles];
-    vector<int> *nSNPs = new vector<int>[nfiles];
-    vector<double> *fracCritTop = new vector<double>[nfiles];
-    vector<double> *fracCritBot = new vector<double>[nfiles];
-    vector<double> *maxScore = new vector<double>[nfiles];
-    vector<double> *minScore = new vector<double>[nfiles];
+    std::vector<int> *winStarts = new std::vector<int>[nfiles];
+    std::vector<int> *nSNPs = new std::vector<int>[nfiles];
+    std::vector<double> *fracCritTop = new std::vector<double>[nfiles];
+    std::vector<double> *fracCritBot = new std::vector<double>[nfiles];
+    std::vector<double> *maxScore = new std::vector<double>[nfiles];
+    std::vector<double> *minScore = new std::vector<double>[nfiles];
 
-    ifstream fin;
+    std::ifstream fin;
     ofstream fout;
-    string *winfilename = new string[nfiles];
+    std::string *winfilename = new std::string[nfiles];
 
     char str[10];
     sprintf(str, "%d", winSize / 1000);
 
-    string name, header;
+    std::string name, header;
     int pos;
     double gpos, freq1, freq2, ihh1, ihh2, data, normedData;
     int crit;
@@ -1011,7 +1105,7 @@ void analyzeXPEHHBPWindows(string normedfiles[], int fileLoci[], int nfiles, int
     int bTop = 0;//quantileBoundary index
     int countTop = 0;//number in quantile, not necessarily equal across quantiles because of ties
     int startTop = 0;//starting index for the sort function
-    map<string, double> *topWindowBoundaryTop = new map<string, double>[numQuantiles];
+    std::map<std::string, double> *topWindowBoundaryTop = new std::map<std::string, double>[numQuantiles];
 
 
     cerr << "\nHigh Scores\nnSNPs 1.0 5.0\n";
@@ -1069,7 +1163,7 @@ void analyzeXPEHHBPWindows(string normedfiles[], int fileLoci[], int nfiles, int
     int bBot = 0;//quantileBoundary index
     int countBot = 0;//number in quantile, not necessarily equal across quantiles because of ties
     int startBot = 0;//starting index for the sort function
-    map<string, double> *topWindowBoundaryBot = new map<string, double>[numQuantiles];
+    std::map<std::string, double> *topWindowBoundaryBot = new std::map<std::string, double>[numQuantiles];
 
 
     cerr << "\nLow Scores\nnSNPs 1.0 5.0\n";
@@ -1203,23 +1297,23 @@ void analyzeXPEHHBPWindows(string normedfiles[], int fileLoci[], int nfiles, int
     return;
 }
 
-void analyzeIHH12BPWindows(string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
+void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
 {
     cerr << "\nAnalyzing BP windows:\n\n";
     //int totalLoci = 0;
     //for (int i = 0; i < nfiles; i++) totalLoci+=fileLoci[i];
-    vector<int> *winStarts = new vector<int>[nfiles];
-    vector<int> *nSNPs = new vector<int>[nfiles];
-    vector<double> *fracCrit = new vector<double>[nfiles];
+    std::vector<int> *winStarts = new std::vector<int>[nfiles];
+    std::vector<int> *nSNPs = new std::vector<int>[nfiles];
+    std::vector<double> *fracCrit = new std::vector<double>[nfiles];
 
-    ifstream fin;
+    std::ifstream fin;
     ofstream fout;
-    string *winfilename = new string[nfiles];
+    std::string *winfilename = new std::string[nfiles];
 
     char str[10];
     sprintf(str, "%d", winSize / 1000);
 
-    string name, header;
+    std::string name, header;
     int pos;
     double gpos, freq1, ihh12, data, normedData;
     bool crit;
@@ -1314,7 +1408,7 @@ void analyzeIHH12BPWindows(string normedfiles[], int fileLoci[], int nfiles, int
     int b = 0;//quantileBoundary index
     int count = 0;//number in quantile, not necessarily equal across quantiles because of ties
     int start = 0;//starting index for the sort function
-    map<string, double> *topWindowBoundary = new map<string, double>[numQuantiles];
+    std::map<std::string, double> *topWindowBoundary = new std::map<std::string, double>[numQuantiles];
 
     //cerr << "\nnSNPs 0.1 0.5 1.0 5.0\n";
     //flog << "\nnSNPs 0.1 0.5 1.0 5.0\n";
@@ -1487,11 +1581,19 @@ void getMeanVarBins(double freq[], double data[], int nloci, double mean[], doub
     return;
 }
 
+
+void saveIHSDataBins(std::string &binsOutfilename, double mean[], double variance[], int n[], int numBins, double threshold[],
+										 double upperCutoff, double lowerCutoff) {
+	
+}
+void loadIHSDataBins(std::string &binsOutfilename, double mean[], double variance[], int n[], int &numBins, double threshold[],
+										 double &upperCutoff, double &lowerCutoff);
+
 //Reads a file, calculates the normalized score, and
 //outputs the original row plus normed score
-void normalizeIHSDataByBins(string &filename, string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
+void normalizeIHSDataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
 {
-    ifstream fin;
+    std::ifstream fin;
     ofstream fout;
 
     fin.open(filename.c_str());
@@ -1502,11 +1604,11 @@ void normalizeIHSDataByBins(string &filename, string &outfilename, int &fileLoci
         throw 1;
     }
 
-    string name;
+    std::string name;
     int pos;
     double freq, data, normedData, ihh1, ihh2;;
     int numInBin = 0;
-    string junk;
+    std::string junk;
 
     // determine the number of cols to skip 
     // (the number more than the number we care about: 6)
@@ -1556,9 +1658,9 @@ void normalizeIHSDataByBins(string &filename, string &outfilename, int &fileLoci
     return;
 }
 
-void normalizeXPEHHDataByBins(string &filename, string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
+void normalizeXPEHHDataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
 {
-    ifstream fin;
+    std::ifstream fin;
     ofstream fout;
 
     fin.open(filename.c_str());
@@ -1569,7 +1671,7 @@ void normalizeXPEHHDataByBins(string &filename, string &outfilename, int &fileLo
         throw 1;
     }
 
-    string name, header;
+    std::string name, header;
     int pos;
     double gpos, freq1, freq2, data, normedData, ihh1, ihh2;;
     int numInBin = 0;
@@ -1623,9 +1725,9 @@ void normalizeXPEHHDataByBins(string &filename, string &outfilename, int &fileLo
     return;
 }
 
-void normalizeIHH12DataByBins(string &filename, string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
+void normalizeIHH12DataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
 {
-    ifstream fin;
+    std::ifstream fin;
     ofstream fout;
 
     fin.open(filename.c_str());
@@ -1636,7 +1738,7 @@ void normalizeIHH12DataByBins(string &filename, string &outfilename, int &fileLo
         throw 1;
     }
 
-    string name, header;
+    std::string name, header;
     int pos;
     double gpos, freq1, data, normedData, ihh1, ihh2;;
     int numInBin = 0;
@@ -1682,9 +1784,9 @@ void normalizeIHH12DataByBins(string &filename, string &outfilename, int &fileLo
 }
 
 //returns number of lines in file
-int checkIHSfile(ifstream &fin)
+int checkIHSfile(std::ifstream &fin)
 {
-    string line;
+    std::string line;
     int expected_cols = 6;
     int expected_cols_alternate = 10; // this is the case if --ihs-detail is specified (four extra columns for iHH left/right and ancestral/derived)
     int current_cols = 0;
@@ -1712,10 +1814,10 @@ int checkIHSfile(ifstream &fin)
     return nloci;
 }
 
-void readAllIHS(vector<string> filename, int fileLoci[], int nfiles, double freq[], double score[])
+void readAllIHS(std::vector<std::string> filename, int fileLoci[], int nfiles, double freq[], double score[])
 {
-    ifstream fin;
-    string junk;
+    std::ifstream fin;
+    std::string junk;
     int overallCount = 0;
     for (int i = 0; i < nfiles; i++)
     {
@@ -1741,9 +1843,9 @@ void readAllIHS(vector<string> filename, int fileLoci[], int nfiles, double freq
     return;
 }
 
-int checkXPEHHfile(ifstream &fin)
+int checkXPEHHfile(std::ifstream &fin)
 {
-    string line;
+    std::string line;
     int expected_cols = 8;
     int current_cols = 0;
 
@@ -1773,9 +1875,9 @@ int checkXPEHHfile(ifstream &fin)
 }
 
 
-int checkIHH12file(ifstream &fin)
+int checkIHH12file(std::ifstream &fin)
 {
-    string line;
+    std::string line;
     int expected_cols = 4;
     int current_cols = 0;
 
@@ -1804,10 +1906,10 @@ int checkIHH12file(ifstream &fin)
     return nloci;
 }
 
-void readAllXPEHH(vector<string> filename, int fileLoci[], int nfiles, double freq1[], double freq2[], double score[])
+void readAllXPEHH(std::vector<std::string> filename, int fileLoci[], int nfiles, double freq1[], double freq2[], double score[])
 {
-    ifstream fin;
-    string junk;
+    std::ifstream fin;
+    std::string junk;
     int overallCount = 0;
     for (int i = 0; i < nfiles; i++)
     {
@@ -1831,10 +1933,10 @@ void readAllXPEHH(vector<string> filename, int fileLoci[], int nfiles, double fr
     return;
 }
 
-void readAllIHH12(vector<string> filename, int fileLoci[], int nfiles, double freq1[], double score[])
+void readAllIHH12(std::vector<std::string> filename, int fileLoci[], int nfiles, double freq1[], double score[])
 {
-    ifstream fin;
-    string junk;
+    std::ifstream fin;
+    std::string junk;
     int overallCount = 0;
     for (int i = 0; i < nfiles; i++)
     {
@@ -1855,9 +1957,9 @@ void readAllIHH12(vector<string> filename, int fileLoci[], int nfiles, double fr
 }
 
 
-int countFields(const string &str)
+int countFields(const std::string &str)
 {
-    string::const_iterator it;
+    std::string::const_iterator it;
     int result;
     int numFields = 0;
     int seenChar = 0;
@@ -1877,9 +1979,9 @@ int countFields(const string &str)
     return numFields;
 }
 
-bool isint(string str)
+bool isint(std::string str)
 {
-    for (string::iterator it = str.begin(); it != str.end(); it++)
+    for (std::string::iterator it = str.begin(); it != str.end(); it++)
     {
         if (!isdigit(*it)) return 0;
     }
