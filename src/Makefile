@@ -14,7 +14,7 @@
 
 #for linux systems
 #CC = g++
-G++FLAG = $(CPPFLAGS) $(CXXFLAGS) -O3 -m64 -mmmx -msse -msse2
+G++FLAG = $(CPPFLAGS) $(CXXFLAGS) -O0 -ggdb -m64 -mmmx -msse -msse2
 LINK_OPTS2 =  -lboost_serialization -lgsl -pthread -lz
 I_PATH = $(CPPFLAGS) -I../include
 L_PATH = ../lib/linux /usr/lib64
@@ -62,4 +62,4 @@ hamming_t.o : hamming_t.cpp hamming_t.h
 	$(CXX) $(G++FLAG) -c hamming_t.cpp $(I_PATH)
 
 clean :
-	rm *.o
+	rm -f *.o

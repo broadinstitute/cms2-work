@@ -26,8 +26,14 @@
 #include <cstring>
 #include <fstream>
 #include <cassert>
+#include <sstream>
 
 #include <cstdio>
+#include <thread>
+#include <chrono>
+
+#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_sort.h>
 
 #include <boost/config.hpp>
 #if defined(BOOST_NO_STDC_NAMESPACE)
@@ -37,19 +43,19 @@ namespace std{
 #endif
 
 #include <boost/archive/tmpdir.hpp>
-#include <boost/archive/xml_iarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
-
-
-#include <gsl/gsl_statistics.h>
-#include <gsl/gsl_sort.h>
+//#include <boost/archive/xml_iarchive.hpp>
+//#include <boost/archive/xml_oarchive.hpp>
 
 // include headers that implement a archive in simple text format
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/export.hpp>
 
 #include "param_t.h"
+
+//#define B_NVP(X) BOOST_SERIALIZATION_NVP(X)
+#define B_NVP(X) X
 
 //using namespace std;
 
@@ -206,9 +212,6 @@ ofstream flog;
 
 class BinsInfo {
 private:
-
-
-
 	std::vector<double> _mean;
 	std::vector<double> _variance;
 	std::vector<int> _n;
@@ -224,23 +227,55 @@ private:
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)
 	{
-		ar & BOOST_SERIALIZATION_NVP(_mean);
-		ar & BOOST_SERIALIZATION_NVP(_variance);
-		ar & BOOST_SERIALIZATION_NVP(_n);
-		ar & BOOST_SERIALIZATION_NVP(_numBins);
-		ar & BOOST_SERIALIZATION_NVP(_threshold);
-		ar & BOOST_SERIALIZATION_NVP(_upperCutoff);
-		ar & BOOST_SERIALIZATION_NVP(_lowerCutoff);
+		ar & B_NVP(_mean);
+		ar & B_NVP(_variance);
+		ar & B_NVP(_n);
+		ar & B_NVP(_numBins);
+		ar & B_NVP(_threshold);
+		ar & B_NVP(_upperCutoff);
+		ar & B_NVP(_lowerCutoff);
 	}
 
+	friend bool operator==(const BinsInfo& lhs, const BinsInfo& rhs);
 public:
+	BinsInfo() { }
 	BinsInfo(double mean[], double variance[], int n[], int numBins, double threshold[],
 					 double upperCutoff, double lowerCutoff):
 		_mean(mean, mean+numBins), _variance(variance, variance+numBins), _n(n, n+numBins),
 		_numBins(numBins), _threshold(threshold, threshold+numBins), _upperCutoff(upperCutoff), _lowerCutoff(lowerCutoff) {}
-	
+
+	virtual ~BinsInfo() { }
+
 };
 
+void print(std::string header, std::vector<double> const &input)
+{
+	std::cerr << header << "\n";
+	for (auto it = input.cbegin(); it != input.cend(); it++)
+		{
+			std::cerr << *it << ' ';
+		}
+	std::cerr << "\n";
+}
+
+bool equal_or_nan(const std::vector<double>& lhs, const std::vector<double>& rhs) {
+	if(lhs.size() != rhs.size()) return false;
+	for(int i=0; i<lhs.size(); ++i)
+		if(!((isnan(lhs[i]) && isnan(rhs[i])) || (lhs[i] == rhs[i])))
+			return false;
+	return true;
+}
+
+bool operator==(const BinsInfo& lhs, const BinsInfo& rhs)
+{
+	return equal_or_nan(lhs._mean, rhs._mean) && 
+		equal_or_nan(lhs._variance, rhs._variance) && lhs._n == rhs._n && lhs._numBins == rhs._numBins &&
+		equal_or_nan(lhs._threshold, rhs._threshold) && lhs._upperCutoff == rhs._upperCutoff && lhs._lowerCutoff == rhs._lowerCutoff;
+}
+bool operator!=(const BinsInfo& lhs, const BinsInfo& rhs) { return !(lhs == rhs); }
+
+BOOST_CLASS_EXPORT(BinsInfo);
+BOOST_CLASS_VERSION(BinsInfo, 1);
 
 int main(int argc, char *argv[])
 {
@@ -474,17 +509,41 @@ int main(int argc, char *argv[])
 				if (!binsOutfile.empty()) {
 					const BinsInfo binsInfo(mean, variance, n, numBins, threshold, upperCutoff, lowerCutoff);
 
-					// create and open a character archive for output
-					std::ofstream ofs(binsOutfile.c_str());
 
 					// save data to archive
-					{
+					if (1) {
+						// create and open a character archive for output
+						std::ofstream ofs(binsOutfile.c_str());
 						assert(ofs.good());
-						boost::archive::xml_oarchive oa(ofs);
+						boost::archive::binary_oarchive oa(ofs);
 						// write class instance to archive
-						oa << BOOST_SERIALIZATION_NVP(binsInfo);
+						oa << B_NVP(binsInfo);
 						// archive and stream closed when destructors are called
 					}
+					std::this_thread::sleep_for(std::chrono::seconds(2));
+
+					// load data from archive
+					{
+						std::ifstream ifs(binsOutfile.c_str());
+						assert(ifs.good());
+						//std::string s(std::istreambuf_iterator<char>(ifs), {});
+						//std::cerr << "CONTENTS: " << s << "\n";
+						if(1){
+							boost::archive::binary_iarchive ia(ifs, std::ios::binary);
+							BinsInfo binsInfoRead;
+							
+							std::cerr << "RESTORING BINS FROM " << binsOutfile << "\n";
+							ia >> B_NVP(binsInfoRead);
+							if(binsInfoRead == binsInfo) {
+								std::cerr << "BINS INFO VERIFIED\n";
+							} else {
+								std::cerr << "BINS INFO NOT VERIFIED!!!!\n";
+							}
+
+							// archive and stream closed when destructors are called
+						}
+					}
+
 				}
 				
 
