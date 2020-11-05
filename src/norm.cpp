@@ -27,6 +27,7 @@
 #include <fstream>
 #include <cassert>
 #include <sstream>
+#include <algorithm>
 
 #include <cstdio>
 #include <thread>
@@ -210,6 +211,9 @@ bool isint(std::string str);
 
 ofstream flog;
 
+typedef double *pdouble_t;
+typedef int *pint_t;
+
 class BinsInfo {
 private:
 	std::vector<double> _mean;
@@ -237,14 +241,35 @@ private:
 	}
 
 	friend bool operator==(const BinsInfo& lhs, const BinsInfo& rhs);
+
+	template <class T> 
+	static void _replace_array(const std::vector<T>& _vec, T *& vec) {
+		if (vec)
+			delete [] vec;
+		vec = new T[_vec.size()];
+		std::copy(_vec.begin(), _vec.end(), vec);
+	}
+
 public:
 	BinsInfo() { }
 	BinsInfo(double mean[], double variance[], int n[], int numBins, double threshold[],
 					 double upperCutoff, double lowerCutoff):
 		_mean(mean, mean+numBins), _variance(variance, variance+numBins), _n(n, n+numBins),
-		_numBins(numBins), _threshold(threshold, threshold+numBins), _upperCutoff(upperCutoff), _lowerCutoff(lowerCutoff) {}
+		_numBins(numBins), _threshold(threshold, threshold+numBins), _upperCutoff(upperCutoff), _lowerCutoff(lowerCutoff) {}	
 
 	virtual ~BinsInfo() { }
+
+	void set_bins_values(pdouble_t& mean, pdouble_t& variance, pint_t& n, int& numBins, pdouble_t& threshold, double& upperCutoff,
+											 double& lowerCutoff) const {
+		_replace_array(_mean, mean);
+		_replace_array(_variance, variance);
+		_replace_array(_threshold, threshold);
+		_replace_array(_n, n);
+
+		numBins = _numBins;
+		upperCutoff = _upperCutoff;
+		lowerCutoff = _lowerCutoff;
+	}
 
 };
 
@@ -544,6 +569,24 @@ int main(int argc, char *argv[])
 						}
 					}
 
+				}
+
+				if (!binsInfile.empty()) {
+					std::ifstream ifs(binsInfile.c_str());
+					assert(ifs.good());
+					//std::string s(std::istreambuf_iterator<char>(ifs), {});
+					//std::cerr << "CONTENTS: " << s << "\n";
+					if(1){
+						boost::archive::binary_iarchive ia(ifs, std::ios::binary);
+						BinsInfo binsInfoRead;
+							
+						std::cerr << "RESTORING BINS FROM " << binsInfile << "\n";
+						ia >> B_NVP(binsInfoRead);
+
+						
+						binsInfoRead.set_bins_values(mean, variance, n, numBins, threshold, upperCutoff, lowerCutoff);
+						// archive and stream closed when destructors are called
+					}
 				}
 				
 
