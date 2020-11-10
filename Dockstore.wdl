@@ -79,7 +79,7 @@ task compute_cms2_components_for_one_replica {
     cd ..
 
     cp ~{script} ~{script_used_name}
-    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop} --neutral-replica-info neut/*.replicaInfo.json --threads ~{threads}
+    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop} --threads ~{threads}
     norm --ihs --files ~{ihs_out_fname} --load-bins neut/ihsbins.dat
   >>>
 
