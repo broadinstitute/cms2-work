@@ -71,8 +71,8 @@ task compute_cms2_components_for_one_replica {
   command <<<
     tar xvfz ~{replica_output}
     mkdir -p $PWD/neut
-    tar xvfz -C $PWD/neut/ ~{neutral_replica_output}
     cd neut
+    tar xvfz ~{neutral_replica_output}
     
     python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string neutrep --sel-pop ~{sel_pop} --threads ~{threads}
     norm --ihs --files neutrep.ihs.out --save-bins ihsbins.dat
