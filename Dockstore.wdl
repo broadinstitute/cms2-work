@@ -153,6 +153,7 @@ workflow compute_cms2_components {
   input {
 #    Array[ReplicaInfo] replicaInfos
     Array[File] replica_outputs
+    File neutral_replica_output
     Int sel_pop
     File script
 
@@ -166,6 +167,7 @@ workflow compute_cms2_components {
     call compute_cms2_components_for_one_replica {
       input:
       replica_output=replica_output,
+      neutral_replica_output=neutral_replica_output,
       sel_pop=sel_pop,
       script=script,
       threads=threads,
