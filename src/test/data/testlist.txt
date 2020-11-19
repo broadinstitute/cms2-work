@@ -1,0 +1,2 @@
+/data/sw/selscan/src/test/data/test01.ihs.out
+/data/sw/selscan/src/test/data/test02.ihs.out

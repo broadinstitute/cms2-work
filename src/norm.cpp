@@ -209,7 +209,7 @@ void skipCols(std::ifstream &fin, int numCols);
 int countFields(const std::string &str);
 bool isint(std::string str);
 
-ofstream flog;
+std::ofstream flog;
 
 typedef double *pdouble_t;
 typedef int *pint_t;
@@ -302,9 +302,55 @@ bool operator!=(const BinsInfo& lhs, const BinsInfo& rhs) { return !(lhs == rhs)
 BOOST_CLASS_EXPORT(BinsInfo);
 BOOST_CLASS_VERSION(BinsInfo, 1);
 
+std::string trim_whitespace(const std::string& str,
+														const std::string& whitespace = " \t\n\r")
+// adapted from https://stackoverflow.com/questions/1798112/removing-leading-and-trailing-spaces-from-a-string
+{
+	const auto strBegin = str.find_first_not_of(whitespace);
+	if (strBegin == std::string::npos)
+		return ""; // no content
+
+	const auto strEnd = str.find_last_not_of(whitespace);
+	const auto strRange = strEnd - strBegin + 1;
+
+	return str.substr(strBegin, strRange);
+}
+
+
+/*
+ * iterate through all the lines in file and
+ * put them in given vector
+ * from https://thispointer.com/c-how-to-read-a-file-line-by-line-into-a-vector/
+ */
+bool getFileContent(std::string fileName, std::vector<std::string> & vecOfStrs, bool trim_each_line=true)
+{
+	// Open the File
+	std::ifstream in(fileName.c_str());
+	// Check if object is valid
+	if(!in)
+		{
+			std::cerr << "Cannot open the File : "<<fileName<<std::endl;
+			return false;
+		}
+	std::string str;
+	// Read the next line from File untill it reaches the end.
+	while (std::getline(in, str))
+		{
+			// Line contains string of length > 0 then save it in vector
+			if(str.size() > 0) {
+				if (trim_each_line)
+					str = trim_whitespace(str);
+				vecOfStrs.push_back(str);
+			}
+		}
+	//Close The File
+	in.close();
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
-    cerr << "norm v" + VERSION + "\n";
+    std::cerr << "norm v" + VERSION + "\n";
     param_t params;
     params.setPreamble(PREAMBLE);
     params.addFlag(ARG_FREQ_BINS, DEFAULT_FREQ_BINS, "", HELP_FREQ_BINS);
@@ -338,7 +384,21 @@ int main(int argc, char *argv[])
     }
 
     int numBins = params.getIntFlag(ARG_FREQ_BINS);
-    std::vector<std::string> filename = params.getStringListFlag(ARG_FILES);
+    std::vector<std::string> filename_orig = params.getStringListFlag(ARG_FILES);
+		std::vector<std::string> filename;
+		{
+			for (std::vector<std::string>::const_iterator it = filename_orig.begin(); it != filename_orig.end(); ++it) {
+				if ( it->front() != '@')
+					filename.push_back(*it);
+				else {
+					bool ok = getFileContent(it->substr(1), filename);
+					if ( !ok ) {
+						std::cerr << "Error reading file list: " << (*it) << "\n";
+            throw - 1;
+					}
+				}
+			}
+		}
     int nfiles = filename.size();
     int winSize = params.getIntFlag(ARG_WINSIZE);
     std::string infoOutfile = params.getStringFlag(ARG_LOG);
@@ -362,40 +422,40 @@ int main(int argc, char *argv[])
 
     if (numBins <= 0)
     {
-        cerr << "ERROR: Must have a positive integer of frequency bins.\n";
+        std::cerr << "ERROR: Must have a positive integer of frequency bins.\n";
         return 1;
     }
 
     if (numQBins <= 0)
     {
-        cerr << "ERROR: Must have a positive integer of quantile bins.\n";
+        std::cerr << "ERROR: Must have a positive integer of quantile bins.\n";
         return 1;
     }
 
     if (winSize <= 0)
     {
-        cerr << "ERROR: Must have a positive integer window size.\n";
+        std::cerr << "ERROR: Must have a positive integer window size.\n";
         return 1;
     }
 
     if (critNum <= 0)
     {
-        cerr << "ERROR: Must give a positive critical value for |iHS| scores.\n";
+        std::cerr << "ERROR: Must give a positive critical value for |iHS| scores.\n";
         return 1;
     }
 
     if (critPercent != DEFAULT_CRIT_PERCENT && (critPercent <= 0 || critPercent >= 1))
     {
-        cerr << "ERROR: Critical percentile must be in (0,1).\n";
+        std::cerr << "ERROR: Critical percentile must be in (0,1).\n";
         return 1;
     }
 
     
     if(IHS + XPEHH + NSL + SOFT!= 1){
-        cerr << "Must specify exactly one of " + ARG_IHS + ", " + ARG_XPEHH + "," + ARG_NSL + "," + ARG_SOFT + "," + ARG_XPNSL + ".\n";
+        std::cerr << "Must specify exactly one of " + ARG_IHS + ", " + ARG_XPEHH + "," + ARG_NSL + "," + ARG_SOFT + "," + ARG_XPNSL + ".\n";
         return 1;
     }
-    cerr << "You have provided " << nfiles << " output files for joint normalization.\n";
+    std::cerr << "You have provided " << nfiles << " output files for joint normalization.\n";
 
     std::string *outfilename = new std::string[nfiles];
     int *fileLoci = new int[nfiles];
@@ -411,7 +471,7 @@ int main(int argc, char *argv[])
     flog.open(infoOutfile.c_str());
     if (flog.fail())
     {
-        cerr << "ERROR: " << infoOutfile << " " << strerror(errno) << endl;
+        std::cerr << "ERROR: " << infoOutfile << " " << strerror(errno) << std::endl;
         return 1;
     }
 
@@ -437,14 +497,14 @@ int main(int argc, char *argv[])
         fin.open(filename[i].c_str());
         if (fin.fail())
         {
-            cerr << "ERROR: " << infoOutfile << " " << strerror(errno);
+            std::cerr << "ERROR: " << infoOutfile << " " << strerror(errno);
             flog << "ERROR: " << infoOutfile << " " << strerror(errno);
             return 1;
         }
         else
         {
-            cerr << "Opened " << filename[i] << endl;
-            //flog << filename[i] << endl;
+            std::cerr << "Opened " << filename[i] << std::endl;
+            //flog << filename[i] << std::endl;
         }
 
         //check integrity of file and keep count of the number of lines
@@ -462,12 +522,12 @@ int main(int argc, char *argv[])
         fin.close();
     }
 
-    cerr << "\nTotal loci: " << totalLoci << endl;
-    flog << "\nTotal loci: " << totalLoci << endl;
+    std::cerr << "\nTotal loci: " << totalLoci << std::endl;
+    flog << "\nTotal loci: " << totalLoci << std::endl;
 
     if (IHS || NSL)
     {
-        cerr << "Reading all data.\n";
+        std::cerr << "Reading all data.\n";
         double *freq = new double[totalLoci];
         double *score = new double[totalLoci];
         //read in all data
@@ -497,7 +557,7 @@ int main(int argc, char *argv[])
             threshold[b] = minFreq + (b + 1) * step;
         }
 
-        cerr << "Calculating mean and variance per frequency bin:\n\n";
+        std::cerr << "Calculating mean and variance per frequency bin:\n\n";
         getMeanVarBins(freq, score, totalLoci, mean, variance, n, numBins, threshold);
 
         gsl_sort(score, 1, totalLoci);
@@ -509,9 +569,9 @@ int main(int argc, char *argv[])
             upperCutoff = gsl_stats_quantile_from_sorted_data (score, 1, totalLoci, 1 - critPercent / 2.0 );
             lowerCutoff = gsl_stats_quantile_from_sorted_data (score, 1, totalLoci, critPercent / 2.0);
 
-            cerr << "\nTop cutoff: " << upperCutoff << endl;
-            cerr << "Bottom cutoff: " << lowerCutoff << "\n\n";
-            flog << "\nTop cutoff: " << upperCutoff << endl;
+            std::cerr << "\nTop cutoff: " << upperCutoff << std::endl;
+            std::cerr << "Bottom cutoff: " << lowerCutoff << "\n\n";
+            flog << "\nTop cutoff: " << upperCutoff << std::endl;
             flog << "Bottom cutoff: " << lowerCutoff << "\n\n";
         }
         else
@@ -523,12 +583,12 @@ int main(int argc, char *argv[])
         delete [] score;
 
         //Output bins info to file.
-        cerr << "bin\tnum\tmean\tvariance\n";
+        std::cerr << "bin\tnum\tmean\tvariance\n";
         flog << "bin\tnum\tmean\tvariance\n";
         for (int i = 0; i < numBins; i++)
         {
-            cerr << threshold[i] << "\t" << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << endl;
-            flog << threshold[i] << "\t" << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << endl;
+            std::cerr << threshold[i] << "\t" << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << std::endl;
+            flog << threshold[i] << "\t" << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << std::endl;
         }
 
 				if (!binsOutfile.empty()) {
@@ -594,7 +654,7 @@ int main(int argc, char *argv[])
         if (FIRST) nfiles = 1;
         for (int i = 0; i < nfiles; i++)
         {
-            cerr << "Normalizing " << filename[i] << "\n";
+					std::cerr << "Normalizing " << filename[i] << "\n";
             normalizeIHSDataByBins(filename[i], outfilename[i], fileLoci[i], mean, variance, n, numBins, threshold, upperCutoff, lowerCutoff);
             //fin[i].close();
             //fout[i].close();
@@ -610,7 +670,7 @@ int main(int argc, char *argv[])
     }
     else if (XPEHH || SOFT) {
 
-        cerr << "Reading all data.\n";
+        std::cerr << "Reading all data.\n";
         double *freq1 = new double[totalLoci];
         double *freq2;
         if(XPEHH) freq2 = new double[totalLoci];
@@ -643,7 +703,7 @@ int main(int argc, char *argv[])
             threshold[b] = minFreq + (b + 1) * step;
         }
 
-        cerr << "Calculating mean and variance:\n\n";
+        std::cerr << "Calculating mean and variance:\n\n";
         getMeanVarBins(freq1, score, totalLoci, mean, variance, n, numBins, threshold);
 
         gsl_sort(score, 1, totalLoci);
@@ -655,9 +715,9 @@ int main(int argc, char *argv[])
             upperCutoff = gsl_stats_quantile_from_sorted_data (score, 1, totalLoci, 1 - critPercent / 2.0 );
             lowerCutoff = gsl_stats_quantile_from_sorted_data (score, 1, totalLoci, critPercent / 2.0);
 
-            cerr << "\nTop cutoff: " << upperCutoff << endl;
-            cerr << "Bottom cutoff: " << lowerCutoff << "\n\n";
-            flog << "\nTop cutoff: " << upperCutoff << endl;
+            std::cerr << "\nTop cutoff: " << upperCutoff << std::endl;
+            std::cerr << "Bottom cutoff: " << lowerCutoff << "\n\n";
+            flog << "\nTop cutoff: " << upperCutoff << std::endl;
             flog << "Bottom cutoff: " << lowerCutoff << "\n\n";
         }
         else
@@ -670,12 +730,12 @@ int main(int argc, char *argv[])
         delete [] score;
 
         //Output bins info to file.
-        cerr << "num\tmean\tvariance\n";
+        std::cerr << "num\tmean\tvariance\n";
         flog << "num\tmean\tvariance\n";
         for (int i = 0; i < numBins; i++)
         {
-            cerr << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << endl;
-            flog << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << endl;
+            std::cerr << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << std::endl;
+            flog << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << std::endl;
         }
 
 
@@ -683,7 +743,7 @@ int main(int argc, char *argv[])
         if (FIRST) nfiles = 1;
         for (int i = 0; i < nfiles; i++)
         {
-            cerr << "Normalizing " << filename[i] << "\n";
+            std::cerr << "Normalizing " << filename[i] << "\n";
             if(XPEHH) normalizeXPEHHDataByBins(filename[i], outfilename[i], fileLoci[i], mean, variance, n, numBins, threshold, upperCutoff, lowerCutoff);
             if(SOFT) normalizeIHH12DataByBins(filename[i], outfilename[i], fileLoci[i], mean, variance, n, numBins, threshold, upperCutoff, lowerCutoff);
             //fin[i].close();
@@ -713,7 +773,7 @@ void analyzeSNPWindows(string normedfiles[],int fileLoci[], int nfiles, int snpW
   std::vector<string>* endSNP = new std::vector<int>[nfiles];
   std::vector<double>* fracCrit = new std::vector<double>[nfiles];
   std::ifstream fin;
-  ofstream fout;
+  std::ofstream fout;
   string* winfilename = new string[nfiles];
 
   char str[10];
@@ -814,7 +874,7 @@ void skipCols(std::ifstream &fin, int numCols)
 
 void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
 {
-    cerr << "\nAnalyzing BP windows:\n\n";
+    std::cerr << "\nAnalyzing BP windows:\n\n";
     //int totalLoci = 0;
     //for (int i = 0; i < nfiles; i++) totalLoci+=fileLoci[i];
     std::vector<int> *winStarts = new std::vector<int>[nfiles];
@@ -823,7 +883,7 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
     std::vector<double> *maxAbsScore = new std::vector<double>[nfiles];
 
     std::ifstream fin;
-    ofstream fout;
+    std::ofstream fout;
     std::string *winfilename = new std::string[nfiles];
 
     char str[10];
@@ -840,7 +900,7 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
         fin.open(normedfiles[i].c_str());
         if (fin.fail())
         {
-            cerr << "ERROR: " << normedfiles[i] << " " << strerror(errno);
+            std::cerr << "ERROR: " << normedfiles[i] << " " << strerror(errno);
             throw - 1;
         }
 
@@ -891,7 +951,7 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
         fin.close();
     }
 
-    cerr << numWindows << " nonzero windows.\n";
+    std::cerr << numWindows << " nonzero windows.\n";
     flog << numWindows << " nonzero windows.\n";
     double *allSNPsPerWindow = new double[numWindows];
     double *allFracCritPerWindow = new double[numWindows];
@@ -933,7 +993,7 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
     //cerr << "\nnSNPs 0.1 0.5 1.0 5.0\n";
     //flog << "\nnSNPs 0.1 0.5 1.0 5.0\n";
 
-    cerr << "\nnSNPs 1.0 5.0\n";
+    std::cerr << "\nnSNPs 1.0 5.0\n";
     flog << "\nnSNPs 1.0 5.0\n";
 
 
@@ -952,17 +1012,17 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
             topWindowBoundary[b]["1.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindow[start]), 1, count, 0.990);
             topWindowBoundary[b]["5.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindow[start]), 1, count, 0.950);
 
-            cerr << quantileBound[b] << " "
+            std::cerr << quantileBound[b] << " "
                  //<< topWindowBoundary[b]["0.1"] << " "
                  //<< topWindowBoundary[b]["0.5"] << " "
                  << topWindowBoundary[b]["1.0"] << " "
-                 << topWindowBoundary[b]["5.0"] << endl;
+                 << topWindowBoundary[b]["5.0"] << std::endl;
 
             flog << quantileBound[b] << " "
                  //<< topWindowBoundary[b]["0.1"] << " "
                  //<< topWindowBoundary[b]["0.5"] << " "
                  << topWindowBoundary[b]["1.0"] << " "
-                 << topWindowBoundary[b]["5.0"] << endl;
+                 << topWindowBoundary[b]["5.0"] << std::endl;
 
             start = i;
             count = 0;
@@ -976,7 +1036,7 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
     topWindowBoundary[b]["1.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindow[start]), 1, count, 0.990);
     topWindowBoundary[b]["5.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindow[start]), 1, count, 0.950);
 
-    cerr << quantileBound[b] << " "
+    std::cerr << quantileBound[b] << " "
          //<< topWindowBoundary[b]["0.1"] << " "
          //<< topWindowBoundary[b]["0.5"] << " "
          << topWindowBoundary[b]["1.0"] << " "
@@ -996,16 +1056,16 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
         fout.open(winfilename[i].c_str());
         if (fout.fail())
         {
-            cerr << "ERROR: " << winfilename[i] << " " << strerror(errno);
+            std::cerr << "ERROR: " << winfilename[i] << " " << strerror(errno);
             throw - 1;
         }
-        cerr << "Creating window file " << winfilename[i] << endl;
-        flog << "Creating window file " << winfilename[i] << endl;
+        std::cerr << "Creating window file " << winfilename[i] << std::endl;
+        flog << "Creating window file " << winfilename[i] << std::endl;
         for (int j = 0; j < nSNPs[i].size(); j++)
         {
             if (nSNPs[i][j] < minSNPs || fracCrit[i][j] < 0)
             {
-                fout << winStarts[i][j] << "\t" << winStarts[i][j] + winSize << "\t" << nSNPs[i][j] << "\t" << fracCrit[i][j] << "\t-1\tNA" << endl;
+                fout << winStarts[i][j] << "\t" << winStarts[i][j] + winSize << "\t" << nSNPs[i][j] << "\t" << fracCrit[i][j] << "\t-1\tNA" << std::endl;
                 continue;
             }
             double percentile = 100.0;
@@ -1037,7 +1097,7 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
                 fout << "NA\n";
             }
             else{
-                fout << maxAbsScore[i][j] << endl;
+                fout << maxAbsScore[i][j] << std::endl;
             }
         }
         fout.close();
@@ -1055,7 +1115,7 @@ void analyzeIHSBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, 
 
 void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
 {
-    cerr << "\nAnalyzing BP windows:\n\n";
+    std::cerr << "\nAnalyzing BP windows:\n\n";
     //int totalLoci = 0;
     //for (int i = 0; i < nfiles; i++) totalLoci+=fileLoci[i];
     std::vector<int> *winStarts = new std::vector<int>[nfiles];
@@ -1066,7 +1126,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
     std::vector<double> *minScore = new std::vector<double>[nfiles];
 
     std::ifstream fin;
-    ofstream fout;
+    std::ofstream fout;
     std::string *winfilename = new std::string[nfiles];
 
     char str[10];
@@ -1084,7 +1144,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
         fin.open(normedfiles[i].c_str());
         if (fin.fail())
         {
-            cerr << "ERROR: " << normedfiles[i] << " " << strerror(errno);
+            std::cerr << "ERROR: " << normedfiles[i] << " " << strerror(errno);
             throw - 1;
         }
 
@@ -1152,7 +1212,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
         fin.close();
     }
 
-    cerr << numWindowsTop << " windows with nSNPs >= " << minSNPs << ".\n";
+    std::cerr << numWindowsTop << " windows with nSNPs >= " << minSNPs << ".\n";
     flog << numWindowsTop << " windows with nSNPs >= " << minSNPs << ".\n";
     double *allSNPsPerWindowTop = new double[numWindowsTop];
     double *allFracCritPerWindowTop = new double[numWindowsTop];
@@ -1210,7 +1270,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
     std::map<std::string, double> *topWindowBoundaryTop = new std::map<std::string, double>[numQuantiles];
 
 
-    cerr << "\nHigh Scores\nnSNPs 1.0 5.0\n";
+    std::cerr << "\nHigh Scores\nnSNPs 1.0 5.0\n";
     flog << "\nHigh Scores\nnSNPs 1.0 5.0\n";
 
 
@@ -1227,13 +1287,13 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
             topWindowBoundaryTop[bTop]["1.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindowTop[startTop]), 1, countTop, 0.990);
             topWindowBoundaryTop[bTop]["5.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindowTop[startTop]), 1, countTop, 0.950);
 
-            cerr << quantileBoundTop[bTop] << " "
+            std::cerr << quantileBoundTop[bTop] << " "
                  << topWindowBoundaryTop[bTop]["1.0"] << " "
-                 << topWindowBoundaryTop[bTop]["5.0"] << endl;
+                 << topWindowBoundaryTop[bTop]["5.0"] << std::endl;
 
             flog << quantileBoundTop[bTop] << " "
                  << topWindowBoundaryTop[bTop]["1.0"] << " "
-                 << topWindowBoundaryTop[bTop]["5.0"] << endl;
+                 << topWindowBoundaryTop[bTop]["5.0"] << std::endl;
 
             startTop = i;
             countTop = 0;
@@ -1245,7 +1305,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
     topWindowBoundaryTop[bTop]["1.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindowTop[startTop]), 1, countTop, 0.990);
     topWindowBoundaryTop[bTop]["5.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindowTop[startTop]), 1, countTop, 0.950);
 
-    cerr << quantileBoundTop[bTop] << " "
+    std::cerr << quantileBoundTop[bTop] << " "
          << topWindowBoundaryTop[bTop]["1.0"] << " "
          << topWindowBoundaryTop[bTop]["5.0"] << "\n\n";
 
@@ -1268,7 +1328,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
     std::map<std::string, double> *topWindowBoundaryBot = new std::map<std::string, double>[numQuantiles];
 
 
-    cerr << "\nLow Scores\nnSNPs 1.0 5.0\n";
+    std::cerr << "\nLow Scores\nnSNPs 1.0 5.0\n";
     flog << "\nLow Scores\nnSNPs 1.0 5.0\n";
 
 
@@ -1285,13 +1345,13 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
             topWindowBoundaryBot[bBot]["1.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindowBot[startBot]), 1, countBot, 0.990);
             topWindowBoundaryBot[bBot]["5.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindowBot[startBot]), 1, countBot, 0.950);
 
-            cerr << quantileBoundBot[bBot] << " "
+            std::cerr << quantileBoundBot[bBot] << " "
                  << topWindowBoundaryBot[bBot]["1.0"] << " "
-                 << topWindowBoundaryBot[bBot]["5.0"] << endl;
+                 << topWindowBoundaryBot[bBot]["5.0"] << std::endl;
 
             flog << quantileBoundBot[bBot] << " "
                  << topWindowBoundaryBot[bBot]["1.0"] << " "
-                 << topWindowBoundaryBot[bBot]["5.0"] << endl;
+                 << topWindowBoundaryBot[bBot]["5.0"] << std::endl;
 
             startBot = i;
             countBot = 0;
@@ -1303,7 +1363,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
     topWindowBoundaryBot[bBot]["1.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindowBot[startBot]), 1, countBot, 0.990);
     topWindowBoundaryBot[bBot]["5.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindowBot[startBot]), 1, countBot, 0.950);
 
-    cerr << quantileBoundBot[bBot] << " "
+    std::cerr << quantileBoundBot[bBot] << " "
          << topWindowBoundaryBot[bBot]["1.0"] << " "
          << topWindowBoundaryBot[bBot]["5.0"] << "\n\n";
 
@@ -1320,17 +1380,17 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
         fout.open(winfilename[i].c_str());
         if (fout.fail())
         {
-            cerr << "ERROR: " << winfilename[i] << " " << strerror(errno);
+            std::cerr << "ERROR: " << winfilename[i] << " " << strerror(errno);
             throw - 1;
         }
-        cerr << "Creating window file " << winfilename[i] << endl;
-        flog << "Creating window file " << winfilename[i] << endl;
+        std::cerr << "Creating window file " << winfilename[i] << std::endl;
+        flog << "Creating window file " << winfilename[i] << std::endl;
         for (int j = 0; j < nSNPs[i].size(); j++)
         {
             fout << winStarts[i][j] << "\t" << winStarts[i][j] + winSize << "\t" << nSNPs[i][j] << "\t" << fracCritTop[i][j] << "\t" << fracCritBot[i][j] << "\t";
             if (nSNPs[i][j] < minSNPs)
             {
-                fout << "-1\t-1\tNA\tNA" << endl;
+                fout << "-1\t-1\tNA\tNA" << std::endl;
                 continue;
             }
 
@@ -1378,7 +1438,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
                 fout << "NA\n";
             }
             else{
-                fout << minScore[i][j] << endl;
+                fout << minScore[i][j] << std::endl;
             }
         }
         fout.close();
@@ -1401,7 +1461,7 @@ void analyzeXPEHHBPWindows(std::string normedfiles[], int fileLoci[], int nfiles
 
 void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles, int winSize, int numQuantiles, int minSNPs)
 {
-    cerr << "\nAnalyzing BP windows:\n\n";
+    std::cerr << "\nAnalyzing BP windows:\n\n";
     //int totalLoci = 0;
     //for (int i = 0; i < nfiles; i++) totalLoci+=fileLoci[i];
     std::vector<int> *winStarts = new std::vector<int>[nfiles];
@@ -1409,7 +1469,7 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
     std::vector<double> *fracCrit = new std::vector<double>[nfiles];
 
     std::ifstream fin;
-    ofstream fout;
+    std::ofstream fout;
     std::string *winfilename = new std::string[nfiles];
 
     char str[10];
@@ -1426,7 +1486,7 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
         fin.open(normedfiles[i].c_str());
         if (fin.fail())
         {
-            cerr << "ERROR: " << normedfiles[i] << " " << strerror(errno);
+            std::cerr << "ERROR: " << normedfiles[i] << " " << strerror(errno);
             throw - 1;
         }
 
@@ -1473,7 +1533,7 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
         fin.close();
     }
 
-    cerr << numWindows << " nonzero windows.\n";
+    std::cerr << numWindows << " nonzero windows.\n";
     flog << numWindows << " nonzero windows.\n";
     double *allSNPsPerWindow = new double[numWindows];
     double *allFracCritPerWindow = new double[numWindows];
@@ -1515,7 +1575,7 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
     //cerr << "\nnSNPs 0.1 0.5 1.0 5.0\n";
     //flog << "\nnSNPs 0.1 0.5 1.0 5.0\n";
 
-    cerr << "\nnSNPs 1.0 5.0\n";
+    std::cerr << "\nnSNPs 1.0 5.0\n";
     flog << "\nnSNPs 1.0 5.0\n";
 
 
@@ -1534,17 +1594,17 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
             topWindowBoundary[b]["1.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindow[start]), 1, count, 0.990);
             topWindowBoundary[b]["5.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindow[start]), 1, count, 0.950);
 
-            cerr << quantileBound[b] << " "
+            std::cerr << quantileBound[b] << " "
                  //<< topWindowBoundary[b]["0.1"] << " "
                  //<< topWindowBoundary[b]["0.5"] << " "
                  << topWindowBoundary[b]["1.0"] << " "
-                 << topWindowBoundary[b]["5.0"] << endl;
+                 << topWindowBoundary[b]["5.0"] << std::endl;
 
             flog << quantileBound[b] << " "
                  //<< topWindowBoundary[b]["0.1"] << " "
                  //<< topWindowBoundary[b]["0.5"] << " "
                  << topWindowBoundary[b]["1.0"] << " "
-                 << topWindowBoundary[b]["5.0"] << endl;
+                 << topWindowBoundary[b]["5.0"] << std::endl;
 
             start = i;
             count = 0;
@@ -1558,7 +1618,7 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
     topWindowBoundary[b]["1.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindow[start]), 1, count, 0.990);
     topWindowBoundary[b]["5.0"] = gsl_stats_quantile_from_sorted_data(&(allFracCritPerWindow[start]), 1, count, 0.950);
 
-    cerr << quantileBound[b] << " "
+    std::cerr << quantileBound[b] << " "
          //<< topWindowBoundary[b]["0.1"] << " "
          //<< topWindowBoundary[b]["0.5"] << " "
          << topWindowBoundary[b]["1.0"] << " "
@@ -1578,16 +1638,16 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
         fout.open(winfilename[i].c_str());
         if (fout.fail())
         {
-            cerr << "ERROR: " << winfilename[i] << " " << strerror(errno);
+            std::cerr << "ERROR: " << winfilename[i] << " " << strerror(errno);
             throw - 1;
         }
-        cerr << "Creating window file " << winfilename[i] << endl;
-        flog << "Creating window file " << winfilename[i] << endl;
+        std::cerr << "Creating window file " << winfilename[i] << std::endl;
+        flog << "Creating window file " << winfilename[i] << std::endl;
         for (int j = 0; j < nSNPs[i].size(); j++)
         {
             if (nSNPs[i][j] < minSNPs || fracCrit[i][j] < 0)
             {
-                fout << winStarts[i][j] << "\t" << winStarts[i][j] + winSize << "\t" << nSNPs[i][j] << "\t" << fracCrit[i][j] << "\t-1" << endl;
+                fout << winStarts[i][j] << "\t" << winStarts[i][j] + winSize << "\t" << nSNPs[i][j] << "\t" << fracCrit[i][j] << "\t-1" << std::endl;
                 continue;
             }
             double percentile = 100.0;
@@ -1614,7 +1674,7 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
                 percentile = 0.1;
             }
             */
-            fout << winStarts[i][j] << "\t" << winStarts[i][j] + winSize << "\t" << nSNPs[i][j] << "\t" << fracCrit[i][j] << "\t" << percentile << endl;
+            fout << winStarts[i][j] << "\t" << winStarts[i][j] + winSize << "\t" << nSNPs[i][j] << "\t" << fracCrit[i][j] << "\t" << percentile << std::endl;
         }
         fout.close();
     }
@@ -1696,13 +1756,13 @@ void loadIHSDataBins(std::string &binsOutfilename, double mean[], double varianc
 void normalizeIHSDataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
 {
     std::ifstream fin;
-    ofstream fout;
+    std::ofstream fout;
 
     fin.open(filename.c_str());
     fout.open(outfilename.c_str());
     if (fout.fail())
     {
-        cerr << "ERROR: " << outfilename << " " << strerror(errno);
+        std::cerr << "ERROR: " << outfilename << " " << strerror(errno);
         throw 1;
     }
 
@@ -1763,13 +1823,13 @@ void normalizeIHSDataByBins(std::string &filename, std::string &outfilename, int
 void normalizeXPEHHDataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
 {
     std::ifstream fin;
-    ofstream fout;
+    std::ofstream fout;
 
     fin.open(filename.c_str());
     fout.open(outfilename.c_str());
     if (fout.fail())
     {
-        cerr << "ERROR: " << outfilename << " " << strerror(errno);
+        std::cerr << "ERROR: " << outfilename << " " << strerror(errno);
         throw 1;
     }
 
@@ -1830,13 +1890,13 @@ void normalizeXPEHHDataByBins(std::string &filename, std::string &outfilename, i
 void normalizeIHH12DataByBins(std::string &filename, std::string &outfilename, int &fileLoci, double mean[], double variance[], int n[], int numBins, double threshold[], double upperCutoff, double lowerCutoff)
 {
     std::ifstream fin;
-    ofstream fout;
+    std::ofstream fout;
 
     fin.open(filename.c_str());
     fout.open(outfilename.c_str());
     if (fout.fail())
     {
-        cerr << "ERROR: " << outfilename << " " << strerror(errno);
+        std::cerr << "ERROR: " << outfilename << " " << strerror(errno);
         throw 1;
     }
 
@@ -1903,7 +1963,7 @@ int checkIHSfile(std::ifstream &fin)
         current_cols = countFields(line);
         if ((current_cols != expected_cols && current_cols != expected_cols_alternate) && nloci > 1)
         {
-            cerr << "ERROR: line " << nloci << " has " << current_cols
+            std::cerr << "ERROR: line " << nloci << " has " << current_cols
                  << " columns, but expected " << expected_cols << " or " << expected_cols_alternate << " columns.\n";
             throw 0;
         }
@@ -1961,7 +2021,7 @@ int checkXPEHHfile(std::ifstream &fin)
         current_cols = countFields(line);
         if ((current_cols != expected_cols) && nloci > 1)
         {
-            cerr << "ERROR: line " << nloci << " has " << current_cols
+            std::cerr << "ERROR: line " << nloci << " has " << current_cols
                  << " columns, but expected " << expected_cols << " columns.\n";
             throw 0;
         }
@@ -1993,7 +2053,7 @@ int checkIHH12file(std::ifstream &fin)
         current_cols = countFields(line);
         if ((current_cols != expected_cols) && nloci > 1)
         {
-            cerr << "ERROR: line " << nloci << " has " << current_cols
+            std::cerr << "ERROR: line " << nloci << " has " << current_cols
                  << " columns, but expected " << expected_cols << " columns.\n";
             throw 0;
         }
