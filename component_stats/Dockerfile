@@ -42,7 +42,7 @@ RUN /opt/docker/install-miniconda.sh
 
 ENV PATH="$MINICONDA_PATH/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-RUN conda install numpy scipy matplotlib selscan=v1.3.0a01
+RUN conda install numpy scipy matplotlib selscan=1.3.0a02
 
 # switch back to the ubuntu user so this tool (and the files written) are not owned by root
 RUN groupadd -r -g 1000 ubuntu && useradd -r -g ubuntu -u 1000 -m ubuntu
