@@ -52,6 +52,12 @@ namespace std{
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/range/numeric.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
+#include <boost/foreach.hpp>
+#include <boost/core/swap.hpp>
+
+#define ForEach BOOST_FOREACH
 
 #include "param_t.h"
 
@@ -174,6 +180,10 @@ const double DEFAULT_CRIT_PERCENT = -1;
 const std::string HELP_CRIT_PERCENT = "Set the critical value such that a SNP with iHS in the most extreme CRIT_PERCENT tails (two-tailed) is marked as an extreme SNP.\n\
 \tNot used by default.";
 
+
+const std::string ARG_ONLYSAVEBINS = "--only-save-bins";
+const bool DEFAULT_ONLYSAVEBINS = false;
+const std::string HELP_ONLYSAVEBINS = "only save bins info and then quit";
 
 const int MISSING = -9999;
 
@@ -348,6 +358,126 @@ bool getFileContent(std::string fileName, std::vector<std::string> & vecOfStrs, 
 	return true;
 }
 
+template <typename T> inline
+double ToDouble(T x) { return x; }
+
+//
+// Class: SumKeeper
+//
+// Keeps a running sum without round-off errors.  Also keeps count of
+// NaN and infinite values.
+//
+// Adapted from: http://code.activestate.com/recipes/393090/
+//
+template <typename ValT = double, typename CountT = size_t>
+class SumKeeper {
+public:
+	 SumKeeper() { clear(); }
+
+	 typedef ValT value_t;
+	 typedef CountT count_t;
+
+	 // Method: add
+	 // Add a value to the sum keeper.
+	 void add( ValT x ) {
+		 if ( (boost::math::isnan)( ToDouble( x ) ) ) numNaNs++;
+		 else if ( (boost::math::isinf)( ToDouble( x ) ) ) numInfs++;
+		 else {
+			 numVals++;
+		
+			 int i = 0;
+			 for ( typename std::vector<ValT>::const_iterator yi = partials.begin(); yi != partials.end(); yi++ ) {
+				 ValT y = *yi;
+
+				 if ( ::fabs( ToDouble( x ) ) < ::fabs( ToDouble( y ) ) ) boost::swap( x, y );
+				 ValT hi = x + y;
+				 ValT lo = y - ( hi - x );
+				 if ( ToDouble( lo ) != 0.0 ) partials[ i++ ] = lo;
+				 x = hi;
+			 }
+			 partials.erase( partials.begin()+i, partials.end() );
+			 partials.push_back( x );
+		 }
+	 }
+
+	 // Method: add
+	 // Add a range of values to this SumKeeper.
+	 template <class ValRange>
+	 void add( const ValRange& valRange ) { ForEach( ValT val, valRange ) add( valRange ); }
+
+	 SumKeeper<ValT,CountT>& operator+=( ValT x ) { add( x ); return *this; }
+	 SumKeeper<ValT,CountT>& operator+=( const SumKeeper<ValT,CountT>& sk  ) {
+		 add( sk.getSum() );
+		 numVals += sk.numVals;
+		 numNaNs += sk.numNaNs;
+		 numInfs += sk.numInfs;
+		 return *this;
+	 }
+
+	 ValT getSum() const { return boost::accumulate( partials, ValT(0.0) ); }
+	 CountT getNumVals() const { return numVals; }
+	 CountT getNumNaNs() const { return numNaNs; }
+	 CountT getNumInfs() const { return numInfs; }
+
+   ValT getMean() const { return static_cast< ValT >( numVals > 0 ? ( ToDouble( getSum() ) / double(numVals) ) : std::numeric_limits<double>::quiet_NaN() ); }
+
+	 void clear() {
+		 partials.clear();
+		 numVals = 0;
+		 numNaNs = 0;
+		 numInfs = 0;
+	 }
+  
+private:
+	 std::vector<ValT> partials;
+
+	 CountT numVals;
+	 CountT numNaNs;
+	 CountT numInfs;
+  
+};  // class SumKeeper
+
+//
+// Class: StatKeeper
+//
+// Keeps a running sum and sum-of-squares without round-off errors,
+// allowing accurate computation of the mean and stddev.
+//
+template <typename ValT = double, typename CountT = size_t>
+class StatKeeper {
+public:
+	 StatKeeper() { clear(); }
+
+   void add( ValT x ) { sum.add( x ); sumSq.add( static_cast< ValT >( ToDouble( x ) * ToDouble( x ) ) ); }
+
+	 void clear() { sum.clear(); sumSq.clear(); }
+
+	 ValT getSum() const { return sum.getSum(); }
+	 CountT getNumVals() const { return sum.getNumVals(); }
+	 CountT getNumNaNs() const { return sum.getNumNaNs(); }
+	 CountT getNumInfs() const { return sum.getNumInfs(); }
+
+	 // Method: add
+	 // Add a range of values to this SumKeeper.
+	 template <class ValRange>
+	 void add( const ValRange& valRange ) { ForEach( ValT val, valRange ) add( val ); }
+
+	 ValT getMean() const { return sum.getMean(); }
+	 ValT getStd() const {
+		 ValT meanSoFar = getMean();
+		 return static_cast< ValT >( std::sqrt( ToDouble( sumSq.getMean() - ( static_cast< ValT >( ToDouble( meanSoFar ) * ToDouble( meanSoFar ) ) ) ) ) );
+	 }
+	 
+private:
+	 // Fields:
+	 //
+	 //   sum - sum of values passed to <add()>
+	 //   sumSq - sum of squares of values passed to <add()>
+	 SumKeeper<ValT,CountT> sum, sumSq;
+};  // class StatKeeper
+
+
+
 int main(int argc, char *argv[])
 {
     std::cerr << "norm v" + VERSION + "\n";
@@ -372,6 +502,7 @@ int main(int argc, char *argv[])
     params.addFlag(ARG_SOFT, DEFAULT_SOFT, "", HELP_SOFT);
     params.addFlag(ARG_XPEHH, DEFAULT_XPEHH, "", HELP_XPEHH);
     params.addFlag(ARG_XPNSL, DEFAULT_XPNSL, "", HELP_XPNSL);
+    params.addFlag(ARG_ONLYSAVEBINS, DEFAULT_ONLYSAVEBINS, "", HELP_ONLYSAVEBINS);
 
 
     try
@@ -417,6 +548,7 @@ int main(int argc, char *argv[])
     bool SOFT = params.getBoolFlag(ARG_SOFT);
     bool XPEHH = params.getBoolFlag(ARG_XPEHH);
     bool XPNSL = params.getBoolFlag(ARG_XPNSL);
+    bool ONLYSAVEBINS = params.getBoolFlag(ARG_ONLYSAVEBINS);
 
     if(XPNSL) XPEHH = true;
 
@@ -629,6 +761,10 @@ int main(int argc, char *argv[])
 						}
 					}
 
+				}  // 				if (!binsOutfile.empty()) 
+				if (ONLYSAVEBINS) {
+					std::cerr << "saved bins, exiting\n";
+					return EXIT_SUCCESS;
 				}
 
 				if (!binsInfile.empty()) {
@@ -1692,6 +1828,8 @@ void analyzeIHH12BPWindows(std::string normedfiles[], int fileLoci[], int nfiles
 
 void getMeanVarBins(double freq[], double data[], int nloci, double mean[], double variance[], int n[], int numBins, double threshold[])
 {
+	typedef SumKeeper<double> sumkeeper_t;
+	std::vector<sumkeeper_t> meanSum(numBins), varianceSum(numBins);
     //initialize
     for (int b = 0; b < numBins; b++)
     {
@@ -1711,10 +1849,20 @@ void getMeanVarBins(double freq[], double data[], int nloci, double mean[], doub
                 n[b]++;
                 mean[b] += data[i];
                 variance[b] += data[i] * data[i];
+
+								meanSum[b].add(data[i]);
+								varianceSum[b].add(data[i] * data[i]);
+
                 break;
             }
         }
     }
+		for ( int ii = 0; ii < numBins; ii++ ) {
+			std::cerr << "bin " << ii << " n " << meanSum[ii].getNumVals() << " meanDiff " << (mean[ii] - meanSum[ii].getSum()) << 
+				" stdDiff " << (variance[ii] - varianceSum[ii].getSum()) << std::endl;
+			mean[ii] = meanSum[ii].getSum();
+			variance[ii] = varianceSum[ii].getSum();
+		}
 
     //Transform the sum(x_i) and sum(x_i^2) into mean and variances for each bin
     double temp;
