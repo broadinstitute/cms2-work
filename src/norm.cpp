@@ -478,6 +478,7 @@ private:
 
 
 
+
 int main(int argc, char *argv[])
 {
     std::cerr << "norm v" + VERSION + "\n";
@@ -786,6 +787,8 @@ int main(int argc, char *argv[])
 				}
 				
 
+				
+
         //Read each file and create normed files.
         if (FIRST) nfiles = 1;
         for (int i = 0; i < nfiles; i++)
@@ -874,6 +877,68 @@ int main(int argc, char *argv[])
             flog << n[i] <<  "\t" << mean[i] << "\t" << variance[i] << std::endl;
         }
 
+				if (!binsOutfile.empty()) {
+					const BinsInfo binsInfo(mean, variance, n, numBins, threshold, upperCutoff, lowerCutoff);
+
+
+					// save data to archive
+					if (1) {
+						// create and open a character archive for output
+						std::ofstream ofs(binsOutfile.c_str());
+						assert(ofs.good());
+						boost::archive::binary_oarchive oa(ofs);
+						// write class instance to archive
+						oa << B_NVP(binsInfo);
+						// archive and stream closed when destructors are called
+					}
+					std::this_thread::sleep_for(std::chrono::seconds(2));
+
+					// load data from archive
+					{
+						std::ifstream ifs(binsOutfile.c_str());
+						assert(ifs.good());
+						//std::string s(std::istreambuf_iterator<char>(ifs), {});
+						//std::cerr << "CONTENTS: " << s << "\n";
+						if(1){
+							boost::archive::binary_iarchive ia(ifs, std::ios::binary);
+							BinsInfo binsInfoRead;
+							
+							std::cerr << "RESTORING BINS FROM " << binsOutfile << "\n";
+							ia >> B_NVP(binsInfoRead);
+							if(binsInfoRead == binsInfo) {
+								std::cerr << "BINS INFO VERIFIED\n";
+							} else {
+								std::cerr << "BINS INFO NOT VERIFIED!!!!\n";
+							}
+
+							// archive and stream closed when destructors are called
+						}
+					}
+
+				}  // 				if (!binsOutfile.empty()) 
+				if (ONLYSAVEBINS) {
+					std::cerr << "saved bins, exiting\n";
+					return EXIT_SUCCESS;
+				}
+
+				if (!binsInfile.empty()) {
+					std::ifstream ifs(binsInfile.c_str());
+					assert(ifs.good());
+					//std::string s(std::istreambuf_iterator<char>(ifs), {});
+					//std::cerr << "CONTENTS: " << s << "\n";
+					if(1){
+						boost::archive::binary_iarchive ia(ifs, std::ios::binary);
+						BinsInfo binsInfoRead;
+							
+						std::cerr << "RESTORING BINS FROM " << binsInfile << "\n";
+						ia >> B_NVP(binsInfoRead);
+
+						
+						binsInfoRead.set_bins_values(mean, variance, n, numBins, threshold, upperCutoff, lowerCutoff);
+						// archive and stream closed when destructors are called
+					}
+				}
+				
 
         //Read each file and create normed files.
         if (FIRST) nfiles = 1;

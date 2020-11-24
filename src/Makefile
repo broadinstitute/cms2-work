@@ -14,7 +14,7 @@
 
 #for linux systems
 #CC = g++
-G++FLAG = $(CPPFLAGS) $(CXXFLAGS) -O0 -ggdb -m64 -mmmx -msse -msse2
+G++FLAG = $(CPPFLAGS) $(CXXFLAGS) -m64 -mmmx -msse -msse2
 LINK_OPTS2 =  -lboost_serialization -lgsl -pthread -lz
 I_PATH = $(CPPFLAGS) -I../include
 L_PATH = ../lib/linux /usr/lib64
