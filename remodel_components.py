@@ -289,6 +289,16 @@ def compute_component_scores(args):
     else:
         execute(f'touch {args.replica_id_string}.ihs.out.100bins.norm')
 
+    if args.nsl_bins:
+        execute(f'norm --nsl --load-bins {args.nsl_bins} --files {args.replica_id_string}.nsl.out')
+    else:
+        execute(f'touch {args.replica_id_string}.nsl.out.100bins.norm')
+
+    if args.ihs12_bins:
+        execute(f'norm --ihs12 --load-bins {args.ihs12_bins} --files {args.replica_id_string}.ihs12.out')
+    else:
+        execute(f'touch {args.replica_id_string}.ihs12.out.norm')
+
     if not args.ihs_only:
         execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
                 f'--out {args.replica_id_string} ')

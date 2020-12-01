@@ -5,6 +5,7 @@ set -e -o pipefail -u -x
 TEST_INPUTS="multithread-test.wdl.json"
 
 womtool validate -i ${TEST_INPUTS} Dockstore.wdl
-time cromwell run -i ${TEST_INPUTS} Dockstore.wdl 
+time cromwell run -i ${TEST_INPUTS} -m tmp/test_run.$$.json Dockstore.wdl 
+
 
 
