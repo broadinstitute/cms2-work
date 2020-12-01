@@ -165,6 +165,8 @@ def parse_args():
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
     parser.add_argument('--ihs-only', action='store_true', help='only compute ihs')
     parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
+    parser.add_argument('--nsl-bins', help='use nsl bins for normalization')
+    parser.add_argument('--ihh12-bins', help='use ihh12 bins for normalization')
     
     return parser.parse_args()
 
