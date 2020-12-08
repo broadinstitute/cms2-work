@@ -189,7 +189,6 @@ task compute_cms2_components_for_one_replica {
     File? ihh12_bins
     Int? n_bins_ihs
     Int n_bins_nsl
-    Int n_bins_ihh12
 
     Int threads
     Int mem_base_gb
@@ -295,6 +294,8 @@ workflow compute_cms2_components {
       ihs_bins=compute_normalization_values.norm_bins_ihs,
       nsl_bins=compute_normalization_values.norm_bins_nsl,
       ihh12_bins=compute_normalization_values.norm_bins_ihh12,
+      n_bins_ihs=n_bins_ihs,
+      n_bins_nsl=n_bins_nsl,
       script=script,
       threads=threads,
       mem_base_gb=mem_base_gb,
