@@ -166,6 +166,9 @@ def parse_args():
     parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
     parser.add_argument('--nsl-bins', help='use nsl bins for normalization')
     parser.add_argument('--ihh12-bins', help='use ihh12 bins for normalization')
+    parser.add_argument('--n-bins-ihs', type=int, default=100, help='number of ihs bins')
+    parser.add_argument('--n-bins-nsl', type=int, default=100, help='number of nsl bins')
+    
     
     return parser.parse_args()
 
@@ -295,16 +298,18 @@ def compute_component_scores(args):
                 f'--out {args.replica_id_string}__altpop_{alt_pop} ')
 
     if args.ihs_bins:
-        execute(f'norm --ihs --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '
-                f'--log {args.replica_id_string}.ihs.out.100bins.norm.log ')
+        execute(f'norm --ihs --bins {args.n_bins_ihs} --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '
+                f'--log {args.replica_id_string}.ihs.out.{args.n_bins_ihs}bins.norm.log ')
     else:
-        execute(f'touch {args.replica_id_string}.ihs.out.100bins.norm {args.replica_id_string}.ihs.out.100bins.norm.log')
+        execute(f'touch {args.replica_id_string}.ihs.out.{args.n_bins_ihs}bins.norm '
+                f'{args.replica_id_string}.ihs.out.{args.n_bins_ihs}bins.norm.log')
 
     if args.nsl_bins:
-        execute(f'norm --nsl --load-bins {args.nsl_bins} --files {args.replica_id_string}.nsl.out '
-                f'--log {args.replica_id_string}.nsl.out.100bins.norm.log ')
+        execute(f'norm --nsl --bins {args.n_bins_nsl} --load-bins {args.nsl_bins} --files {args.replica_id_string}.nsl.out '
+                f'--log {args.replica_id_string}.nsl.out.{args.n_bins_nsl}bins.norm.log ')
     else:
-        execute(f'touch {args.replica_id_string}.nsl.out.100bins.norm {args.replica_id_string}.nsl.out.100bins.norm.log')
+        execute(f'touch {args.replica_id_string}.nsl.out.{args.n_bins_nsl}bins.norm '
+                f'{args.replica_id_string}.nsl.out.{args.n_bins_nsl}bins.norm.log')
 
     if args.ihh12_bins:
         execute(f'norm --ihh12 --load-bins {args.ihh12_bins} --files {args.replica_id_string}.ihh12.out '

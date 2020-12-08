@@ -76,6 +76,9 @@ task compute_normalization_values {
     Array[File] nsl_out
     Array[File] ihh12_out
 
+    Int n_bins_ihs
+    Int n_bins_nsl
+
     Int threads
     Int mem_base_gb
     Int mem_per_thread_gb
@@ -84,15 +87,18 @@ task compute_normalization_values {
   }
 
   command <<<
-    norm --ihs --files @~{write_lines(ihs_out)} --save-bins norm_bins_ihs.dat --only-save-bins
-    norm --nsl --files @~{write_lines(nsl_out)} --save-bins norm_bins_nsl.dat --only-save-bins
-    norm --ihh12 --files @~{write_lines(ihh12_out)} --save-bins norm_bins_ihh12.dat --only-save-bins
+    norm --ihs --bins ~{n_bins_ihs} --files @~{write_lines(ihs_out)} --save-bins norm_bins_ihs.dat --only-save-bins --log norm_bins_ihs.log
+    norm --nsl --bins ~{n_bins_nsl} --files @~{write_lines(nsl_out)} --save-bins norm_bins_nsl.dat --only-save-bins --log norm_bins_nsl.log
+    norm --ihh12 --files @~{write_lines(ihh12_out)} --save-bins norm_bins_ihh12.dat --only-save-bins --log norm_bins_ihh12.log
   >>>
 
   output {
     File norm_bins_ihs = "norm_bins_ihs.dat"
     File norm_bins_nsl = "norm_bins_nsl.dat"
     File norm_bins_ihh12 = "norm_bins_nsl.dat"
+    File norm_bins_ihs_log = "norm_bins_ihs.log"
+    File norm_bins_nsl_log = "norm_bins_nsl.log"
+    File norm_bins_ihh12_log = "norm_bins_ihh12.log"
   }
 
   runtime {
@@ -104,65 +110,68 @@ task compute_normalization_values {
 }
 
 
-task compute_normed_scores {
-  meta {
-    description: "Compute CMS2 normed scores"
-    email: "ilya_shl@alum.mit.edu"
-  }
-  input {
-    Array[File] ihs_raw
-    File ihs_bins
+# task compute_normed_scores {
+#   meta {
+#     description: "Compute CMS2 normed scores"
+#     email: "ilya_shl@alum.mit.edu"
+#   }
+#   input {
+#     Array[File] ihs_raw
+#     File ihs_bins
 
-    Array[File] nsl_raw
-    File nsl_bins
+#     Array[File] nsl_raw
+#     File nsl_bins
 
-    Array[File] ihh12_raw
-    File ihh12_bins
+#     Array[File] ihh12_raw
+#     File ihh12_bins
 
-    Int threads
-    Int mem_base_gb
-    Int mem_per_thread_gb
-    Int local_disk_gb
-    String docker
-  }
+#     Int n_bins_ihs
+#     Int n_bins_nsl
 
-  String ihs_bins_log = ihs_bins + ".log"
-  String nsl_bins_log = nsl_bins + ".log"
-  String ihh12_bins_log = ihh12_bins + ".log"
+#     Int threads
+#     Int mem_base_gb
+#     Int mem_per_thread_gb
+#     Int local_disk_gb
+#     String docker
+#   }
 
-  command <<<
-    cp ~{write_lines(ihs_raw)} ihs_raw_files.list.txt
-    norm --ihs --files @ihs_raw_files.list.txt --load-bins ~{ihs_bins} --save-bins norm_bins_used_ihs.dat --log ~{ihs_bins_log}
-    cat ihs_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.100bins.normed normed_$(basename YYY)'
+#   String ihs_bins_log = ihs_bins + ".log"
+#   String nsl_bins_log = nsl_bins + ".log"
+#   String ihh12_bins_log = ihh12_bins + ".log"
 
-    cp ~{write_lines(nsl_raw)} nsl_raw_files.list.txt
-    norm --nsl --files @nsl_raw_files.list.txt --load-bins ~{nsl_bins} --save-bins norm_bins_used_nsl.dat --log ~{nsl_bins_log}
-    cat nsl_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.100bins.normed normed_$(basename YYY)'
+#   command <<<
+#     cp ~{write_lines(ihs_raw)} ihs_raw_files.list.txt
+#     norm --ihs --files @ihs_raw_files.list.txt --load-bins ~{ihs_bins} --save-bins norm_bins_used_ihs.dat --log ~{ihs_bins_log}
+#     cat ihs_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.~{n_bins_ihs}bins.normed normed_$(basename YYY)'
 
-    cp ~{write_lines(ihh12_raw)} ihh12_raw_files.list.txt
-    norm --ihh12 --files @ihh12_raw_files.list.txt --load-bins ~{ihh12_bins} --save-bins norm_bins_used_ihh12.dat --log ~{ihh12_bins_log}
-    cat ihh12_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.normed normed_$(basename YYY)'
-  >>>
+#     cp ~{write_lines(nsl_raw)} nsl_raw_files.list.txt
+#     norm --nsl --files @nsl_raw_files.list.txt --load-bins ~{nsl_bins} --save-bins norm_bins_used_nsl.dat --log ~{nsl_bins_log}
+#     cat nsl_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.~{n_bins_nsl}bins.normed normed_$(basename YYY)'
 
-  output {
-    File norm_bins_ihs = "norm_bins_used_ihs.dat"
-    Array[File] normed_ihs_out = prefix("normed_", ihs_raw)
-    File norm_bins_ihs_log = ihs_bins_log
-    File norm_bins_nsl = "norm_bins_used_nsl.dat"
-    Array[File] normed_nsl_out = prefix("normed_", nsl_raw)
-    File norm_bins_nsl_log = nsl_bins_log
-    File norm_bins_ihh12 = "norm_bins_used_ihh12.dat"
-    Array[File] normed_ihh12_out = prefix("normed_", ihh12_raw)
-    File norm_bins_ihh12_log = ihh12_bins_log
-  }
+#     cp ~{write_lines(ihh12_raw)} ihh12_raw_files.list.txt
+#     norm --ihh12 --files @ihh12_raw_files.list.txt --load-bins ~{ihh12_bins} --save-bins norm_bins_used_ihh12.dat --log ~{ihh12_bins_log}
+#     cat ihh12_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.normed normed_$(basename YYY)'
+#   >>>
 
-  runtime {
-    docker: docker
-    memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
-    cpu: threads
-    disks: "local-disk " + local_disk_gb + " LOCAL"
-  }
-}
+#   output {
+#     File norm_bins_ihs = "norm_bins_used_ihs.dat"
+#     Array[File] normed_ihs_out = prefix("normed_", ihs_raw)
+#     File norm_bins_ihs_log = ihs_bins_log
+#     File norm_bins_nsl = "norm_bins_used_nsl.dat"
+#     Array[File] normed_nsl_out = prefix("normed_", nsl_raw)
+#     File norm_bins_nsl_log = nsl_bins_log
+#     File norm_bins_ihh12 = "norm_bins_used_ihh12.dat"
+#     Array[File] normed_ihh12_out = prefix("normed_", ihh12_raw)
+#     File norm_bins_ihh12_log = ihh12_bins_log
+#   }
+
+#   runtime {
+#     docker: docker
+#     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
+#     cpu: threads
+#     disks: "local-disk " + local_disk_gb + " LOCAL"
+#   }
+# }
 
 
 task compute_cms2_components_for_one_replica {
@@ -178,6 +187,9 @@ task compute_cms2_components_for_one_replica {
     File? ihs_bins
     File? nsl_bins
     File? ihh12_bins
+    Int? n_bins_ihs
+    Int n_bins_nsl
+    Int n_bins_ihh12
 
     Int threads
     Int mem_base_gb
@@ -191,9 +203,9 @@ task compute_cms2_components_for_one_replica {
   String replica_id_string = basename(replica_output)
   String script_used_name = "script-used." + basename(script)
   String ihs_out_fname = replica_id_string + ".ihs.out"
-  String ihs_normed_out_fname = replica_id_string + ".ihs.out.100bins.norm"
+  String ihs_normed_out_fname = replica_id_string + ".ihs.out." + n_bins_ihs + "bins.norm"
   String ihs_normed_out_log_fname = ihs_normed_out_fname + ".log"
-  String nsl_normed_out_fname = replica_id_string + ".nsl.out.100bins.norm"
+  String nsl_normed_out_fname = replica_id_string + ".nsl.out." + n_bins_nsl + "bins.norm"
   String nsl_normed_out_log_fname = nsl_normed_out_fname + ".log"
   String ihh12_normed_out_fname = replica_id_string + ".ihh12.out.norm"
   String ihh12_normed_out_log_fname = ihh12_normed_out_fname + ".log"
@@ -202,7 +214,7 @@ task compute_cms2_components_for_one_replica {
     tar xvfz ~{replica_output}
 
     cp ~{script} ~{script_used_name}
-    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop} --threads ~{threads} ~{"--ihs-bins " + ihs_bins} ~{"--nsl-bins " + nsl_bins} ~{"--ihh12-bins " + ihh12_bins}
+    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop} --threads ~{threads} ~{"--ihs-bins " + ihs_bins} ~{"--nsl-bins " + nsl_bins} ~{"--ihh12-bins " + ihh12_bins} ~{"--n-bins-ihs " + n_bins_ihs} ~{"--n-bins-nsl " + n_bins_nsl}
   >>>
 
   output {
@@ -236,7 +248,8 @@ workflow compute_cms2_components {
     Int sel_pop
     File script
 
-    Int n_bins = 100
+    Int n_bins_ihs = 100
+    Int n_bins_nsl = 100
     Int threads = 1
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
@@ -249,6 +262,8 @@ workflow compute_cms2_components {
       input:
       replica_output=neutral_replica_output,
       sel_pop=sel_pop,
+      n_bins_ihs=n_bins_ihs,
+      n_bins_nsl=n_bins_nsl,
       script=script,
       threads=threads,
       mem_base_gb=mem_base_gb,
@@ -263,6 +278,8 @@ workflow compute_cms2_components {
     ihs_out=compute_components_for_neutral.ihs,
     nsl_out=compute_components_for_neutral.nsl,
     ihh12_out=compute_components_for_neutral.ihh12,
+    n_bins_ihs=n_bins_ihs,
+    n_bins_nsl=n_bins_nsl,
     threads=1,
     mem_base_gb=64,
     mem_per_thread_gb=0,
