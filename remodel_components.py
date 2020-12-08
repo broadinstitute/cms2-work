@@ -163,7 +163,6 @@ def parse_args():
     parser.add_argument('--replica-id-string')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
-    parser.add_argument('--ihs-only', action='store_true', help='only compute ihs')
     parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
     parser.add_argument('--nsl-bins', help='use nsl bins for normalization')
     parser.add_argument('--ihh12-bins', help='use ihh12 bins for normalization')
@@ -280,36 +279,38 @@ def compute_component_scores(args):
     replicaInfo = _json_loadf(args.replica_info)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     this_pop_idx = pop_id_to_idx[args.sel_pop]
-    if not args.ihs_only:
-        execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
-                f'--out {args.replica_id_string} ')
+
+    execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+            f'--out {args.replica_id_string} ')
     execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
             f'--out {args.replica_id_string} ')
 
+    execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+            f'--out {args.replica_id_string} ')
+    for alt_pop in replicaInfo['popIds']:
+        if alt_pop == args.sel_pop: continue
+        alt_pop_idx = pop_id_to_idx[alt_pop]
+        execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+                f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
+                f'--out {args.replica_id_string}__altpop_{alt_pop} ')
+
     if args.ihs_bins:
-        execute(f'norm --ihs --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out')
+        execute(f'norm --ihs --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '
+                f'--log {args.replica_id_string}.ihs.out.100bins.norm.log ')
     else:
-        execute(f'touch {args.replica_id_string}.ihs.out.100bins.norm')
+        execute(f'touch {args.replica_id_string}.ihs.out.100bins.norm {args.replica_id_string}.ihs.out.100bins.norm.log')
 
     if args.nsl_bins:
-        execute(f'norm --nsl --load-bins {args.nsl_bins} --files {args.replica_id_string}.nsl.out')
+        execute(f'norm --nsl --load-bins {args.nsl_bins} --files {args.replica_id_string}.nsl.out '
+                f'--log {args.replica_id_string}.nsl.out.100bins.norm.log ')
     else:
-        execute(f'touch {args.replica_id_string}.nsl.out.100bins.norm')
+        execute(f'touch {args.replica_id_string}.nsl.out.100bins.norm {args.replica_id_string}.nsl.out.100bins.norm.log')
 
     if args.ihh12_bins:
-        execute(f'norm --ihh12 --load-bins {args.ihh12_bins} --files {args.replica_id_string}.ihh12.out')
+        execute(f'norm --ihh12 --load-bins {args.ihh12_bins} --files {args.replica_id_string}.ihh12.out '
+                f'--log {args.replica_id_string}.ihh12.out.norm.log ')
     else:
-        execute(f'touch {args.replica_id_string}.ihh12.out.norm')
-
-    if not args.ihs_only:
-        execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
-                f'--out {args.replica_id_string} ')
-        for alt_pop in replicaInfo['popIds']:
-            if alt_pop == args.sel_pop: continue
-            alt_pop_idx = pop_id_to_idx[alt_pop]
-            execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
-                    f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
-                    f'--out {args.replica_id_string}__altpop_{alt_pop} ')
+        execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
 
 if __name__=='__main__':
   compute_component_scores(parse_args())

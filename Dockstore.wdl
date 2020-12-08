@@ -126,27 +126,34 @@ task compute_normed_scores {
     String docker
   }
 
+  String ihs_bins_log = ihs_bins + ".log"
+  String nsl_bins_log = nsl_bins + ".log"
+  String ihh12_bins_log = ihh12_bins + ".log"
+
   command <<<
     cp ~{write_lines(ihs_raw)} ihs_raw_files.list.txt
-    norm --ihs --files @ihs_raw_files.list.txt --load-bins ~{ihs_bins} --save-bins norm_bins_used_ihs.dat
+    norm --ihs --files @ihs_raw_files.list.txt --load-bins ~{ihs_bins} --save-bins norm_bins_used_ihs.dat --log ~{ihs_bins_log}
     cat ihs_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.100bins.normed normed_$(basename YYY)'
 
     cp ~{write_lines(nsl_raw)} nsl_raw_files.list.txt
-    norm --nsl --files @nsl_raw_files.list.txt --load-bins ~{nsl_bins} --save-bins norm_bins_used_nsl.dat
+    norm --nsl --files @nsl_raw_files.list.txt --load-bins ~{nsl_bins} --save-bins norm_bins_used_nsl.dat --log ~{nsl_bins_log}
     cat nsl_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.100bins.normed normed_$(basename YYY)'
 
     cp ~{write_lines(ihh12_raw)} ihh12_raw_files.list.txt
-    norm --ihh12 --files @ihh12_raw_files.list.txt --load-bins ~{ihh12_bins} --save-bins norm_bins_used_ihh12.dat
+    norm --ihh12 --files @ihh12_raw_files.list.txt --load-bins ~{ihh12_bins} --save-bins norm_bins_used_ihh12.dat --log ~{ihh12_bins_log}
     cat ihh12_raw_files.list.txt | xargs -I YYY -- sh -c 'mv YYY.normed normed_$(basename YYY)'
   >>>
 
   output {
     File norm_bins_ihs = "norm_bins_used_ihs.dat"
     Array[File] normed_ihs_out = prefix("normed_", ihs_raw)
+    File norm_bins_ihs_log = ihs_bins_log
     File norm_bins_nsl = "norm_bins_used_nsl.dat"
     Array[File] normed_nsl_out = prefix("normed_", nsl_raw)
+    File norm_bins_nsl_log = nsl_bins_log
     File norm_bins_ihh12 = "norm_bins_used_ihh12.dat"
     Array[File] normed_ihh12_out = prefix("normed_", ihh12_raw)
+    File norm_bins_ihh12_log = ihh12_bins_log
   }
 
   runtime {
@@ -185,8 +192,11 @@ task compute_cms2_components_for_one_replica {
   String script_used_name = "script-used." + basename(script)
   String ihs_out_fname = replica_id_string + ".ihs.out"
   String ihs_normed_out_fname = replica_id_string + ".ihs.out.100bins.norm"
+  String ihs_normed_out_log_fname = ihs_normed_out_fname + ".log"
   String nsl_normed_out_fname = replica_id_string + ".nsl.out.100bins.norm"
+  String nsl_normed_out_log_fname = nsl_normed_out_fname + ".log"
   String ihh12_normed_out_fname = replica_id_string + ".ihh12.out.norm"
+  String ihh12_normed_out_log_fname = ihh12_normed_out_fname + ".log"
 
   command <<<
     tar xvfz ~{replica_output}
@@ -200,9 +210,12 @@ task compute_cms2_components_for_one_replica {
     File ihh12 = replica_id_string + ".ihh12.out"
     File ihs = ihs_out_fname
     File ihs_normed = ihs_normed_out_fname
+    File ihs_normed_log = ihs_normed_out_log_fname
     File nsl = replica_id_string + ".nsl.out"
     File nsl_normed = nsl_normed_out_fname
+    File nsl_normed_log = nsl_normed_out_log_fname
     File ihh12_normed = ihh12_normed_out_fname
+    File ihh12_normed_log = ihh12_normed_out_log_fname
     Array[File] xpehh = glob("*.xpehh.out")
     Int threads_used = threads
     File script_used = script_used_name
