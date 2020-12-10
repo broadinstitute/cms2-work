@@ -183,10 +183,17 @@ def run_one_replica(replicaNum, args, paramFile):
         f'--drop-singletons .25 --tped {tpedPrefix} )'
         )
 
+    no_sweep = dict(selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.,)
+
     def _load_sweep_info():
-        simNum, selPop, selGen, selBegPop, selBegGen, selCoeff, selFreq = map(float, slurp_file(sweepInfoFile).strip().split())
-        return dict(selPop=int(selPop), selGen=selGen, selBegPop=int(selBegPop), 
-                    selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
+        result = copy.deepcopy(no_sweep)
+        try:
+            simNum, selPop, selGen, selBegPop, selBegGen, selCoeff, selFreq = map(float, slurp_file(sweepInfoFile).strip().split())
+            result = dict(selPop=int(selPop), selGen=selGen, selBegPop=int(selBegPop),
+                          selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
+        except Exception as e:
+            _log.warning(f'Could not load sweep info file {sweepInfoFile}: {e}')
+        return result
 
     replicaInfo = dict(replicaId=dict(blockNum=args.blockNum,
                                       replicaNumInBlock=replicaNum,
@@ -199,7 +206,7 @@ def run_one_replica(replicaNum, args, paramFile):
                                       modelIdParts=[os.path.basename(args.paramFileCommon),
                                                     os.path.basename(args.paramFile)],
                                       popIds=popIds, popNames=popNames,
-                                      sweepInfo=dict(selPop=0, selGen=0., selBegPop=0, selBegGen=0., selCoeff=0., selFreq=0.,)))
+                                      sweepInfo=copy.deepcopy(no_sweep)))
     try:
         _run(cosi2_cmd, timeout=args.repTimeoutSeconds)
         # TODO: parse param file for list of pops, and check that we get all the files.

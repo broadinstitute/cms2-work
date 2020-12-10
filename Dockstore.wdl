@@ -3,8 +3,23 @@ version 1.0
 #
 # tofix:
 
+#   - add proper automated CI with deployment to terra and tagging of workflow versions by code version and saving of version as output
+#   - add ability to run things with caching locally
+
+#
+#   - add collation step
+#   - add automatic generation of summary plots
+#        - including for the distribution of present-day freqs, and other params chosen from distributions
+#
+
 #   - fix odd ihs norm scores
 #   - add taking max of relevant xpop scores
+
+#   - add ability to define super-pops for comparison
+#   - add steps to compute 
+
+#
+#   - break up computation of components
 #
 
 #
@@ -30,6 +45,7 @@ version 1.0
 #
 # Computation of CMS2 component scores
 #
+
 
 struct SweepInfo {
   Int  selPop
@@ -66,15 +82,141 @@ struct ReplicaInfo {
   Float durationSeconds
 }
 
+task cosi2_run_one_sim_block {
+  meta {
+    description: "Run one block of cosi2 simulations for one demographic model."
+    email: "ilya_shl@alum.mit.edu"
+  }
+
+  parameter_meta {
+    # Inputs
+    ## required
+    paramFile: "parts cosi2 parameter file (concatenated to form the parameter file)"
+    recombFile: "recombination map"
+    simBlockId: "an ID of this simulation block (e.g. block number in a list of blocks)."
+
+    ## optional
+    numRepsPerBlock: "number of simulations in this block"
+    maxAttempts: "max number of attempts to simulate forward frequency trajectory before failing"
+
+    # Outputs
+    replicaInfos: "array of replica infos"
+  }
+
+  input {
+    File         paramFileCommon
+    File         paramFile
+    File         recombFile
+    String       simBlockId
+    String       modelId
+    Int          blockNum
+    Int          numBlocks
+    Int          numRepsPerBlock = 1
+    Int          numCpusPerBlock = numRepsPerBlock
+    Int          maxAttempts = 10000000
+    Int          repTimeoutSeconds = 300
+    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
+    String       memoryPerBlock = "3 GB"
+    Int          preemptible = 3
+    File         taskScript
+  }
+
+  String tpedPrefix = "tpeds__${simBlockId}"
+
+  command <<<
+    python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
+      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --numBlocks ~{numBlocks} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --tpedPrefix ~{tpedPrefix} --outJson replicaInfos.json
+  >>>
+
+  output {
+    Array[ReplicaInfo] replicaInfos = read_json("replicaInfos.json").replicaInfos
+    Array[File] tpeds_tar_gz = prefix(tpedPrefix + "__tar_gz__rep_", range(numRepsPerBlock))
+
+#    String      cosi2_docker_used = ""
+  }
+  runtime {
+#    docker: "quay.io/ilya_broad/cms-dev:2.0.1-15-gd48e1db-is-cms2-new"
+    docker: cosi2_docker
+    memory: memoryPerBlock
+    cpu: numCpusPerBlock
+    dx_instance_type: "mem1_ssd1_v2_x4"
+    preemptible: preemptible
+    volatile: true  # FIXME: not volatile if random seeds specified
+  }
+}
+
+
+# task run_sims_cosi2 {
+#     meta {
+#       description: "Run a set of cosi2 simulations for one or more demographic models."
+#       author: "Ilya Shlyakhter"
+#       email: "ilya_shl@alum.mit.edu"
+#     }
+
+#     parameter_meta {
+#       paramFiles: "cosi2 parameter files specifying the demographic model (paramFileCommon is prepended to each)"
+#       recombFile: "Recombination map from which map of each simulated region is sampled"
+#       nreps: "Number of replicates for _each_ file in paramFiles"
+#     }
+
+#     input {
+#       String experimentId = "default"
+#       File paramFileCommon
+#       String modelId = "model_"+basename(paramFileCommon, ".par")
+#       Array[File] paramFiles
+#       File recombFile
+#       Int nreps = 1
+#       Int maxAttempts = 10000000
+#       Int numRepsPerBlock = 1
+#       Int numCpusPerBlock = numRepsPerBlock
+#       Int repTimeoutSeconds = 600
+#       String       memoryPerBlock = "3 GB"
+#       String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
+#       Int preemptible = 3
+#       File         taskScript
+#     }
+#     Int numBlocks = nreps / numRepsPerBlock
+#     #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
+
+#     scatter(paramFile_blockNum in cross(paramFiles, range(numBlocks))) {
+#       call cosi2_run_one_sim_block {
+#         input:
+#         paramFileCommon = paramFileCommon,
+#         paramFile = paramFile_blockNum.left,
+# 	recombFile=recombFile,
+#         modelId=modelId+"_"+basename(paramFile_blockNum.left, ".par"),
+# 	blockNum=paramFile_blockNum.right,
+# 	simBlockId=modelId+"_"+basename(paramFile_blockNum.left, ".par")+"__block_"+paramFile_blockNum.right+"__of_"+numBlocks,
+# 	numBlocks=numBlocks,
+# 	maxAttempts=maxAttempts,
+# 	repTimeoutSeconds=repTimeoutSeconds,
+# 	numRepsPerBlock=numRepsPerBlock,
+# 	numCpusPerBlock=numCpusPerBlock,
+# 	memoryPerBlock=memoryPerBlock,
+# 	cosi2_docker=cosi2_docker,
+# 	preemptible=preemptible,
+# 	taskScript=taskScript
+#       }
+#     }
+
+#     output {
+#       Array[ReplicaInfo] replicaInfos = flatten(cosi2_run_one_sim_block.replicaInfos)
+#       Array[File] tpeds_tar_gz = flatten(cosi2_run_one_sim_block.tpeds_tar_gz)
+#     }
+# }
+
 task compute_normalization_values {
   meta {
     description: "Compute CMS2 normalization values"
     email: "ilya_shl@alum.mit.edu"
   }
   input {
+    String out_fnames_base
     Array[File] ihs_out
     Array[File] nsl_out
     Array[File] ihh12_out
+    Int beg
+    Int n_files
 
     Int n_bins_ihs
     Int n_bins_nsl
@@ -87,18 +229,18 @@ task compute_normalization_values {
   }
 
   command <<<
-    norm --ihs --bins ~{n_bins_ihs} --files @~{write_lines(ihs_out)} --save-bins norm_bins_ihs.dat --only-save-bins --log norm_bins_ihs.log
-    norm --nsl --bins ~{n_bins_nsl} --files @~{write_lines(nsl_out)} --save-bins norm_bins_nsl.dat --only-save-bins --log norm_bins_nsl.log
-    norm --ihh12 --files @~{write_lines(ihh12_out)} --save-bins norm_bins_ihh12.dat --only-save-bins --log norm_bins_ihh12.log
+    norm --ihs --bins ~{n_bins_ihs} --files @<(tail +~{beg} ~{write_lines(ihs_out)} | head -~{n_files}) --save-bins ~{out_fnames_base}.norm_bins_ihs.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihs.log
+    norm --nsl --bins ~{n_bins_nsl} --files @<(tail +~{beg} ~{write_lines(nsl_out)} | head -~{n_files}) --save-bins ~{out_fnames_base}.norm_bins_nsl.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_nsl.log
+    norm --ihh12 --files @<(tail +~{beg} ~{write_lines(ihh12_out)} | head -~{n_files}) --save-bins ~{out_fnames_base}.norm_bins_ihh12.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihh12.log
   >>>
 
   output {
-    File norm_bins_ihs = "norm_bins_ihs.dat"
-    File norm_bins_nsl = "norm_bins_nsl.dat"
-    File norm_bins_ihh12 = "norm_bins_nsl.dat"
-    File norm_bins_ihs_log = "norm_bins_ihs.log"
-    File norm_bins_nsl_log = "norm_bins_nsl.log"
-    File norm_bins_ihh12_log = "norm_bins_ihh12.log"
+    File norm_bins_ihs = out_fnames_base + ".norm_bins_ihs.dat"
+    File norm_bins_nsl = out_fnames_base + ".norm_bins_nsl.dat"
+    File norm_bins_ihh12 = out_fnames_base + ".norm_bins_ihh12.dat"
+    File norm_bins_ihs_log = out_fnames_base + ".norm_bins_ihs.log"
+    File norm_bins_nsl_log = out_fnames_base + ".norm_bins_nsl.log"
+    File norm_bins_ihh12_log = out_fnames_base + ".norm_bins_ihh12.log"
   }
 
   runtime {
@@ -240,11 +382,132 @@ task compute_cms2_components_for_one_replica {
   }
 }
 
-workflow compute_cms2_components {
+task create_tar_gz {
+  meta {
+    description: "Combine files into a tar file"
+    email: "ilya_shl@alum.mit.edu"
+  }
   input {
-    Array[File] replica_outputs
-    Array[File] neutral_replica_outputs
-    Int sel_pop
+    Array[File] files
+    String out_basename = "out"
+  }
+  String out_fname_tar_gz = out_basename + ".tar.gz"
+  command <<<
+    tar cvfz ~{out_fname_tar_gz} ~{sep=" " files}
+  >>>
+  output {
+    File out_tar_gz = out_fname_tar_gz
+  }
+  runtime {
+    docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
+    memory: "500 MB"
+    cpu: 1
+    disks: "local-disk 1 LOCAL"
+  }
+}
+
+task get_pop_ids {
+  meta {
+    description: "Extract population ids from param file"
+    email: "ilya_shl@alum.mit.edu"
+  }
+  input {
+    File paramFile_demographic_model
+    Array[File] paramFiles_selection
+  }
+  command <<<
+  python <<CODE
+    import re
+    pop_ids = []
+    pop_names = []
+    with open(~{paramFile_demographic_model}) as dem_model:
+      for line in dem_model:
+        m = re.search(r'^\s*pop_define\s+(?P<pop_id>\d+)\s+(?P<pop_name>\w+)', line)
+        if m:
+          pop_id = m.group('pop_id')
+          pop_name = m.group('pop_name')
+          pop_ids.append(pop_id)
+          pop_names.append(pop_name)
+    with open('pop_ids.txt', 'w') as out:
+      out.write('\n'.join(pop_ids))
+    with open('pop_names.txt', 'w') as out:
+      out.write('\n'.join(pop_names))
+
+    sel_pops = []
+    for sweep_def in ~{sep="," paramFiles_selection}.split(','):
+      sel_pops_here = []
+      with open(sweep_def) as f:
+        for line in f:
+          m = re.search(r'^\s*pop_event\s+sweep_mult(?:_standing)?\s+"[^"]*"\s+(?P<sel_pop_id>\d+)\s+\d', line) # "
+          if m:
+            sel_pops_here.append(m.group('sel_pop_id'))
+      if len(sel_pops_here) != 1:
+        raise RuntimeError(f"Could not find sole sweep in {sweep_def}")
+      sel_pops.extend(sel_pops_here)
+    with open('sel_pop_ids.txt', 'w') at out:
+      out.write('\n'.join(sel_pops))
+  CODE
+  >>>
+  output {
+    Array[Int] pop_ids = read_lines("pop_ids.txt")
+    Array[String] pop_names = read_lines("pop_names.txt")
+    Array[Int] sel_pop_ids = read_lines("sel_pop_ids.txt")
+  }
+  runtime {
+    #docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
+    docker: "python@sha256:665fe0313c2c76ee88308e6d186df0cda152000e7c141ba38a6da6c14b78c1fd"
+    memory: "500 MB"
+    cpu: 1
+    disks: "local-disk 1 LOCAL"
+  }
+}
+
+workflow run_sims_and_compute_cms2_components {
+  meta {
+    description: "Run simulations and compute CMS2 component scores"
+    email: "ilya_shl@alum.mit.edu"
+  }
+  parameter_meta {
+    experimentId: "String identifying this computational experiment; used to name output files."
+    experiment_description: "Free-from string describing the analysis"
+    paramFileCommon: "The unvarying part of the parameter file"
+    modelId: "String identifying the demographic model"
+    paramFiles: "The varying part of the parameter file, appended to paramFileCommon; first element represents neutral model."
+    recombFile: "Recombination map from which map of each simulated region is sampled"
+    nreps_neutral: "Number of neutral replicates to simulate"
+    nreps: "Number of replicates for _each_ non-neutral file in paramFiles"
+  }
+
+  input {
+    #
+    # Simulation params
+    #
+
+    String experimentId = "default"
+    String experiment_description = "an experiment"
+    File paramFile_demographic_model
+    File paramFile_neutral
+    String modelId = "model_"+basename(paramFileCommon, ".par")
+    Array[File] paramFiles_selection
+    File recombFile
+    Int nreps_neutral
+    Int nreps = 1
+    Int maxAttempts = 10000000
+    Int numRepsPerBlock = 1
+    Int numCpusPerBlock = numRepsPerBlock
+    Int repTimeoutSeconds = 600
+    String       memoryPerBlock = "3 GB"
+    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
+    Int preemptible = 3
+    File taskScript_simulation
+
+    #
+    # Component score computation params
+    #
+
+    #Array[File] replica_outputs
+    #Array[File] neutral_replica_outputs
+
     File script
 
     Int n_bins_ihs = 100
@@ -256,44 +519,129 @@ workflow compute_cms2_components {
     String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
 
-  scatter(neutral_replica_output in neutral_replica_outputs) {
-    call compute_cms2_components_for_one_replica as compute_components_for_neutral {
+  Int numBlocksNeutral = nreps_neutral / numRepsPerBlock
+  Int numBlocks = nreps / numRepsPerBlock
+  #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
+  
+  call create_tar_gz as save_input_files {
+    input:
+       files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation, script], paramFiles_selection]),
+       out_basename = modelId
+  }
+
+  call get_pop_ids {
+    input:
+       paramFile_demographic_model = paramFile_demographic_model,
+       paramFiles_selection = paramFiles_selection
+  }
+
+  ####################################################
+  # Run neutral sims
+  ####################################################
+
+  scatter(blockNum in range(numBlocksNeutral)) {
+    call cosi2_run_one_sim_block as run_neutral_sims {
       input:
-      replica_output=neutral_replica_output,
-      sel_pop=sel_pop,
+      paramFileCommon = paramFile_demographic_model,
+      paramFile = paramFile_neutral,
+      recombFile=recombFile,
+      modelId=modelId+"_neutral",
+      blockNum=blockNum,
+      simBlockId=modelId+"_neutral__block_"+blockNum+"__of_"+numBlocksNeutral,
+      numBlocks=numBlocksNeutral,
+      maxAttempts=maxAttempts,
+      repTimeoutSeconds=repTimeoutSeconds,
+      numRepsPerBlock=numRepsPerBlock,
+      numCpusPerBlock=numCpusPerBlock,
+      memoryPerBlock=memoryPerBlock,
+      cosi2_docker=cosi2_docker,
+      preemptible=preemptible,
+      taskScript=taskScript_simulation
+    }
+  }
+
+  ####################################################
+  # Run selection sims
+  ####################################################
+
+  scatter(paramFile_blockNum in cross(paramFiles_selection, range(numBlocks))) {
+    call cosi2_run_one_sim_block as run_selection_sims {
+      input:
+      paramFileCommon = paramFile_demographic_model,
+      paramFile = paramFile_blockNum.left,
+      recombFile=recombFile,
+      modelId=modelId+"_"+basename(paramFile_blockNum.left, ".par"),
+      blockNum=paramFile_blockNum.right,
+      simBlockId=modelId+"_"+basename(paramFile_blockNum.left, ".par")+"__block_"+paramFile_blockNum.right+"__of_"+numBlocks,
+      numBlocks=numBlocks,
+      maxAttempts=maxAttempts,
+      repTimeoutSeconds=repTimeoutSeconds,
+      numRepsPerBlock=numRepsPerBlock,
+      numCpusPerBlock=numCpusPerBlock,
+      memoryPerBlock=memoryPerBlock,
+      cosi2_docker=cosi2_docker,
+      preemptible=preemptible,
+      taskScript=taskScript_simulation
+    }
+  }
+
+  ####################################################
+  # Compute CMS2 component stats for neutral sims
+  ####################################################
+
+
+  Array[Pair[Boolean,File]] neutral_sims = flatten(zip(run_neutral_sims.succeeded, run_neutral_sims.tpeds_tar_gz))
+  scatter(sel_pop in get_pop_ids.pop_ids) {
+    scatter(neut_sim in neutral_sims) {
+      Boolean neut_sim_succeeded = neut_sim.left
+      if (neut_sim_succeeded) {
+	call compute_cms2_components_for_one_replica as compute_cms2_components_for_neutral {
+	  input:
+	  sel_pop=sel_pop,
+	  replica_output=neut_sim.right,
+	  n_bins_ihs=n_bins_ihs,
+	  n_bins_nsl=n_bins_nsl,
+	  script=script,
+	  threads=threads,
+	  mem_base_gb=mem_base_gb,
+	  mem_per_thread_gb=mem_per_thread_gb,
+	  local_disk_gb=local_disk_gb,
+	  docker=docker
+	}
+      }
+    }
+    Pair[Int,File?] = 
+  }
+
+  scatter(pop_idx in range(get_pop_ids.pop_ids)) {
+    call compute_normalization_values {
+      input:
+      ihs_out=compute_cms2_components_for_neutral.ihs,
+      nsl_out=compute_cms2_components_for_neutral.nsl,
+      ihh12_out=compute_cms2_components_for_neutral.ihh12,
+      beg=pop_idx * length(flatten(run_neutral_sims.tpeds_tar_gz)),
+      n_files=length(flatten(run_neutral_sims.tpeds_tar_gz)),
       n_bins_ihs=n_bins_ihs,
       n_bins_nsl=n_bins_nsl,
-      script=script,
-      threads=threads,
-      mem_base_gb=mem_base_gb,
-      mem_per_thread_gb=mem_per_thread_gb,
+      threads=1,
+      mem_base_gb=64,
+      mem_per_thread_gb=0,
       local_disk_gb=local_disk_gb,
       docker=docker
     }
   }
 
-  call compute_normalization_values {
-    input:
-    ihs_out=compute_components_for_neutral.ihs,
-    nsl_out=compute_components_for_neutral.nsl,
-    ihh12_out=compute_components_for_neutral.ihh12,
-    n_bins_ihs=n_bins_ihs,
-    n_bins_nsl=n_bins_nsl,
-    threads=1,
-    mem_base_gb=64,
-    mem_per_thread_gb=0,
-    local_disk_gb=local_disk_gb,
-    docker=docker
-  }
-
-  scatter(replica_output in replica_outputs) {
-    call compute_cms2_components_for_one_replica {
+  scatter(sel_pop_idx__selection_replica_output in cross(length(get_pop_ids.pop_ids), flatten(run_selection_sims.tpeds_tar_gz))) {
+    Int sel_pop_idx = sel_pop_idx__selection_replica_output.left
+    Int sel_pop = get_pop_ids.pop_ids[sel_pop_idx]
+    File selection_replica_output = pop_idx__selection_replica_output.right
+    call compute_cms2_components_for_one_replica as compute_cms2_components_for_selection {
       input:
-      replica_output=replica_output,
       sel_pop=sel_pop,
-      ihs_bins=compute_normalization_values.norm_bins_ihs,
-      nsl_bins=compute_normalization_values.norm_bins_nsl,
-      ihh12_bins=compute_normalization_values.norm_bins_ihh12,
+      replica_output=selection_replica_output,
+      ihs_bins=compute_normalization_values.norm_bins_ihs[sel_pop_idx],
+      nsl_bins=compute_normalization_values.norm_bins_nsl[sel_pop_idx],
+      ihh12_bins=compute_normalization_values.norm_bins_ihh12[sel_pop_idx],
       n_bins_ihs=n_bins_ihs,
       n_bins_nsl=n_bins_nsl,
       script=script,
@@ -306,6 +654,9 @@ workflow compute_cms2_components {
   }
 
   output {
+    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.tpeds_tar_gz),
+    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.tpeds_tar_gz),
+
     Array[Object] replicaInfo_out = compute_cms2_components_for_one_replica.replicaInfo
     Array[File] ihh12out = compute_cms2_components_for_one_replica.ihh12
     Array[File] ihsout = compute_cms2_components_for_one_replica.ihs
@@ -315,6 +666,6 @@ workflow compute_cms2_components {
     Array[File] ihh12normedout = compute_cms2_components_for_one_replica.ihh12_normed
     Array[Array[File]] xpehhout = compute_cms2_components_for_one_replica.xpehh
     Int threads_used=threads
-    Array[File] script_used = compute_cms2_components_for_one_replica.script_used
+    File saved_input_files = save_input_files.out_tar_gz
   }
 }

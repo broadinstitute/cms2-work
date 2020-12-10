@@ -1,11 +1,14 @@
 {
-    "compute_cms2_components.replica_outputs": [
-	"tpeds__model_default_112115_825am__demography_sel1_origin1__block_0__of_4__tar_gz__rep_0"
-    ],
-    "compute_cms2_components.neutral_replica_outputs": 
-	["tpeds__model_default_112115_825am__demography_sel1_origin1__block_0__of_4__tar_gz__rep_0"],
-    "compute_cms2_components.sel_pop": 1,
-    "compute_cms2_components.script": "remodel_components.py",
-    "compute_cms2_components.threads": 8
+    "run_sims_and_compute_cms2_components.nreps_neutral": 4,
+    "run_sims_and_compute_cms2_components.nreps": 4,
+    "run_sims_and_compute_cms2_components.numRepsPerBlock": 2,
+    "run_sims_and_compute_cms2_components.paramFileCommon": "test.cosiParams",
+    "run_sims_and_compute_cms2_components.paramFiles": ["test.sweep.cosiParams"],
+    "run_sims_and_compute_cms2_components.recombFile": "test_recom.recom",
+
+
+    "run_sims_and_compute_cms2_components.taskScript_simulation": "runcosi.py",
+    "run_sims_and_compute_cms2_components.script": "remodel_components.py",
+    "run_sims_and_compute_cms2_components.threads": 8
 }
 
