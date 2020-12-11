@@ -215,8 +215,6 @@ task compute_normalization_values {
     Array[File] ihs_out
     Array[File] nsl_out
     Array[File] ihh12_out
-    Int beg
-    Int n_files
 
     Int n_bins_ihs
     Int n_bins_nsl
@@ -229,9 +227,9 @@ task compute_normalization_values {
   }
 
   command <<<
-    norm --ihs --bins ~{n_bins_ihs} --files @<(tail +~{beg} ~{write_lines(ihs_out)} | head -~{n_files}) --save-bins ~{out_fnames_base}.norm_bins_ihs.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihs.log
-    norm --nsl --bins ~{n_bins_nsl} --files @<(tail +~{beg} ~{write_lines(nsl_out)} | head -~{n_files}) --save-bins ~{out_fnames_base}.norm_bins_nsl.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_nsl.log
-    norm --ihh12 --files @<(tail +~{beg} ~{write_lines(ihh12_out)} | head -~{n_files}) --save-bins ~{out_fnames_base}.norm_bins_ihh12.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihh12.log
+    norm --ihs --bins ~{n_bins_ihs} --files @~{write_lines(ihs_out)} --save-bins ~{out_fnames_base}.norm_bins_ihs.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihs.log
+    norm --nsl --bins ~{n_bins_nsl} --files @~{write_lines(nsl_out)} --save-bins ~{out_fnames_base}.norm_bins_nsl.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_nsl.log
+    norm --ihh12 --files @~{write_lines(ihh12_out)} --save-bins ~{out_fnames_base}.norm_bins_ihh12.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihh12.log
   >>>
 
   output {
@@ -399,7 +397,8 @@ task create_tar_gz {
     File out_tar_gz = out_fname_tar_gz
   }
   runtime {
-    docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
+    docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    # docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
@@ -414,52 +413,37 @@ task get_pop_ids {
   input {
     File paramFile_demographic_model
     Array[File] paramFiles_selection
+    File pop_ids_script
   }
   command <<<
-  python <<CODE
-    import re
-    pop_ids = []
-    pop_names = []
-    with open(~{paramFile_demographic_model}) as dem_model:
-      for line in dem_model:
-        m = re.search(r'^\s*pop_define\s+(?P<pop_id>\d+)\s+(?P<pop_name>\w+)', line)
-        if m:
-          pop_id = m.group('pop_id')
-          pop_name = m.group('pop_name')
-          pop_ids.append(pop_id)
-          pop_names.append(pop_name)
-    with open('pop_ids.txt', 'w') as out:
-      out.write('\n'.join(pop_ids))
-    with open('pop_names.txt', 'w') as out:
-      out.write('\n'.join(pop_names))
-
-    sel_pops = []
-    for sweep_def in ~{sep="," paramFiles_selection}.split(','):
-      sel_pops_here = []
-      with open(sweep_def) as f:
-        for line in f:
-          m = re.search(r'^\s*pop_event\s+sweep_mult(?:_standing)?\s+"[^"]*"\s+(?P<sel_pop_id>\d+)\s+\d', line) # "
-          if m:
-            sel_pops_here.append(m.group('sel_pop_id'))
-      if len(sel_pops_here) != 1:
-        raise RuntimeError(f"Could not find sole sweep in {sweep_def}")
-      sel_pops.extend(sel_pops_here)
-    with open('sel_pop_ids.txt', 'w') at out:
-      out.write('\n'.join(sel_pops))
-  CODE
+    python3 ~{pop_ids_script} --dem-model ~{paramFile_demographic_model} --sweep-defs ~{sep=" " paramFiles_selection}
   >>>
   output {
     Array[Int] pop_ids = read_lines("pop_ids.txt")
     Array[String] pop_names = read_lines("pop_names.txt")
     Array[Int] sel_pop_ids = read_lines("sel_pop_ids.txt")
+    Map[Int,Int] pop_id_to_idx = read_json("pop_id_to_idx.json")
   }
   runtime {
+    docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     #docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
-    docker: "python@sha256:665fe0313c2c76ee88308e6d186df0cda152000e7c141ba38a6da6c14b78c1fd"
+    #docker: "python@sha256:665fe0313c2c76ee88308e6d186df0cda152000e7c141ba38a6da6c14b78c1fd"
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
   }
+}
+
+struct CMS2_Components_Result {
+   ReplicaInfo replicaInfo
+   File selection_sim_tar_gz
+   File ihsout
+   File ihsnormedout
+   File nslout
+   File nslnormedout
+   File ihh12out
+   File ihh12normedout
+   Array[File] xpehhout
 }
 
 workflow run_sims_and_compute_cms2_components {
@@ -470,9 +454,9 @@ workflow run_sims_and_compute_cms2_components {
   parameter_meta {
     experimentId: "String identifying this computational experiment; used to name output files."
     experiment_description: "Free-from string describing the analysis"
-    paramFileCommon: "The unvarying part of the parameter file"
+    paramFile_demographic_model: "The unvarying part of the parameter file"
     modelId: "String identifying the demographic model"
-    paramFiles: "The varying part of the parameter file, appended to paramFileCommon; first element represents neutral model."
+    paramFiles_selection: "The varying part of the parameter file, appended to paramFileCommon; first element represents neutral model."
     recombFile: "Recombination map from which map of each simulated region is sampled"
     nreps_neutral: "Number of neutral replicates to simulate"
     nreps: "Number of replicates for _each_ non-neutral file in paramFiles"
@@ -487,7 +471,7 @@ workflow run_sims_and_compute_cms2_components {
     String experiment_description = "an experiment"
     File paramFile_demographic_model
     File paramFile_neutral
-    String modelId = "model_"+basename(paramFileCommon, ".par")
+    String modelId = "model_"+basename(paramFile_demographic_model, ".par")
     Array[File] paramFiles_selection
     File recombFile
     Int nreps_neutral
@@ -516,6 +500,7 @@ workflow run_sims_and_compute_cms2_components {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
+    File pop_ids_script
     String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
 
@@ -532,7 +517,8 @@ workflow run_sims_and_compute_cms2_components {
   call get_pop_ids {
     input:
        paramFile_demographic_model = paramFile_demographic_model,
-       paramFiles_selection = paramFiles_selection
+       paramFiles_selection = paramFiles_selection,
+       pop_ids_script = pop_ids_script
   }
 
   ####################################################
@@ -590,10 +576,10 @@ workflow run_sims_and_compute_cms2_components {
   ####################################################
 
 
-  Array[Pair[Boolean,File]] neutral_sims = flatten(zip(run_neutral_sims.succeeded, run_neutral_sims.tpeds_tar_gz))
+  Array[Pair[ReplicaInfo,File]] neutral_sims = zip(flatten(run_neutral_sims.replicaInfos), flatten(run_neutral_sims.tpeds_tar_gz))
   scatter(sel_pop in get_pop_ids.pop_ids) {
     scatter(neut_sim in neutral_sims) {
-      Boolean neut_sim_succeeded = neut_sim.left
+      Boolean neut_sim_succeeded = neut_sim.left.succeeded
       if (neut_sim_succeeded) {
 	call compute_cms2_components_for_one_replica as compute_cms2_components_for_neutral {
 	  input:
@@ -610,17 +596,15 @@ workflow run_sims_and_compute_cms2_components {
 	}
       }
     }
-    Pair[Int,File?] = 
   }
 
-  scatter(pop_idx in range(get_pop_ids.pop_ids)) {
+  scatter(pop_idx in range(length(get_pop_ids.pop_ids))) {
     call compute_normalization_values {
       input:
-      ihs_out=compute_cms2_components_for_neutral.ihs,
-      nsl_out=compute_cms2_components_for_neutral.nsl,
-      ihh12_out=compute_cms2_components_for_neutral.ihh12,
-      beg=pop_idx * length(flatten(run_neutral_sims.tpeds_tar_gz)),
-      n_files=length(flatten(run_neutral_sims.tpeds_tar_gz)),
+      out_fnames_base = modelId,
+      ihs_out=select_all(compute_cms2_components_for_neutral.ihs[pop_idx]),
+      nsl_out=select_all(compute_cms2_components_for_neutral.nsl[pop_idx]),
+      ihh12_out=select_all(compute_cms2_components_for_neutral.ihh12[pop_idx]),
       n_bins_ihs=n_bins_ihs,
       n_bins_nsl=n_bins_nsl,
       threads=1,
@@ -631,41 +615,53 @@ workflow run_sims_and_compute_cms2_components {
     }
   }
 
-  scatter(sel_pop_idx__selection_replica_output in cross(length(get_pop_ids.pop_ids), flatten(run_selection_sims.tpeds_tar_gz))) {
-    Int sel_pop_idx = sel_pop_idx__selection_replica_output.left
-    Int sel_pop = get_pop_ids.pop_ids[sel_pop_idx]
-    File selection_replica_output = pop_idx__selection_replica_output.right
-    call compute_cms2_components_for_one_replica as compute_cms2_components_for_selection {
-      input:
-      sel_pop=sel_pop,
-      replica_output=selection_replica_output,
-      ihs_bins=compute_normalization_values.norm_bins_ihs[sel_pop_idx],
-      nsl_bins=compute_normalization_values.norm_bins_nsl[sel_pop_idx],
-      ihh12_bins=compute_normalization_values.norm_bins_ihh12[sel_pop_idx],
-      n_bins_ihs=n_bins_ihs,
-      n_bins_nsl=n_bins_nsl,
-      script=script,
-      threads=threads,
-      mem_base_gb=mem_base_gb,
-      mem_per_thread_gb=mem_per_thread_gb,
-      local_disk_gb=local_disk_gb,
-      docker=docker
+  Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.tpeds_tar_gz))
+  scatter(sel_sim in selection_sims) {
+    ReplicaInfo replicaInfo = sel_sim.left
+    if (replicaInfo.succeeded) {
+      Int sel_pop = replicaInfo.modelInfo.sweepInfo.selPop
+      Int sel_pop_idx = get_pop_ids.pop_id_to_idx[sel_pop]
+      call compute_cms2_components_for_one_replica as compute_cms2_components_for_selection {
+	input:
+	sel_pop=sel_pop,
+	replica_output=sel_sim.right,
+	n_bins_ihs=n_bins_ihs,
+	n_bins_nsl=n_bins_nsl,
+	ihs_bins=compute_normalization_values.norm_bins_ihs[sel_pop_idx],
+	nsl_bins=compute_normalization_values.norm_bins_nsl[sel_pop_idx],
+	ihh12_bins=compute_normalization_values.norm_bins_ihh12[sel_pop_idx],
+	script=script,
+	threads=threads,
+	mem_base_gb=mem_base_gb,
+	mem_per_thread_gb=mem_per_thread_gb,
+	local_disk_gb=local_disk_gb,
+	docker=docker
+      }
+      CMS2_Components_Result sel_components_result = object {
+	replicaInfo: replicaInfo,
+	selection_sim_tar_gz: sel_sim.right,
+	ihsout: compute_cms2_components_for_selection.ihs,
+	ihsnormedout: compute_cms2_components_for_selection.ihs_normed,
+	nslout: compute_cms2_components_for_selection.nsl,
+	nslnormedout: compute_cms2_components_for_selection.nsl_normed,
+	ihh12out: compute_cms2_components_for_selection.ihh12,
+	ihh12normedout: compute_cms2_components_for_selection.ihh12_normed,
+	xpehhout: compute_cms2_components_for_selection.xpehh
+      }
     }
   }
 
   output {
-    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.tpeds_tar_gz),
-    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.tpeds_tar_gz),
-
-    Array[Object] replicaInfo_out = compute_cms2_components_for_one_replica.replicaInfo
-    Array[File] ihh12out = compute_cms2_components_for_one_replica.ihh12
-    Array[File] ihsout = compute_cms2_components_for_one_replica.ihs
-    Array[File] ihsnormedout = compute_cms2_components_for_one_replica.ihs_normed
-    Array[File] nslout = compute_cms2_components_for_one_replica.nsl
-    Array[File] nslnormedout = compute_cms2_components_for_one_replica.nsl_normed
-    Array[File] ihh12normedout = compute_cms2_components_for_one_replica.ihh12_normed
-    Array[Array[File]] xpehhout = compute_cms2_components_for_one_replica.xpehh
-    Int threads_used=threads
+    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.tpeds_tar_gz)
+    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.tpeds_tar_gz)
+    Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
+    Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     File saved_input_files = save_input_files.out_tar_gz
+    Array[Int] pop_ids = get_pop_ids.pop_ids
+    Array[String] pop_names = get_pop_ids.pop_names
+    Array[Int] sel_pop_ids = get_pop_ids.sel_pop_ids
+    Map[String,String] pop_id_to_idx = get_pop_ids.pop_id_to_idx
+    
+    Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }
 }
