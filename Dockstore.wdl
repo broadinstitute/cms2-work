@@ -212,9 +212,9 @@ task compute_normalization_values {
   }
   input {
     String out_fnames_base
-    Array[File] ihs_out
-    Array[File] nsl_out
-    Array[File] ihh12_out
+    Array[File]+ ihs_out
+    Array[File]+ nsl_out
+    Array[File]+ ihh12_out
 
     Int n_bins_ihs
     Int n_bins_nsl

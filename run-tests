@@ -5,7 +5,19 @@ set -e -o pipefail -u -x
 TEST_INPUTS="multithread-test.wdl.json"
 
 womtool validate -i ${TEST_INPUTS} Dockstore.wdl
-time cromwell run -i ${TEST_INPUTS} -m tmp/test_run.$$.json Dockstore.wdl 
+#cp test.cosiParams test.neutral.cosiParams test.sweep.cosiParams test_recom.recom get_pop_ids.py runcosi.py remodel_components.py multithread-test.wdl.json Dockstore.wdl /data/ilya-work/sw/cromwell/scripts/docker-compose-mysql/cromwell-executions
+#time cromwell run -i ${TEST_INPUTS} -m tmp/test_run.$$.json Dockstore.wdl
+#pushd /data/ilya-work/sw/cromwell/scripts/docker-compose-mysql
+TMP_INPUTS="/data/$$.${TEST_INPUTS}"
+sed s#./#$PWD/#g ${TEST_INPUTS} > ${TMP_INPUTS}
+oliver submit $PWD/Dockstore.wdl ${TMP_INPUTS}
+
+
+
+
+
+
+
 
 
 

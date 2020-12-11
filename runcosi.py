@@ -213,7 +213,7 @@ def run_one_replica(replicaNum, args, paramFile):
         sweepInfo = _load_sweep_info()
         replicaInfo['modelInfo'].update(sweepInfo=sweepInfo)
         tpedFiles = [f'{tpedPrefix}_0_{popId}.tped' for popId in popIds]
-        replicaInfoCopy = replicaInfo.copy()
+        replicaInfoCopy = copy.deepcopy(replicaInfo)
         replicaInfoCopy.update(succeeded=True)
         _write_json(fname=replicaInfoJsonFile,
                     json_val=dict(replicaInfo=replicaInfoCopy,
@@ -224,7 +224,9 @@ def run_one_replica(replicaNum, args, paramFile):
                                   paramFile=paramFileCopyFile))
         shutil.copyfile(src=paramFile, dst=paramFileCopyFile)
         tpedFilesJoined = " ".join(tpedFiles)
-        _run(f'tar cvfz {tpeds_tar_gz} {tpedFilesJoined} {trajFile} {paramFileCopyFile} {replicaInfoJsonFile}')
+        trajFile_which = trajFile if os.path.isfile(trajFile) else ''
+        _run(f'tar cvfz {tpeds_tar_gz} {tpedFilesJoined} {trajFile_which} '
+             f'{paramFileCopyFile} {replicaInfoJsonFile}')
         replicaInfo.update(succeeded=True)
     except subprocess.SubprocessError as subprocessError:
         _log.warning(f'command "{cosi2_cmd}" failed with {subprocessError}')
