@@ -660,7 +660,7 @@ workflow run_sims_and_compute_cms2_components {
     Array[Int] pop_ids = get_pop_ids.pop_ids
     Array[String] pop_names = get_pop_ids.pop_names
     Array[Int] sel_pop_ids = get_pop_ids.sel_pop_ids
-    Map[String,String] pop_id_to_idx = get_pop_ids.pop_id_to_idx
+    Map[Int,Int] pop_id_to_idx = get_pop_ids.pop_id_to_idx
     
     Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }
