@@ -1,15 +1,18 @@
 version: '3'
 services:
-  cromwell:
-    image: "quay.io/comp-bio-aging/cromwell:master"
-    volumes:
-      - /data:/data
-      - /data/cromwell-executions:/data/cromwell-executions
-      - /data/cromwell-workflow-logs:/data/cromwell-workflow-logs
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: ["/wait-for-it/wait-for-it.sh mysql-db:3306 -t 120 -- java -Dconfig.file=/data/sources/cromwell-client/services/cromwell/app-config/application.conf -jar /app/cromwell.jar server"]
-    ports:
-      - "8000:8000"
+  # cromwell:
+  #   image: "quay.io/comp-bio-aging/cromwell:master"
+  #   volumes:
+  #     - /data:/data
+  #     - /data/ilya-work:/data/ilya-work
+  #     - /data/ilya-work/proj:/data/ilya-work/proj
+  #     - /data/ilya-work/proj/dockstore-tool-cms2:/data/ilya-work/proj/dockstore-tool-cms2
+  #     - /data/cromwell-executions:/data/cromwell-executions
+  #     - /data/cromwell-workflow-logs:/data/cromwell-workflow-logs
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   command: ["/wait-for-it/wait-for-it.sh mysql-db:3306 -t 120 -- java -Dconfig.file=/data/sources/cromwell-client/services/cromwell/app-config/application.conf -jar /app/cromwell.jar server"]
+  #   ports:
+  #     - "8000:8000"
   mysql-db:
     image: "mysql:8"
     environment:
@@ -21,22 +24,22 @@ services:
       - /data/databases/mysql:/var/lib/mysql
       - /data/databases/mysql:/var/lib/mysql-files
     ports:
-      - "3307:3306"
-  cromwell-client:
-    image: quay.io/comp-bio-aging/cromwell-web:latest
-    environment:
-      - CROMWELL=http://cromwell:8000
-      - CROMWELL_LOGS=/data/sources/cromwell-client/logs
-    ports:
-      - 8001:8001
-    volumes:
-      - /data:/data
-      - /etc/hosts:/etc/hosts
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-      replicas: 1
-      mode: replicated
-      restart_policy:
-        condition: on-failure
+      - "3306:3306"
+  # cromwell-client:
+  #   image: quay.io/comp-bio-aging/cromwell-web:latest
+  #   environment:
+  #     - CROMWELL=http://cromwell:8000
+  #     - CROMWELL_LOGS=/data/sources/cromwell-client/logs
+  #   ports:
+  #     - 8001:8001
+  #   volumes:
+  #     - /data:/data
+  #     - /etc/hosts:/etc/hosts
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #         - node.role == manager
+  #     replicas: 1
+  #     mode: replicated
+  #     restart_policy:
+  #       condition: on-failure

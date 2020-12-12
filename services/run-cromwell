@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e -o pipefail -x
+
+cromwell -Dconfig.file=/data/sources/cromwell-client/services/cromwell/app-config/application.conf server
