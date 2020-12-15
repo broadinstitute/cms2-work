@@ -45,7 +45,7 @@ def do_get_pop_ids(args):
       sel_pops_here = []
       with open(sweep_def) as f:
         for line in f:
-          m = re.search(r'^\s*pop_event\s+sweep_mult(?:_standing)?\s+"[^"]*"\s+(?P<sel_pop_id>\d+)\s+\d', line) # "
+          m = re.search(r'^\s*pop_event\s+sweep_mult(?:_standing)?\s+"[^"]*"\s+(?P<sel_pop_id>\d+)\s+', line) # "
           if m:
             sel_pops_here.append(m.group('sel_pop_id'))
       if len(sel_pops_here) != 1:
