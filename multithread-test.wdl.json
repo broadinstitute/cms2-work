@@ -2,9 +2,9 @@
     "run_sims_and_compute_cms2_components.nreps_neutral": 4,
     "run_sims_and_compute_cms2_components.nreps": 4,
     "run_sims_and_compute_cms2_components.numRepsPerBlock": 2,
-    "run_sims_and_compute_cms2_components.paramFile_demographic_model": "./test.cosiParams",
+    "run_sims_and_compute_cms2_components.paramFile_demographic_model": "./default_112115_825am__demography.par",
     "run_sims_and_compute_cms2_components.paramFile_neutral": "./test.neutral.cosiParams",
-    "run_sims_and_compute_cms2_components.paramFiles_selection": ["./test.sweep.cosiParams"],
+    "run_sims_and_compute_cms2_components.paramFiles_selection": ["./sel1_origin1.par", "sel3_origin2.par"],
     "run_sims_and_compute_cms2_components.recombFile": "./test_recom.recom",
     "run_sims_and_compute_cms2_components.pop_ids_script": "./get_pop_ids.py",
 

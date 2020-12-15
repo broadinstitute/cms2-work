@@ -8,6 +8,7 @@ womtool validate -i ${TEST_INPUTS} Dockstore.wdl
 #cp test.cosiParams test.neutral.cosiParams test.sweep.cosiParams test_recom.recom get_pop_ids.py runcosi.py remodel_components.py multithread-test.wdl.json Dockstore.wdl /data/ilya-work/sw/cromwell/scripts/docker-compose-mysql/cromwell-executions
 #time cromwell run -i ${TEST_INPUTS} -m tmp/test_run.$$.json Dockstore.wdl
 #pushd /data/ilya-work/sw/cromwell/scripts/docker-compose-mysql
+gpg --output default_112115_825am__demography.par --decrypt default_112115_825am__demography.par.gpg  
 TMP_INPUTS="/data/$$.${TEST_INPUTS}"
 sed s#./#$PWD/#g ${TEST_INPUTS} > ${TMP_INPUTS}
 #oliver submit $PWD/Dockstore.wdl ${TMP_INPUTS}
