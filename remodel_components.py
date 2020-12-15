@@ -290,12 +290,13 @@ def compute_component_scores(args):
 
     execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
             f'--out {args.replica_id_string} ')
-    for alt_pop in replicaInfo['popIds']:
-        if alt_pop == args.sel_pop: continue
-        alt_pop_idx = pop_id_to_idx[alt_pop]
-        execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
-                f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
-                f'--out {args.replica_id_string}__altpop_{alt_pop} ')
+    if False:
+        for alt_pop in replicaInfo['popIds']:
+            if alt_pop == args.sel_pop: continue
+            alt_pop_idx = pop_id_to_idx[alt_pop]
+            execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+                    f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
+                    f'--out {args.replica_id_string}__altpop_{alt_pop} ')
 
     if args.ihs_bins:
         execute(f'norm --ihs --bins {args.n_bins_ihs} --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '

@@ -370,7 +370,7 @@ task compute_cms2_components_for_one_replica {
     File nsl_normed_log = nsl_normed_out_log_fname
     File ihh12_normed = ihh12_normed_out_fname
     File ihh12_normed_log = ihh12_normed_out_log_fname
-    Array[File] xpehh = glob("*.xpehh.out")
+    #Array[File] xpehh = glob("*.xpehh.out")
     Int threads_used = threads
     File script_used = script_used_name
   }
@@ -451,7 +451,7 @@ struct CMS2_Components_Result {
    File nslnormedout
    File ihh12out
    File ihh12normedout
-   Array[File] xpehhout
+   #Array[File] xpehhout
 }
 
 workflow run_sims_and_compute_cms2_components {
@@ -483,7 +483,7 @@ workflow run_sims_and_compute_cms2_components {
     Array[File] paramFiles_selection
     File recombFile
     Int nreps_neutral
-    Int nreps = 1
+    Int nreps
     Int maxAttempts = 10000000
     Int numRepsPerBlock = 1
     Int numCpusPerBlock = numRepsPerBlock
@@ -502,8 +502,8 @@ workflow run_sims_and_compute_cms2_components {
 
     File script
 
-    Int n_bins_ihs = 100
-    Int n_bins_nsl = 100
+    Int n_bins_ihs = 20
+    Int n_bins_nsl = 20
     Int threads = 1
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
@@ -658,8 +658,9 @@ workflow run_sims_and_compute_cms2_components {
 	nslout: compute_cms2_components_for_selection.nsl,
 	nslnormedout: compute_cms2_components_for_selection.nsl_normed,
 	ihh12out: compute_cms2_components_for_selection.ihh12,
-	ihh12normedout: compute_cms2_components_for_selection.ihh12_normed,
-	xpehhout: compute_cms2_components_for_selection.xpehh
+	ihh12normedout: compute_cms2_components_for_selection.ihh12_normed
+	#,
+	#xpehhout: compute_cms2_components_for_selection.xpehh
       }
     }
   }
