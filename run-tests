@@ -10,7 +10,9 @@ womtool validate -i ${TEST_INPUTS} Dockstore.wdl
 #pushd /data/ilya-work/sw/cromwell/scripts/docker-compose-mysql
 TMP_INPUTS="/data/$$.${TEST_INPUTS}"
 sed s#./#$PWD/#g ${TEST_INPUTS} > ${TMP_INPUTS}
-oliver submit $PWD/Dockstore.wdl ${TMP_INPUTS}
+#oliver submit $PWD/Dockstore.wdl ${TMP_INPUTS}
+cromshell submit $PWD/Dockstore.wdl ${TMP_INPUTS}
+
 
 
 

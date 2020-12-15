@@ -224,6 +224,7 @@ task compute_normalization_values {
     Int mem_per_thread_gb
     Int local_disk_gb
     String docker
+    Int preemptible
   }
 
   command <<<
@@ -243,6 +244,7 @@ task compute_normalization_values {
 
   runtime {
     docker: docker
+    preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
     disks: "local-disk " + local_disk_gb + " LOCAL"
@@ -335,6 +337,7 @@ task compute_cms2_components_for_one_replica {
     Int mem_per_thread_gb
     Int local_disk_gb
     String docker
+    Int preemptible
   }
 #  String modelId = replicaInfo.modelInfo.modelId
 #  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
@@ -374,6 +377,7 @@ task compute_cms2_components_for_one_replica {
 
   runtime {
     docker: docker
+    preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
     disks: "local-disk " + local_disk_gb + " LOCAL"
@@ -388,6 +392,7 @@ task create_tar_gz {
   input {
     Array[File] files
     String out_basename = "out"
+    Int preemptible
   }
   String out_fname_tar_gz = out_basename + ".tar.gz"
   command <<<
@@ -399,6 +404,7 @@ task create_tar_gz {
   runtime {
     docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     # docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
+    preemptible: preemptible
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
@@ -414,6 +420,7 @@ task get_pop_ids {
     File paramFile_demographic_model
     Array[File] paramFiles_selection
     File pop_ids_script
+    Int preemptible
   }
   command <<<
     python3 ~{pop_ids_script} --dem-model ~{paramFile_demographic_model} --sweep-defs ~{sep=" " paramFiles_selection}
@@ -427,6 +434,7 @@ task get_pop_ids {
   runtime {
     docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     #docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
+    preemptible: preemptible
     #docker: "python@sha256:665fe0313c2c76ee88308e6d186df0cda152000e7c141ba38a6da6c14b78c1fd"
     memory: "500 MB"
     cpu: 1
@@ -511,14 +519,16 @@ workflow run_sims_and_compute_cms2_components {
   call create_tar_gz as save_input_files {
     input:
        files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation, script], paramFiles_selection]),
-       out_basename = modelId
+       out_basename = modelId,
+       preemptible=preemptible
   }
 
   call get_pop_ids {
     input:
        paramFile_demographic_model = paramFile_demographic_model,
        paramFiles_selection = paramFiles_selection,
-       pop_ids_script = pop_ids_script
+       pop_ids_script = pop_ids_script,
+       preemptible=preemptible
   }
 
   ####################################################
@@ -592,7 +602,8 @@ workflow run_sims_and_compute_cms2_components {
 	  mem_base_gb=mem_base_gb,
 	  mem_per_thread_gb=mem_per_thread_gb,
 	  local_disk_gb=local_disk_gb,
-	  docker=docker
+	  docker=docker,
+	  preemptible=preemptible
 	}
       }
     }
@@ -611,7 +622,8 @@ workflow run_sims_and_compute_cms2_components {
       mem_base_gb=64,
       mem_per_thread_gb=0,
       local_disk_gb=local_disk_gb,
-      docker=docker
+      docker=docker,
+      preemptible=preemptible
     }
   }
 
@@ -635,7 +647,8 @@ workflow run_sims_and_compute_cms2_components {
 	mem_base_gb=mem_base_gb,
 	mem_per_thread_gb=mem_per_thread_gb,
 	local_disk_gb=local_disk_gb,
-	docker=docker
+	docker=docker,
+	preemptible=preemptible
       }
       CMS2_Components_Result sel_components_result = object {
 	replicaInfo: replicaInfo,
