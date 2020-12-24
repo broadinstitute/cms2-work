@@ -40,6 +40,20 @@ def do_get_pop_ids(args):
       out.write('\n'.join(pop_names))
     _write_json('pop_id_to_idx.json', {pop_id: i for i, pop_id in enumerate(pop_ids)})
 
+    pop_pairs_1 = []
+    pop_pairs_2 = []
+    for i in range(len(pop_ids)):
+        for j in range(i+1, len(pop_ids)):
+            pop_pairs_1.append(pop_ids[i])
+            pop_pairs_2.append(pop_ids[j])
+
+    with open('pop_pairs_pop1.txt', 'w') as out1:
+        out1.write('\n'.join(pop_pairs_1))
+    with open('pop_pairs_pop2.txt', 'w') as out2:
+        out2.write('\n'.join(pop_pairs_2))
+
+    #pop_pairs = [(pop_ids[i]), for i in range(len(pop_ids)) for j in range(i, len(pop_ids))]
+
     sel_pops = []
     for sweep_def in (args.sweep_defs or []):
       sel_pops_here = []
