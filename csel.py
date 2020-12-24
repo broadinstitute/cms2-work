@@ -2,6 +2,7 @@ import argparse
 #from firecloud import fiss
 import json
 import operator
+import subprocess
 
 #print(fiss.meth_list(args=argparse.Namespace()))
 import firecloud.api as fapi
@@ -37,16 +38,18 @@ def _pretty_print_json(json_dict, sort_keys=True):
 
 def _write_json(fname, **json_dict):
     dump_file(fname=fname, value=_pretty_print_json(json_dict))
-
-
+    print('converting', fname, 'to org')
+    subprocess.check_call(f'./to_org.sh fname', shell=True)
+    print('converted', fname, 'to org')
 
 #print('ENTITIES ARE', fapi.list_entity_types(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE).json())
 z = fapi.list_submissions(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE)
 #print('SUBMISSIONS ARE', z, z.json())
 _write_json('tmp/submissions.json', **{'result': list(z.json())})
-for s in sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True):
+for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)):
     print('looking at submission from', s['submissionDate'])
-    if not s['submissionDate'].startswith('2020-12-23'): 
+    submission_date = s['submissionDate']
+    if not submission_date.startswith('2020-12-'): 
         print('skipping')
         continue
 
@@ -55,6 +58,7 @@ for s in sorted(list(z.json()), key=operator.itemgetter('submissionDate'), rever
     print('getting submission')
     y = fapi.get_submission(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=s['submissionId']).json()
     print('got submission')
+    _write_json(f'tmp/{submission_date}.{submission_idx}.subm.json', **y)
     if 'workflowId' not in y['workflows'][0]:
         print('workflow ID missing from submission!')
         continue
@@ -62,10 +66,10 @@ for s in sorted(list(z.json()), key=operator.itemgetter('submissionDate'), rever
     zz = fapi.get_workflow_metadata(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=s['submissionId'],
                                     workflow_id=y['workflows'][0]['workflowId']).json()
     print('saving workflow metadata')
-    _write_json('tmp/j3.json', **zz)
+    _write_json(f'tmp/{submission_date}.{submission_idx}.mdata.json', **zz)
     if 'submittedFiles' in zz:
-        dump_file(fname='tmp/w3.wdl', value=zz['submittedFiles']['workflow'])
-    break
+        dump_file(fname=f'tmp/{submission_date}.{submission_idx}.workflow.wdl', value=zz['submittedFiles']['workflow'])
+
     #succ = [v["succeeded"] for v in zz['outputs']["run_sims_cosi2.replicaInfos"]]
     #print(f'Succeeded: {sum(succ)} of {len(succ)}')
 
