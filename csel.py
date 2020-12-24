@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 #from firecloud import fiss
 import json
@@ -39,7 +41,7 @@ def _pretty_print_json(json_dict, sort_keys=True):
 def _write_json(fname, **json_dict):
     dump_file(fname=fname, value=_pretty_print_json(json_dict))
     print('converting', fname, 'to org')
-    subprocess.check_call(f'./to_org.sh fname', shell=True)
+    subprocess.check_call(f'./to_org.sh {fname}', shell=True)
     print('converted', fname, 'to org')
 
 #print('ENTITIES ARE', fapi.list_entity_types(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE).json())
