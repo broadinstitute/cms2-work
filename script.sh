@@ -25,7 +25,6 @@ commit_staged_files() {
     git status
     git diff
     git add *.wdl
-    git rm -f .travis.yaml || true
     git diff --cached
     git commit -m 'replaced git commit'
 }
