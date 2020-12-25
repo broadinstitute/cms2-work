@@ -16,12 +16,15 @@ commit_staged_files() {
     #echo "getpopids url: ${FILE_URL_GET_POP_IDS}"
     git --version
     echo "branch is ${TRAVIS_BRANCH}"
+    git status
+    echo "CHECKING OUT ${STAGING_BRANCH}"
     git checkout -b "${STAGING_BRANCH}"
     git merge "${TRAVIS_BRANCH}"
     sed -i "s/GITCOMMIT/${TRAVIS_COMMIT}/g" simp.wdl
     git status
     git diff
     git add *.wdl
+    git rm -f .travis.yaml || true
     git diff --cached
     git commit -m 'replaced git commit'
 }
@@ -29,6 +32,9 @@ commit_staged_files() {
 upload_files() {
     git remote add origin-me https://${GH_TOKEN}@github.com/notestaff/dockstore-tool-cms2.git
     git push --set-upstream origin-me "${STAGING_BRANCH}"
+    git status
+    git checkout ${TRAVIS_BRANCH}
+    git status
 }
 
 setup_git
