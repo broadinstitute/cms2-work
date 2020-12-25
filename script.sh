@@ -6,6 +6,7 @@ set -o pipefail
 set -o xtrace
 
 setup_git() {
+    echo "Setting up git"
     git config --global user.email "travis@travis-ci.org"
     git config --global user.name "Travis CI"
     echo "Git setup done"
