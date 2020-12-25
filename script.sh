@@ -5,6 +5,26 @@ set -o pipefail
 #set -o nounset
 set -o xtrace
 
+#
+# so, the staged version actually needs to:
+#    - be checked out into a separate dir, e.g. a worktree
+#    - copy the relevant files, e.g. *.py and *.wdl, from the main branch, where they have the 
+#    - then replace GITCOMMIT with the right commit, and raw github file address
+#    - after committing, tag with a tag that identifies the commit 
+#    - possibly name the branch smth like staging/this, or even make a separate repo just for this (and make a token for writing to just that
+#      repo)
+#
+#    - then deploy to terra.
+#        - so, actually, on terra, does the actual wdl that was used get saved?
+#          regardless, the file might not be.
+#
+#  - so, let's say we split this into several wdls, and do an import.
+#    btw, let's maybe try an import?
+
+#
+# then, can add proper 
+#
+
 setup_git() {
     echo "Setting up git"
     git config --global user.email "travis@travis-ci.org"
