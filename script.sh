@@ -8,6 +8,7 @@ set -o xtrace
 setup_git() {
     git config --global user.email "travis@travis-ci.org"
     git config --global user.name "Travis CI"
+    echo "Git setup done"
 }
 
 export STAGING_BRANCH="${TRAVIS_BRANCH}-staging"
