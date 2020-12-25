@@ -6,6 +6,10 @@ services:
 env:
 #  - LANGUAGE=cwl
   - LANGUAGE=wdl
+  env:
+      - FILE_URL_GET_POP_IDS=https://raw.githubusercontent.com/${TRAVIS_PULL_REQUEST_SLUG:-$TRAVIS_REPO_SLUG}/${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}/get_pop_ids.py
+
+      
 #  - LANGUAGE=nfl
 
 # notifications:
@@ -19,12 +23,12 @@ language: java
 jdk: 
   - openjdk8
 
-before_install:
-  - docker build -t quay.io/ilya_broad/dockstore-tool-cosi2 .
-  - pyenv global 3.6
+#before_install:
+#  - docker build -t quay.io/ilya_broad/dockstore-tool-cosi2 .
+#  - pyenv global 3.6
 
-install: 
-  - bash install.sh
+#install: 
+#  - bash install.sh
 
 script: 
   - bash script.sh

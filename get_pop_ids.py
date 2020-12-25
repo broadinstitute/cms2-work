@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""Parse cosi2 param files to extract the population ids and names, and output in json format
+various information about them that would be difficult to do in WDL.
+"""
+
 import argparse
 import json
 import re
@@ -16,6 +20,10 @@ def _pretty_print_json(json_val, sort_keys=True):
 def _write_json(fname, json_val):
     dump_file(fname=fname, value=_pretty_print_json(json_val))
 
+def chk(cond, msg):
+    if not cond:
+        raise RuntimeError(f'Error in {__name__}: {msg}')
+
 def parse_args(args=None):
     parser = argparse.ArgumentParser(args)
     parser.add_argument('--dem-model', required=True, help='demographic model')
@@ -24,6 +32,8 @@ def parse_args(args=None):
     return parser.parse_args()
 
 def do_get_pop_ids(args):
+    pops_info = {}
+
     pop_ids = []
     pop_names = []
     with open(args.dem_model) as dem_model:
@@ -34,18 +44,40 @@ def do_get_pop_ids(args):
           pop_name = m.group('pop_name')
           pop_ids.append(pop_id)
           pop_names.append(pop_name)
-    with open('pop_ids.txt', 'w') as out:
-      out.write('\n'.join(pop_ids))
-    with open('pop_names.txt', 'w') as out:
-      out.write('\n'.join(pop_names))
-    _write_json('pop_id_to_idx.json', {pop_id: i for i, pop_id in enumerate(pop_ids)})
+
+    chk(len(pop_ids) > 0, 'No pops!')
+    chk(len(set(pop_ids)) == len(pop_ids), f'duplicate pops: {pop_ids}')
+    chk(len(set(pop_names)) == len(pop_names), f'duplicate pop names: {pop_names}')
+
+    pops_info['pop_ids'] = pop_ids
+    pops_info['pop_names'] = pop_names
+    pops_info['pop_id2name'] = dict(zip(pop_ids, pop_names))
+    pops_info['pop_name2id'] = dict(zip(pop_names, pop_ids))
+    pops_info['pop_id2idx'] = {pop_id: i for i, pop_id in enumerate(pop_ids)}
+    
+    # with open('pop_ids.txt', 'w') as out:
+    #   out.write('\n'.join(pop_ids))
+    # with open('pop_names.txt', 'w') as out:
+    #   out.write('\n'.join(pop_names))
+    # _write_json('pop_id_to_idx.json', {pop_id: i for i, pop_id in enumerate(pop_ids)})
+
+
+    pops_info['pop_pairs'] = [{"Left": pop_ids[i], "Right": pop_ids[j]} for i in range(len(pop_ids)) for j in range(i+1, len(pop_ids))]
+
+    
 
     pop_pairs_1 = []
     pop_pairs_2 = []
-    for i in range(len(pop_ids)):
+    :
         for j in range(i+1, len(pop_ids)):
             pop_pairs_1.append(pop_ids[i])
             pop_pairs_2.append(pop_ids[j])
+
+    
+
+    _write_json(fname='pops_info.json', dict(pops_info=pops_info))
+
+
 
     with open('pop_pairs_pop1.txt', 'w') as out1:
         out1.write('\n'.join(pop_pairs_1))
