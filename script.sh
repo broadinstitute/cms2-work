@@ -13,7 +13,7 @@ setup_git() {
 export STAGING_BRANCH="${TRAVIS_BRANCH}-staging"
 
 commit_staged_files() {
-    echo "getpopids url: ${FILE_URL_GET_POP_IDS}"
+    #echo "getpopids url: ${FILE_URL_GET_POP_IDS}"
     git --version
     echo "branch is ${TRAVIS_BRANCH}"
     git checkout -b "${STAGING_BRANCH}"

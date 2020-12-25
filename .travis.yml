@@ -6,9 +6,6 @@ services:
 env:
 #  - LANGUAGE=cwl
   - LANGUAGE=wdl
-  env:
-      - FILE_URL_GET_POP_IDS=https://raw.githubusercontent.com/${TRAVIS_PULL_REQUEST_SLUG:-$TRAVIS_REPO_SLUG}/${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}/get_pop_ids.py
-
       
 #  - LANGUAGE=nfl
 
