@@ -48,7 +48,7 @@ workflow my_example {
     Array[String] out_analyzed_fnames = example.analyzed_fnames
     File out_analyzed = example.analyzed
     Pair[Int,Int] out_ppair = (example.ppair.left + 1, example.ppair.right-1)
-    String out_version = "GITCOMMIT"
+    String out_version = "c17c889dcad530acc21db9497c80ac1ef17e5a66"
   }
   # call example {
   #   input:
