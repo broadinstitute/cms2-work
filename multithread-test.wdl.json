@@ -6,11 +6,11 @@
     "run_sims_and_compute_cms2_components.paramFile_neutral": "./test.neutral.cosiParams",
     "run_sims_and_compute_cms2_components.paramFiles_selection": ["./sel1_origin1.par", "./sel3_origin2.par"],
     "run_sims_and_compute_cms2_components.recombFile": "./test_recom.recom",
-    "run_sims_and_compute_cms2_components.pop_ids_script": "./get_pop_ids.py",
+    "run_sims_and_compute_cms2_components.pop_ids_script": "./get_pops_info.py",
 
 
     "run_sims_and_compute_cms2_components.taskScript_simulation": "./runcosi.py",
-    "run_sims_and_compute_cms2_components.script": "./remodel_components.py",
+    "run_sims_and_compute_cms2_components.compute_components_script": "./remodel_components.py",
     "run_sims_and_compute_cms2_components.threads": 8
 }
 

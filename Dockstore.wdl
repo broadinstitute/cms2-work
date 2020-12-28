@@ -5,6 +5,7 @@ version 1.0
 #
 # tofix:
 
+#   - maybe do not store replicaInfos in metadata unless needed
 #   - separate the component computation workflow since need to also do this for tpeds from real data
 #     - though, could represent neutral real regions and neutral sims and selected real regions as selected sims, with the
 #       putative selected pop indicated?   so, separate putative selpop for a sim, from the rest of sim info which
@@ -159,8 +160,8 @@ task cosi2_run_one_sim_block {
 }
 
 
-# * task compute_stats_for_normalization
-task compute_stats_for_normalization {
+# * task compute_one_pop_bin_stats_for_normalization
+task compute_one_pop_bin_stats_for_normalization {
   meta {
     description: "Compute the means and stds of component scores on neutral sims, for the purpose of normalization"
     email: "ilya_shl@alum.mit.edu"
@@ -207,8 +208,8 @@ task compute_stats_for_normalization {
   }
 }
 
-# * task compute_stats_for_cross_pop_normalization
-task compute_stats_for_cross_pop_normalization {
+# * task compute_two_pop_bin_stats_for_normalization
+task compute_two_pop_bin_stats_for_normalization {
   meta {
     description: "Compute the means and stds of component scores on neutral sims, for a pop pair, for the purpose of normalization"
     email: "ilya_shl@alum.mit.edu"
@@ -228,18 +229,12 @@ task compute_stats_for_cross_pop_normalization {
   }
 
   command <<<
-    norm --ihs --bins ~{n_bins_ihs} --files @~{write_lines(ihs_out)} --save-bins ~{out_fnames_base}.norm_bins_ihs.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihs.log
-    norm --nsl --bins ~{n_bins_nsl} --files @~{write_lines(nsl_out)} --save-bins ~{out_fnames_base}.norm_bins_nsl.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_nsl.log
-    norm --ihh12 --files @~{write_lines(ihh12_out)} --save-bins ~{out_fnames_base}.norm_bins_ihh12.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihh12.log
+    norm --xpehh --bins ~{n_bins_xpehh} --files @~{write_lines(xpehh_out)} --save-bins ~{out_fnames_base}.norm_bins_xpehh.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_xpehh.log
   >>>
 
   output {
-    File norm_bins_ihs = out_fnames_base + ".norm_bins_ihs.dat"
-    File norm_bins_nsl = out_fnames_base + ".norm_bins_nsl.dat"
-    File norm_bins_ihh12 = out_fnames_base + ".norm_bins_ihh12.dat"
-    File norm_bins_ihs_log = out_fnames_base + ".norm_bins_ihs.log"
-    File norm_bins_nsl_log = out_fnames_base + ".norm_bins_nsl.log"
-    File norm_bins_ihh12_log = out_fnames_base + ".norm_bins_ihh12.log"
+    File norm_bins_xpehh = out_fnames_base + ".norm_bins_xpehh.dat"
+    File norm_bins_xpehh_log = out_fnames_base + ".norm_bins_nsl.log"
   }
 
   runtime {
@@ -260,6 +255,27 @@ task normalize_and_collate {
     description: "Normalize raw scores to neutral sims, and collate component scores into one table."
   }
   input {
+    Array[Int] pop_ids
+    Array[Pair[Int,Int]] pop_pairs
+    Int sel_pop
+    File ihs_out
+    File nsl_out
+    File ihh12_out
+    Array[File] xpehh_out
+
+    File norm_bins_ihs
+    File norm_bins_nsl
+    File norm_bins_ihh12
+
+    Array[File] norm_bins_xpehh
+
+    File norm_and_collate_script = "./norm_and_collate.py"
+  }
+  command <<<
+    python3 "~{norm_and_collate_script}"
+  >>>  
+  output {
+    File normed_collated_stats
   }
 }
 
@@ -327,8 +343,8 @@ task normalize_and_collate {
 #   }
 # }
 
-# * task compute_cms2_components_for_one_replica
-task compute_cms2_components_for_one_replica {
+# * task compute_one_pop_cms2_components_for_one_replica
+task compute_one_pop_cms2_components_for_one_replica {
   meta {
     description: "Compute CMS2 component scores"
     email: "ilya_shl@alum.mit.edu"
@@ -338,11 +354,12 @@ task compute_cms2_components_for_one_replica {
     File replica_output
     Int sel_pop
     File script
-    File? ihs_bins
-    File? nsl_bins
-    File? ihh12_bins
-    Int? n_bins_ihs
-    Int n_bins_nsl
+
+    # File? ihs_bins
+    # File? nsl_bins
+    # File? ihh12_bins
+    # Int? n_bins_ihs
+    # Int n_bins_nsl
 
     Int threads
     Int mem_base_gb
@@ -354,34 +371,37 @@ task compute_cms2_components_for_one_replica {
 #  String modelId = replicaInfo.modelInfo.modelId
 #  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
 #  String replica_id_string = "model_" + modelId + "__rep_" + replicaNumGlobal + "__selpop_" + sel_pop
-  String replica_id_string = basename(replica_output) + "__selIn_" + sel_pop
+  String out_basename = basename(replica_output) + "__selIn_" + sel_pop
   String script_used_name = "script-used." + basename(script)
-  String ihs_out_fname = replica_id_string + ".ihs.out"
-  String ihs_normed_out_fname = replica_id_string + ".ihs.out." + n_bins_ihs + "bins.norm"
-  String ihs_normed_out_log_fname = ihs_normed_out_fname + ".log"
-  String nsl_normed_out_fname = replica_id_string + ".nsl.out." + n_bins_nsl + "bins.norm"
-  String nsl_normed_out_log_fname = nsl_normed_out_fname + ".log"
-  String ihh12_normed_out_fname = replica_id_string + ".ihh12.out.norm"
-  String ihh12_normed_out_log_fname = ihh12_normed_out_fname + ".log"
+  String ihs_out_fname = out_basename + ".ihs.out"
+  String nsl_out_fname = out_basename + ".nsl.out"
+  String ihh12_out_fname = out_basename + ".ihh12.out"
+  # String ihs_normed_out_fname = out_basename + ".ihs.out." + n_bins_ihs + "bins.norm"
+  # String ihs_normed_out_log_fname = ihs_normed_out_fname + ".log"
+  # String nsl_normed_out_fname = out_basename + ".nsl.out." + n_bins_nsl + "bins.norm"
+  # String nsl_normed_out_log_fname = nsl_normed_out_fname + ".log"
+  # String ihh12_normed_out_fname = out_basename + ".ihh12.out.norm"
+  # String ihh12_normed_out_log_fname = ihh12_normed_out_fname + ".log"
 
   command <<<
-    tar xvfz ~{replica_output}
+    tar xvfz "~{replica_output}"
 
-    cp ~{script} ~{script_used_name}
-    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop} --threads ~{threads} ~{"--ihs-bins " + ihs_bins} ~{"--nsl-bins " + nsl_bins} ~{"--ihh12-bins " + ihh12_bins} ~{"--n-bins-ihs " + n_bins_ihs} ~{"--n-bins-nsl " + n_bins_nsl}
+    cp "~{script}" "~{script_used_name}"
+    python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string ~{out_basename} \
+      --sel-pop ~{sel_pop} --threads ~{threads} --components ihs nsl ihh12
   >>>
 
   output {
-    Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
-    File ihh12 = replica_id_string + ".ihh12.out"
+    #Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
     File ihs = ihs_out_fname
-    File ihs_normed = ihs_normed_out_fname
-    File ihs_normed_log = ihs_normed_out_log_fname
-    File nsl = replica_id_string + ".nsl.out"
-    File nsl_normed = nsl_normed_out_fname
-    File nsl_normed_log = nsl_normed_out_log_fname
-    File ihh12_normed = ihh12_normed_out_fname
-    File ihh12_normed_log = ihh12_normed_out_log_fname
+    File nsl = nsl_out_fname
+    File ihh12 = ihh12_out_fname
+    #File ihs_normed = ihs_normed_out_fname
+    #File ihs_normed_log = ihs_normed_out_log_fname
+    #File nsl_normed = nsl_normed_out_fname
+    #File nsl_normed_log = nsl_normed_out_log_fname
+    #File ihh12_normed = ihh12_normed_out_fname
+    #File ihh12_normed_log = ihh12_normed_out_log_fname
     #Array[File] xpehh = glob("*.xpehh.out")
     Int threads_used = threads
     File script_used = script_used_name
@@ -396,11 +416,10 @@ task compute_cms2_components_for_one_replica {
   }
 }
 
-# * task compute_cms2_cross_pop_components_for_one_replica
-task compute_cms2_cross_pop_components_for_one_replica {
+# * task compute_two_pop_cms2_components_for_one_replica
+task compute_two_pop_cms2_components_for_one_replica {
   meta {
     description: "Compute cross-pop comparison CMS2 component scores"
-    email: "ilya_shl@alum.mit.edu"
   }
 # ** inputs
   input {
@@ -409,7 +428,7 @@ task compute_cms2_cross_pop_components_for_one_replica {
     Int sel_pop
     Int alt_pop
     File script
-    File? xpehh_bins
+    #File? xpehh_bins
 
     Int threads
     Int mem_base_gb
@@ -421,24 +440,25 @@ task compute_cms2_cross_pop_components_for_one_replica {
 #  String modelId = replicaInfo.modelInfo.modelId
 #  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
 #  String replica_id_string = "model_" + modelId + "__rep_" + replicaNumGlobal + "__selpop_" + sel_pop
-  String replica_id_string = basename(replica_output) + "__selpop+" + sel_pop + "__altpop_" + alt_pop
-  String script_used_name = replica_id_string + ".script-used." + basename(script)
-  String xpehh_out_fname = replica_id_string + ".xpehh.out"
-  String xpehh_log_fname = replica_id_string + ".xpehh.log"
+  String out_basename = basename(replica_output) + "__selpop+" + sel_pop + "__altpop_" + alt_pop
+  String script_used_name = out_basename + ".script-used." + basename(script)
+  String xpehh_out_fname = out_basename + ".xpehh.out"
+  String xpehh_log_fname = out_basename + ".xpehh.log"
 
 # ** command
   command <<<
-    tar xvfz ~{replica_output}
+    tar xvfz "~{replica_output}"
 
-    cp ~{script} ~{script_used_name}
-    python3 ~{script} --replica-info *.replicaInfo.json --replica-id-string ~{replica_id_string} --sel-pop ~{sel_pop} --alt-pop {alt_pop} --threads ~{threads} ~{"--xpehh-bins " + xpehh_bins}
+    cp "~{script}" "~{script_used_name}"
+    python3 "~{script}" --replica-info *.replicaInfo.json --out-basename ~{replica_id_string} \
+        --sel-pop ~{sel_pop} --alt-pop ~{alt_pop} --threads ~{threads} --components xpehh
   >>>
 
 # ** outputs
   output {
-    Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
-    File xpehh_raw = replica_id_string + ".xpehh.out"
-    File xpehh_log = replica_id_string + ".xpehh.log"
+    #Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
+    File xpehh_raw = xpehh_out_fname
+    File xpehh_log = xpehh_log_fname
     #Array[File] xpehh = glob("*.xpehh.out")
     Int threads_used = threads
     File script_used = script_used_name
@@ -463,7 +483,6 @@ task create_tar_gz {
   input {
     Array[File] files
     String out_basename = "out"
-    Int preemptible
   }
   String out_fname_tar_gz = out_basename + ".tar.gz"
   command <<<
@@ -475,40 +494,55 @@ task create_tar_gz {
   runtime {
     docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     # docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
-    preemptible: preemptible
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
   }
 }
 
-# * task get_pop_ids
-task get_pop_ids {
+# * task get_pops_info
+
+#
+# ** struct PopsInfo
+#
+# Information about population ids and names.
+#
+# Each pop has: a pop id (a small integer); a pop name (a string); a pop index
+# (0-based index of the pop in the list of pop ids).
+#
+struct PopsInfo {
+    Array[Int] pop_ids  # population IDs, used throughout to identify populations
+    Array[String] pop_names
+    Map[Int,Int] pop_id_to_idx  # map from pop id to its index in pop_ids
+    Map[Int,Array[Int]] pop_alts  # map from pop id to list of all other pop ids
+    Array[Pair[Int,Int]] pop_pairs # all two-pop sets, for cross-pop comparisons
+
+    Array[Int] sel_pop_ids  # for each sweep definition in paramFiles_selection input to
+    # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
+}
+
+# ** task get_pops_info implemenation
+task get_pops_info {
   meta {
-    description: "Extract population ids from param file"
-    email: "ilya_shl@alum.mit.edu"
+    description: "Extract population ids from cosi2 simulator param file"
   }
   input {
     File paramFile_demographic_model
     Array[File] paramFiles_selection
-    File pop_ids_script
-    Int preemptible
+
+    File get_pops_info_script
   }
+  String modelId = "model_"+basename(paramFile_demographic_model, ".par")
+  String pops_info_fname = modelId + ".pops_info.json"
   command <<<
-    python3 ~{pop_ids_script} --dem-model ~{paramFile_demographic_model} --sweep-defs ~{sep=" " paramFiles_selection}
+    python3 "~{pop_ids_script}" --dem-model "~{paramFile_demographic_model}" \
+       --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "${pops_info_fname}"
   >>>
   output {
-    Array[Int] pop_ids = read_lines("pop_ids.txt")
-    Array[String] pop_names = read_lines("pop_names.txt")
-    Array[Int] sel_pop_ids = read_lines("sel_pop_ids.txt")
-    Map[Int,Int] pop_id_to_idx = read_json("pop_id_to_idx.json")
-    Array[Pair[Int,Int]] pop_pairs = zip(read_lines("pop_pairs_pop1.txt"), read_lines("pop_pairs_pop2.txt"))
+    PopsInfo pops_info = read_json("${pops_info_fname}")
   }
   runtime {
     docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
-    #docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
-    preemptible: preemptible
-    #docker: "python@sha256:665fe0313c2c76ee88308e6d186df0cda152000e7c141ba38a6da6c14b78c1fd"
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
@@ -577,7 +611,7 @@ workflow run_sims_and_compute_cms2_components {
     #Array[File] replica_outputs
     #Array[File] neutral_replica_outputs
 
-    File script
+    File compute_components_script = "./remodel_components.py"
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
@@ -588,7 +622,7 @@ workflow run_sims_and_compute_cms2_components {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File pop_ids_script
+    File pops_info_script = "./get_pops_info.py"
     String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
 
@@ -598,19 +632,20 @@ workflow run_sims_and_compute_cms2_components {
 # *** call create_tar_gz as save_input_files
   call create_tar_gz as save_input_files {
     input:
-       files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation, script], paramFiles_selection]),
-       out_basename = modelId,
-       preemptible=preemptible
+       files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation, script],
+                        paramFiles_selection]),
+       out_basename = modelId
   }
 
-# *** call get_pop_ids
-  call get_pop_ids {
+# *** call get_pops_info
+  call get_pops_info {
     input:
        paramFile_demographic_model = paramFile_demographic_model,
        paramFiles_selection = paramFiles_selection,
-       pop_ids_script = pop_ids_script,
-       preemptible=preemptible
+       pops_info_script = pops_info_script
   }
+
+  PopsInfo pops_info = get_pops_info.pops_info
 
   ####################################################
   # Run neutral sims
@@ -692,7 +727,7 @@ workflow run_sims_and_compute_cms2_components {
 	  sel_pop=sel_pop,
 	  replica_output=neut_sim_tped,
 
-	  script=script,
+	  script=compute_components_script,
 	  threads=threads,
 	  mem_base_gb=mem_base_gb,
 	  mem_per_thread_gb=mem_per_thread_gb,
@@ -729,7 +764,7 @@ workflow run_sims_and_compute_cms2_components {
        alt_pop=pop_pair.right,
        replica_output=neut_sim_tped,
        
-       script=script,
+       script=compute_components_script,
        threads=threads,
        mem_base_gb=mem_base_gb,
        mem_per_thread_gb=mem_per_thread_gb,
@@ -758,26 +793,29 @@ workflow run_sims_and_compute_cms2_components {
 # ** Component stats for selection sims
   Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.tpeds_tar_gz))
 
-  # scatter(sel_pop in pop_ids) {
-  #   scatter(res in zip(get_pop_ids.pop_pairs, compute_two_pop_cms2_components_for_neutral.norm_bins_xpehh)) {
-  #     if((res.left.left == sel_pop) || (res.left.right == sel_pop)) {
-  # 	a_pop_pair = pop_pair
-  # 	a_norm_bins_xpehh = res.right
-  #     }
-  #   }
-  # }
+  scatter(sel_pop in pop_ids) {
+    scatter(pop_pair_and_normed in zip(pops_info.pop_pairs
+      Pair[Int,Int] pop_pair = pops_info.pop_pairs[pop_pair_idx]
+      if((pops_info.pop_pairs[ == sel_pop) || (res.left.right == sel_pop)) {
+   	alt_pop_pair = pop_pair
+   	a_norm_bins_xpehh = res.right
+       }
+     }
+  }}
+
+
 
   scatter(sel_sim in selection_sims) {
-    ReplicaInfo replicaInfo = sel_sim.left
-    if (replicaInfo.succeeded) {
-      Int sel_pop = replicaInfo.modelInfo.sweepInfo.selPop
-      Int sel_pop_idx = get_pop_ids.pop_id_to_idx[sel_pop]
+    ReplicaInfo sel_sim_replicaInfo = sel_sim.left
+    if (sel_sim_replicaInfo.succeeded) {
+      Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
+      Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
       call compute_one_pop_cms2_components_for_one_replica as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
 	replica_output=sel_sim.right,
 
-	script=script,
+	script=compute_components_script,
 	threads=threads,
 	mem_base_gb=mem_base_gb,
 	mem_per_thread_gb=mem_per_thread_gb,
@@ -785,30 +823,29 @@ workflow run_sims_and_compute_cms2_components {
 	docker=docker,
 	preemptible=preemptible
       }
-      scatter(alt_pop in pop_ids) {
-	if (alt_pop != sel_pop) {
-	  call compute_two_pop_cms2_components_for_one_replica as compute_two_pop_cms2_components_for_selection {
-	    input:
-	    sel_pop=sel_pop,
-	    alt_pop=alt_pop,
-	    replica_output=sel_sim.right,
+      scatter(alt_pop in pops_info.pop_alts) {
+	call compute_two_pop_cms2_components_for_one_replica as compute_two_pop_cms2_components_for_selection {
+	  input:
+	  sel_pop=sel_pop,
+	  alt_pop=alt_pop,
+	  replica_output=sel_sim.right,
 
-	    script=script,
-	    threads=threads,
-	    mem_base_gb=mem_base_gb,
-	    mem_per_thread_gb=mem_per_thread_gb,
-	    local_disk_gb=local_disk_gb,
-	    docker=docker,
-	    preemptible=preemptible
-	  }
+	  script=compute_components_script,
+	  threads=threads,
+	  mem_base_gb=mem_base_gb,
+	  mem_per_thread_gb=mem_per_thread_gb,
+	  local_disk_gb=local_disk_gb,
+	  docker=docker,
+	  preemptible=preemptible
 	}
       }
+
 
       # should normalize_and_collate be done by blocks?
       call normalize_and_collate {
 	input:
 	  pop_ids=pop_ids,
-	  pop_pairs=get_pop_ids.pop_pairs,
+	  pop_pairs=pop_infos.pop_pairs,
 	  sel_pop=sel_pop,
 
 	  ihs_out=compute_one_pop_cms2_components_for_selection.ihs,
@@ -826,7 +863,7 @@ workflow run_sims_and_compute_cms2_components {
 	  norm_bins_nsl=compute_one_pop_stats_for_normalization.norm_bins_nsl[sel_pop_idx],
 	  norm_bins_ihh12=compute_one_pop_stats_for_normalization.norm_bins_ihh12[sel_pop_idx],
 
-	  norm_bins_xpehh=compute_two_pop_cms2_components_for_neutral.norm_bins_xpehh
+	  norm_bins_xpehh=
       }
 
       # CMS2_Components_Result sel_components_result = object {

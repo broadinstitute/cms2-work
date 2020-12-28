@@ -1,5 +1,7 @@
-##    run new, heterogenous demography model set; generate component scores
-##    02.21.2019
+#!/usr/bin/env python3
+
+"""Normalize component scores, and collate the results.
+"""
 
 import argparse
 import csv
@@ -152,26 +154,19 @@ def execute(action, **kw):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    # parser.add_argument('model')
-    # parser.add_argument('selpop', type=int)
-    # parser.add_argument('irep', type=int)
-    # parser.add_argument('--cmsdir', required=True)
-    # parser.add_argument('--writedir', required=True)
-    # parser.add_argument('--simRecomFile')
-    # parser.add_argument('--pops', nargs='+')
-    parser.add_argument('--replica-info')
-    parser.add_argument('--out-basename', required=True, help='base name for output files')
-    parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
-    parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'xpehh'),
-                        nargs='+', help='which component tests to compute')
-    parser.add_argument('--threads', type=int, default=1, help='selscan threads')
 
-    # parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
-    # parser.add_argument('--nsl-bins', help='use nsl bins for normalization')
-    # parser.add_argument('--ihh12-bins', help='use ihh12 bins for normalization')
-    # parser.add_argument('--n-bins-ihs', type=int, default=100, help='number of ihs bins')
-    # parser.add_argument('--n-bins-nsl', type=int, default=100, help='number of nsl bins')
+    parser.add_argument('--pops-info-json', help='info about populations')
+    parser.add_argument('--sel-pop', type=int, help='putatively selected pop')
+
+    parser.add_argument('--ihs-raw', help='raw ihs scores')
+    parser.add_argument('--nsl-raw', help='raw nsl scores')
+    parser.add_argument('--ihh12-raw', help='raw ihh12 scores')
+    parser.add_argument('--xpehh-raw', nargs='+', help='raw xpehh scores')
+
+    parser.add_argument('--norm-bins-ihs', help='IHS bins data from neutral sims, for normalization')
+    parser.add_argument('--norm-bins-nsl', help='IHS bins data from neutral sims, for normalization')
+    parser.add_argument('--norm-bins-ihh12', help='IHS bins data from neutral sims, for normalization')
+    
     
     return parser.parse_args()
 
@@ -330,6 +325,26 @@ def compute_component_scores(args):
     #             f'--log {args.replica_id_string}.ihh12.out.norm.log ')
     # else:
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
+
+def normalize_and_collate_scores(args):
+    execute(f'norm --ihs --bins {args.n_bins_ihs} --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '
+            f'--log {args.replica_id_string}.ihs.out.{args.n_bins_ihs}bins.norm.log ')
+
+    execute(f'norm --nsl --bins {args.n_bins_nsl} --load-bins {args.nsl_bins} --files {args.replica_id_string}.nsl.out '
+            f'--log {args.replica_id_string}.nsl.out.{args.n_bins_nsl}bins.norm.log ')
+
+    execute(f'norm --ihh12 --bins {args.n_bins_ihh12} --load-bins {args.ihh12_bins} --files {args.replica_id_string}.ihh12.out '
+            f'--log {args.replica_id_string}.ihh12.out.{args.n_bins_ihh12}bins.norm.log ')
+    
+    for alt_pop in args.pop_ids:
+        if alt_pop != args.sel_pop:
+            execute(f'norm --xpehh --bins {args.n_bins_xpehh} --load-bins {args.xpehh_bins} --files {args.replica_id_string}.xpehh.out '
+                    f'--log {args.replica_id_string}.xpehh.out.{args.n_bins_xpehh}bins.norm.log ')
+
+    #
+    # compute fst and deltadaf
+    #
  
 if __name__=='__main__':
-  compute_component_scores(parse_args())
+  #compute_component_scores(parse_args())
+  normalize_and_collate_scores(parse_args())

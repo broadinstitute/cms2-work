@@ -28,6 +28,8 @@ def parse_args(args=None):
     parser = argparse.ArgumentParser(args)
     parser.add_argument('--dem-model', required=True, help='demographic model')
     parser.add_argument('--sweep-defs', nargs='*', required=True, help='sweep definitions')
+
+    parser.add_argument('--out-pops-info', required=True, help='output file to which pops info gets written')
     
     return parser.parse_args()
 
@@ -51,9 +53,10 @@ def do_get_pop_ids(args):
 
     pops_info['pop_ids'] = pop_ids
     pops_info['pop_names'] = pop_names
-    pops_info['pop_id2name'] = dict(zip(pop_ids, pop_names))
-    pops_info['pop_name2id'] = dict(zip(pop_names, pop_ids))
-    pops_info['pop_id2idx'] = {pop_id: i for i, pop_id in enumerate(pop_ids)}
+    #pops_info['pop_id2name'] = dict(zip(pop_ids, pop_names))
+    #pops_info['pop_name2id'] = dict(zip(pop_names, pop_ids))
+    pops_info['pop_id_to_idx'] = {pop_id: i for i, pop_id in enumerate(pop_ids)}
+    pops_info['pop_alts'] = {pop_id: [alt_pop_id for alt_pop_id in pop_ids if alt_pop_id != pop_id] for pop_id in pop_ids}
     
     # with open('pop_ids.txt', 'w') as out:
     #   out.write('\n'.join(pop_ids))
@@ -62,29 +65,9 @@ def do_get_pop_ids(args):
     # _write_json('pop_id_to_idx.json', {pop_id: i for i, pop_id in enumerate(pop_ids)})
 
 
-    pops_info['pop_pairs'] = [{"Left": pop_ids[i], "Right": pop_ids[j]} for i in range(len(pop_ids)) for j in range(i+1, len(pop_ids))]
-
-    
-
-    pop_pairs_1 = []
-    pop_pairs_2 = []
-    :
-        for j in range(i+1, len(pop_ids)):
-            pop_pairs_1.append(pop_ids[i])
-            pop_pairs_2.append(pop_ids[j])
-
-    
-
-    _write_json(fname='pops_info.json', dict(pops_info=pops_info))
-
-
-
-    with open('pop_pairs_pop1.txt', 'w') as out1:
-        out1.write('\n'.join(pop_pairs_1))
-    with open('pop_pairs_pop2.txt', 'w') as out2:
-        out2.write('\n'.join(pop_pairs_2))
-
-    #pop_pairs = [(pop_ids[i]), for i in range(len(pop_ids)) for j in range(i, len(pop_ids))]
+    pops_info['pop_pairs'] = [{"Left": pop_ids[i], "Right": pop_ids[j]}
+                              for i in range(len(pop_ids))
+                              for j in range(i+1, len(pop_ids))]
 
     sel_pops = []
     for sweep_def in (args.sweep_defs or []):
@@ -97,8 +80,13 @@ def do_get_pop_ids(args):
       if len(sel_pops_here) != 1:
         raise RuntimeError(f"Could not find sole sweep in {sweep_def}")
       sel_pops.extend(sel_pops_here)
-    with open('sel_pop_ids.txt', 'w') as out:
-      out.write('\n'.join(sel_pops))
+
+      pops_info['sel_pop_ids'] = sel_pop_ids
+
+    _write_json(fname=args.out_pops_info, json_val=dict(pops_info=pops_info))
+
+    #with open('sel_pop_ids.txt', 'w') as out:
+    #  out.write('\n'.join(sel_pops))
 
 if __name__ == '__main__':
     do_get_pop_ids(parse_args())
