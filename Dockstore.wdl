@@ -39,6 +39,16 @@ version 1.0
 #      - not load all files in memory
 #      - use accurate accumulators for sum and sum-of-sq
 
+
+#
+# Terms and abbreviations:
+#
+#    haps - haplotypes
+#    sims - simulations
+#    reps - simulation replicas
+#    comps, components - component test statistics of CMS
+#
+
 #
 # jvitti's score norming incl xpehh
 # /idi/sabeti-scratch/jvitti/cms/cms/dists/scores_func.py
@@ -89,7 +99,7 @@ struct ReplicaInfo {
   ReplicaId replicaId
   ModelInfo modelInfo
 
-  File        tpeds_tar_gz
+  File        region_haps_tar_gz
 
   Boolean succeeded
   Float durationSeconds
@@ -144,7 +154,7 @@ task cosi2_run_one_sim_block {
 
   output {
     Array[ReplicaInfo] replicaInfos = read_json("replicaInfos.json").replicaInfos
-    Array[File] tpeds_tar_gz = prefix(tpedPrefix + "__tar_gz__rep_", range(numRepsPerBlock))
+    Array[File] region_haps_tar_gzs = prefix(tpedPrefix + "__tar_gz__rep_", range(numRepsPerBlock))
 
 #    String      cosi2_docker_used = ""
   }
@@ -230,6 +240,7 @@ task compute_two_pop_bin_stats_for_normalization {
 
   command <<<
     norm --xpehh --bins ~{n_bins_xpehh} --files @~{write_lines(xpehh_out)} --save-bins ~{out_fnames_base}.norm_bins_xpehh.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_xpehh.log
+    
   >>>
 
   output {
@@ -343,17 +354,31 @@ task normalize_and_collate {
 #   }
 # }
 
-# * task compute_one_pop_cms2_components_for_one_replica
-task compute_one_pop_cms2_components_for_one_replica {
+# struct ComponentComputationSpec {
+#    String component
+#    Int sel_pop
+#    Int alt_pop
+#  }
+
+#  task compute_component_scores {
+#    input {
+#       File replica_output
+#       Array[ComponentComputationSpec] component_specs
+#       Array[String] out_fnames
+#    }
+#    output {
+#      Array[File] out_files = prefix("components_", out_fnames)
+#    }
+# }
+
+# * task compute_one_pop_cms2_components
+task compute_one_pop_cms2_components {
   meta {
-    description: "Compute CMS2 component scores"
-    email: "ilya_shl@alum.mit.edu"
+    description: "Compute one-pop CMS2 component scores assuming selection in a given pop"
   }
   input {
-#    ReplicaInfo replicaInfo
-    File replica_output
+    File region_haps_tar_gz
     Int sel_pop
-    File script
 
     # File? ihs_bins
     # File? nsl_bins
@@ -361,6 +386,7 @@ task compute_one_pop_cms2_components_for_one_replica {
     # Int? n_bins_ihs
     # Int n_bins_nsl
 
+    File script
     Int threads
     Int mem_base_gb
     Int mem_per_thread_gb
@@ -371,8 +397,9 @@ task compute_one_pop_cms2_components_for_one_replica {
 #  String modelId = replicaInfo.modelInfo.modelId
 #  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
 #  String replica_id_string = "model_" + modelId + "__rep_" + replicaNumGlobal + "__selpop_" + sel_pop
-  String out_basename = basename(replica_output) + "__selIn_" + sel_pop
+  String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop
   String script_used_name = "script-used." + basename(script)
+
   String ihs_out_fname = out_basename + ".ihs.out"
   String nsl_out_fname = out_basename + ".nsl.out"
   String ihh12_out_fname = out_basename + ".ihh12.out"
@@ -384,7 +411,7 @@ task compute_one_pop_cms2_components_for_one_replica {
   # String ihh12_normed_out_log_fname = ihh12_normed_out_fname + ".log"
 
   command <<<
-    tar xvfz "~{replica_output}"
+    tar xvfz "~{region_haps_tar_gz}"
 
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string ~{out_basename} \
@@ -416,20 +443,21 @@ task compute_one_pop_cms2_components_for_one_replica {
   }
 }
 
-# * task compute_two_pop_cms2_components_for_one_replica
-task compute_two_pop_cms2_components_for_one_replica {
+# * task compute_two_pop_cms2_components_
+task compute_two_pop_cms2_components {
   meta {
     description: "Compute cross-pop comparison CMS2 component scores"
   }
 # ** inputs
   input {
 #    ReplicaInfo replicaInfo
-    File replica_output
+    File region_haps_tar_gz
     Int sel_pop
     Int alt_pop
-    File script
+
     #File? xpehh_bins
 
+    File script
     Int threads
     Int mem_base_gb
     Int mem_per_thread_gb
@@ -440,14 +468,15 @@ task compute_two_pop_cms2_components_for_one_replica {
 #  String modelId = replicaInfo.modelInfo.modelId
 #  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
 #  String replica_id_string = "model_" + modelId + "__rep_" + replicaNumGlobal + "__selpop_" + sel_pop
-  String out_basename = basename(replica_output) + "__selpop+" + sel_pop + "__altpop_" + alt_pop
+  String out_basename = basename(region_haps_tar_gz) + "__selpop+" + sel_pop + "__altpop_" + alt_pop
   String script_used_name = out_basename + ".script-used." + basename(script)
+
   String xpehh_out_fname = out_basename + ".xpehh.out"
   String xpehh_log_fname = out_basename + ".xpehh.log"
 
 # ** command
   command <<<
-    tar xvfz "~{replica_output}"
+    tar xvfz "~{region_haps_tar_gz}"
 
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --out-basename ~{replica_id_string} \
@@ -492,7 +521,8 @@ task create_tar_gz {
     File out_tar_gz = out_fname_tar_gz
   }
   runtime {
-    docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     # docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
     memory: "500 MB"
     cpu: 1
@@ -542,7 +572,8 @@ task get_pops_info {
     PopsInfo pops_info = read_json("${pops_info_fname}")
   }
   runtime {
-    docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
@@ -608,8 +639,8 @@ workflow run_sims_and_compute_cms2_components {
     # Component score computation params
     #
 
-    #Array[File] replica_outputs
-    #Array[File] neutral_replica_outputs
+    #Array[File] region_haps_tar_gzs
+    #Array[File] neutral_region_haps_tar_gzs
 
     File compute_components_script = "./remodel_components.py"
 
@@ -623,7 +654,8 @@ workflow run_sims_and_compute_cms2_components {
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
     File pops_info_script = "./get_pops_info.py"
-    String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
 
   #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
@@ -646,6 +678,8 @@ workflow run_sims_and_compute_cms2_components {
   }
 
   PopsInfo pops_info = get_pops_info.pops_info
+  Array[Int] pop_ids = pop_info.pop_ids
+  Int n_pops = length(pop_ids)
 
   ####################################################
   # Run neutral sims
@@ -659,10 +693,12 @@ workflow run_sims_and_compute_cms2_components {
       paramFileCommon = paramFile_demographic_model,
       paramFile = paramFile_neutral,
       recombFile=recombFile,
+
       modelId=modelId+"_neutral",
       blockNum=blockNum,
       simBlockId=modelId+"_neutral__block_"+blockNum+"__of_"+numBlocksNeutral,
       numBlocks=numBlocksNeutral,
+
       maxAttempts=maxAttempts,
       repTimeoutSeconds=repTimeoutSeconds,
       numRepsPerBlock=numRepsPerBlock,
@@ -673,6 +709,17 @@ workflow run_sims_and_compute_cms2_components {
       taskScript=taskScript_simulation
     }
   }
+
+# *** Gather successful neutral sims
+  Array[Pair[ReplicaInfo,File]] neutral_sims = 
+      zip(flatten(run_neutral_sims.replicaInfos), flatten(run_neutral_sims.region_haps_tar_gzs))
+
+  scatter(neut_sim in neutral_sims) {
+    if (neut_sim.left.succeeded) {
+      File neut_sim_region_haps_tar_gz_maybe = neut_sim.right
+    }
+  }
+  Array[File] neut_sim_region_haps_tar_gzs = select_all(neut_sim_region_haps_tar_gz_maybe)
 
   ####################################################
   # Run selection sims
@@ -706,71 +753,63 @@ workflow run_sims_and_compute_cms2_components {
   ####################################################
 
 # ** Compute normalization stats
-  Array[Pair[ReplicaInfo,File]] neutral_sims = 
-      zip(flatten(run_neutral_sims.replicaInfos), flatten(run_neutral_sims.tpeds_tar_gz))
+# *** Compute one-pop CMS2 components for neutral sims
+  scatter(sel_pop in pop_ids) {
+    scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
+      call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
+	input:
+	sel_pop=sel_pop,
+	region_haps_tar_gz=neut_sim_region_haps_tar_gz,
 
-  Array[Int] pop_ids = get_pop_ids.pop_ids
-  Array[String] pop_ids_str = pop_ids
+	script=compute_components_script,
+	threads=threads,
+	mem_base_gb=mem_base_gb,
+	mem_per_thread_gb=mem_per_thread_gb,
+	local_disk_gb=local_disk_gb,
+	docker=docker,
+	preemptible=preemptible
+      }
+    }
 
-  scatter(neut_sim in neutral_sims) {
-    Boolean neut_sim_succeeded = neut_sim.left.succeeded
-    if (neut_sim_succeeded) {
-      File a_neut_sim_tped = neut_sim.right
+# *** Compute normalization stats for one-pop components for neutral sims
+    call compute_one_pop_stats_for_normalization {
+      input:
+      out_fnames_base = modelId + "__selpop_" + sel_pop,
+
+      ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
+      nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
+      ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
+
+      n_bins_ihs=n_bins_ihs,
+      n_bins_nsl=n_bins_nsl,
+      n_bins_ihh12=n_bins_ihh12,
+
+      threads=1,
+      mem_base_gb=64,
+      mem_per_thread_gb=0,
+      local_disk_gb=local_disk_gb,
+      docker=docker,
+      preemptible=preemptible
     }
   }
-  Array[File] ok_neut_sim_tpeds = select_all(a_neut_sim_tped)
 
-  scatter(sel_pop in pop_ids) {
-    scatter(neut_sim_tped in ok_neut_sim_tpeds) {
-	call compute_one_pop_cms2_components_for_one_replica as compute_one_pop_cms2_components_for_neutral {
-	  input:
-	  sel_pop=sel_pop,
-	  replica_output=neut_sim_tped,
-
-	  script=compute_components_script,
-	  threads=threads,
-	  mem_base_gb=mem_base_gb,
-	  mem_per_thread_gb=mem_per_thread_gb,
-	  local_disk_gb=local_disk_gb,
-	  docker=docker,
-	  preemptible=preemptible
-	}
-     }
-
-     call compute_one_pop_stats_for_normalization {
-       input:
-       out_fnames_base = modelId,
-       ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
-       nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
-       ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
-
-       n_bins_ihs=n_bins_ihs,
-       n_bins_nsl=n_bins_nsl,
-       n_bins_ihh12=n_bins_ihh12,
-
-       threads=1,
-       mem_base_gb=64,
-       mem_per_thread_gb=0,
-       local_disk_gb=local_disk_gb,
-       docker=docker,
-       preemptible=preemptible
-     }
-   }
-
-   scatter(pop_pair in get_pop_ids.pop_pairs) {
-     call compute_two_pop_cms2_components_for_one_replica as compute_two_pop_cms2_components_for_neutral {
-       input:
-       sel_pop=pop_pair.left,
-       alt_pop=pop_pair.right,
-       replica_output=neut_sim_tped,
-       
-       script=compute_components_script,
-       threads=threads,
-       mem_base_gb=mem_base_gb,
-       mem_per_thread_gb=mem_per_thread_gb,
-       local_disk_gb=local_disk_gb,
-       docker=docker,
-       preemptible=preemptible
+# *** Compute two-pop CMS2 components for neutral sims
+   scatter(pop_pair in pop_infos.pop_pairs) {
+     scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
+       call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
+	 input:
+	 sel_pop=pop_pair.left,
+	 alt_pop=pop_pair.right,
+	 region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+	 
+	 script=compute_components_script,
+	 threads=threads,
+	 mem_base_gb=mem_base_gb,
+	 mem_per_thread_gb=mem_per_thread_gb,
+	 local_disk_gb=local_disk_gb,
+	 docker=docker,
+	 preemptible=preemptible
+       }
      }
 
      call compute_two_pop_stats_for_normalization {
@@ -791,7 +830,7 @@ workflow run_sims_and_compute_cms2_components {
   }
 
 # ** Component stats for selection sims
-  Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.tpeds_tar_gz))
+  Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.region_haps_tar_gz))
 
   scatter(sel_pop in pop_ids) {
     scatter(pop_pair_and_normed in zip(pops_info.pop_pairs
@@ -804,16 +843,15 @@ workflow run_sims_and_compute_cms2_components {
   }}
 
 
-
   scatter(sel_sim in selection_sims) {
     ReplicaInfo sel_sim_replicaInfo = sel_sim.left
     if (sel_sim_replicaInfo.succeeded) {
       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
       Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
-      call compute_one_pop_cms2_components_for_one_replica as compute_one_pop_cms2_components_for_selection {
+      call compute_one_pop_cms2_components_ as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
-	replica_output=sel_sim.right,
+	region_haps_tar_gz=sel_sim.right,
 
 	script=compute_components_script,
 	threads=threads,
@@ -824,11 +862,11 @@ workflow run_sims_and_compute_cms2_components {
 	preemptible=preemptible
       }
       scatter(alt_pop in pops_info.pop_alts) {
-	call compute_two_pop_cms2_components_for_one_replica as compute_two_pop_cms2_components_for_selection {
+	call compute_two_pop_cms2_components_ as compute_two_pop_cms2_components_for_selection {
 	  input:
 	  sel_pop=sel_pop,
 	  alt_pop=alt_pop,
-	  replica_output=sel_sim.right,
+	  region_haps_tar_gz=sel_sim.right,
 
 	  script=compute_components_script,
 	  threads=threads,
@@ -883,17 +921,16 @@ workflow run_sims_and_compute_cms2_components {
 
 # ** Workflow outputs
   output {
-    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.tpeds_tar_gz)
-    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.tpeds_tar_gz)
+# *** Bookkeeping outputs
+    File saved_input_files = save_input_files.out_tar_gz
+    PopsInfo pops_info = pops_info
+# *** Simulation outputs
+    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.region_haps_tar_gz)
+    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.region_haps_tar_gz)
     Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
     Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
-    File saved_input_files = save_input_files.out_tar_gz
-    Array[Int] pop_ids = get_pop_ids.pop_ids
-    Array[String] pop_names = get_pop_ids.pop_names
-    Array[Int] sel_pop_ids = get_pop_ids.sel_pop_ids
-    Map[Int,Int] pop_id_to_idx = get_pop_ids.pop_id_to_idx
-    
+# *** Component scores
     Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }
 }
