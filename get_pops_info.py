@@ -81,7 +81,7 @@ def do_get_pop_ids(args):
         raise RuntimeError(f"Could not find sole sweep in {sweep_def}")
       sel_pops.extend(sel_pops_here)
 
-      pops_info['sel_pop_ids'] = sel_pop_ids
+      pops_info['sel_pop_ids'] = sel_pops
 
     _write_json(fname=args.out_pops_info, json_val=dict(pops_info=pops_info))
 

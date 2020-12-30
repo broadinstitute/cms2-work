@@ -160,6 +160,7 @@ def parse_args():
     # parser.add_argument('--simRecomFile')
     # parser.add_argument('--pops', nargs='+')
     parser.add_argument('--replica-info')
+    parser.add_argument('--replica-id-string')
     parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')

@@ -295,10 +295,10 @@ task normalize_and_collate {
     Int n_bins_ihh12
     Int n_bins_xpehh
 
-    File norm_and_collate_script = "./norm_and_collate.py"
+    File normalize_and_collate_script
   }
   command <<<
-    #python3 "~{norm_and_collate_script}"
+    #python3 "~{normalize_and_collate_script}"
     touch "normed_and_collated.tsv"
   >>>  
   output {
@@ -430,8 +430,8 @@ task compute_one_pop_cms2_components {
     tar xvfz "~{region_haps_tar_gz}"
 
     cp "~{script}" "~{script_used_name}"
-    python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string ~{out_basename} \
-      --sel-pop ~{sel_pop} --threads ~{threads} --components ihs nsl ihh12
+    python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string "~{out_basename}" \
+      --out-basename "~{out_basename}" --sel-pop ~{sel_pop} --threads ~{threads} --components ihs nsl ihh12
   >>>
 
   output {
@@ -484,7 +484,7 @@ task compute_two_pop_cms2_components {
 #  String modelId = replicaInfo.modelInfo.modelId
 #  Int replicaNumGlobal = replicaInfo.replicaId.replicaNumGlobal
 #  String replica_id_string = "model_" + modelId + "__rep_" + replicaNumGlobal + "__selpop_" + sel_pop
-  String out_basename = basename(region_haps_tar_gz) + "__selpop+" + sel_pop + "__altpop_" + alt_pop
+  String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop + "__altpop_" + alt_pop
   String script_used_name = out_basename + ".script-used." + basename(script)
 
   String xpehh_out_fname = out_basename + ".xpehh.out"
@@ -496,7 +496,8 @@ task compute_two_pop_cms2_components {
 
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --out-basename "~{out_basename}" \
-        --sel-pop ~{sel_pop} --alt-pop ~{alt_pop} --threads ~{threads} --components xpehh
+        --replica-id-string "~{out_basename}" --sel-pop ~{sel_pop} --alt-pop ~{alt_pop} \
+        --threads ~{threads} --components xpehh
   >>>
 
 # ** outputs
@@ -588,7 +589,7 @@ task get_pops_info {
     touch empty_file
   >>>
   output {
-    PopsInfo pops_info = read_json("${pops_info_fname}")
+    PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
     File empty_file = "empty_file"
   }
   runtime {
@@ -674,6 +675,7 @@ workflow run_sims_and_compute_cms2_components {
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
     File get_pops_info_script = "./get_pops_info.py"
+    File normalize_and_collate_script = "./norm_and_collate.py"
     String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
     #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
@@ -685,7 +687,7 @@ workflow run_sims_and_compute_cms2_components {
   call create_tar_gz as save_input_files {
     input:
        files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation, compute_components_script,
-                         get_pops_info_script],
+                         get_pops_info_script, normalize_and_collate_script],
                         paramFiles_selection]),
        out_basename = modelId
   }
@@ -935,7 +937,8 @@ workflow run_sims_and_compute_cms2_components {
 	  norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl[sel_pop_idx],
 	  norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12[sel_pop_idx],
 
-	  norm_bins_xpehh=norm_bins_xpehh[sel_pop_idx]
+	  norm_bins_xpehh=norm_bins_xpehh[sel_pop_idx],
+	  normalize_and_collate_script=normalize_and_collate_script
       }
 
       # CMS2_Components_Result sel_components_result = object {
