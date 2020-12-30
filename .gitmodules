@@ -1,0 +1,4 @@
+[submodule "selscan"]
+	path = selscan
+	url = https://github.com/notestaff/selscan.git
+	branch = is-norm-add-saving-and-loading-of-means
