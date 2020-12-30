@@ -10,3 +10,7 @@
 	path = fiss
 	url = https://github.com/notestaff/fiss.git
 	branch = is-fix-proj-list-output
+[submodule "cromwell-client"]
+	path = cromwell-client
+	url = https://github.com/notestaff/cromwell-client.git
+	branch = is-run-cromwell-directly
