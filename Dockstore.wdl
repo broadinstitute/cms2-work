@@ -288,8 +288,12 @@ task normalize_and_collate {
     File norm_bins_ihs
     File norm_bins_nsl
     File norm_bins_ihh12
-
     Array[File] norm_bins_xpehh
+
+    Int n_bins_ihs
+    Int n_bins_nsl
+    Int n_bins_ihh12
+    Int n_bins_xpehh
 
     File norm_and_collate_script = "./norm_and_collate.py"
   }
@@ -498,7 +502,7 @@ task compute_two_pop_cms2_components {
 # ** outputs
   output {
     #Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
-    File xpehh_out = xpehh_out_fname
+    File xpehh = xpehh_out_fname
     File xpehh_log = xpehh_log_fname
     Int sel_pop_used = sel_pop
     Int alt_pop_used = alt_pop
@@ -581,9 +585,11 @@ task get_pops_info {
   command <<<
     python3 "~{get_pops_info_script}" --dem-model "~{paramFile_demographic_model}" \
        --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "${pops_info_fname}"
+    touch empty_file
   >>>
   output {
     PopsInfo pops_info = read_json("${pops_info_fname}")
+    File empty_file = "empty_file"
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
@@ -839,7 +845,7 @@ workflow run_sims_and_compute_cms2_components {
 	   sel_pop=get_pops_info.pops_info.pop_ids[sel_pop_idx],
 	   alt_pop=get_pops_info.pops_info.pop_ids[alt_pop_idx],
 
-	   xpehh_out=compute_two_pop_cms2_components_for_neutral.xpehh_out,
+	   xpehh_out=compute_two_pop_cms2_components_for_neutral.xpehh,
 
 	   n_bins_xpehh=n_bins_xpehh,
 
@@ -854,96 +860,98 @@ workflow run_sims_and_compute_cms2_components {
      }
   }
 
-#    scatter(sel_pop_idx in pop_idxes) {
-#      scatter(alt_pop_idx in pop_idxes) {
-#        File norm_bins_xpehh = 
-#           select_first([
-#             compute_two_pop_bin_stats_for_normalization[sel_pop_idx][alt_pop_idx].norm_bins_xpehh,
-#             compute_two_pop_bin_stats_for_normalization[alt_pop_idx][sel_pop_idx].norm_bins_flip_pops_xpehh
-#          ])
-#      }
-#    }
+   scatter(sel_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+     scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+       if (alt_pop_idx != sel_pop_idx) {
+	 File norm_bins_xpehh_maybe = 
+         select_first([
+         compute_two_pop_bin_stats_for_normalization.norm_bins_xpehh[sel_pop_idx][alt_pop_idx],
+         compute_two_pop_bin_stats_for_normalization.norm_bins_flip_pops_xpehh[alt_pop_idx][sel_pop_idx]
+         ])
+       }
+     }
+     Array[File] norm_bins_xpehh = select_all(norm_bins_xpehh_maybe)
+   }
 
+# ** Component stats for selection sims
+  Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.region_haps_tar_gzs))
 
-# # ** Component stats for selection sims
-#   Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.region_haps_tar_gz))
+  scatter(sel_sim in selection_sims) {
+    ReplicaInfo sel_sim_replicaInfo = sel_sim.left
+    if (sel_sim_replicaInfo.succeeded) {
+      Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
+      Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
+      call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
+	input:
+	sel_pop=sel_pop,
+	region_haps_tar_gz=sel_sim.right,
 
-#   scatter(sel_sim in selection_sims) {
-#     ReplicaInfo sel_sim_replicaInfo = sel_sim.left
-#     if (sel_sim_replicaInfo.succeeded) {
-#       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
-#       Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
-#       call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
-# 	input:
-# 	sel_pop=sel_pop,
-# 	region_haps_tar_gz=sel_sim.right,
+	script=compute_components_script,
+	threads=threads,
+	mem_base_gb=mem_base_gb,
+	mem_per_thread_gb=mem_per_thread_gb,
+	local_disk_gb=local_disk_gb,
+	docker=docker,
+	preemptible=preemptible
+      }
+      scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+	if (alt_pop_idx != sel_pop_idx) {
+	  call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
+	    input:
+	    sel_pop=sel_pop,
+	    alt_pop=get_pops_info.pops_info.pop_ids[alt_pop_idx],
+	    region_haps_tar_gz=sel_sim.right,
 
-# 	script=compute_components_script,
-# 	threads=threads,
-# 	mem_base_gb=mem_base_gb,
-# 	mem_per_thread_gb=mem_per_thread_gb,
-# 	local_disk_gb=local_disk_gb,
-# 	docker=docker,
-# 	preemptible=preemptible
-#       }
-#       scatter(alt_pop_idx in pop_idxes) {
-# 	if (alt_pop_idx != sel_pop_idx) {
-# 	  call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
-# 	    input:
-# 	    sel_pop=sel_pop,
-# 	    alt_pop=alt_pop,
-# 	    region_haps_tar_gz=sel_sim.right,
+	    script=compute_components_script,
+	    threads=threads,
+	    mem_base_gb=mem_base_gb,
+	    mem_per_thread_gb=mem_per_thread_gb,
+	    local_disk_gb=local_disk_gb,
+	    docker=docker,
+	    preemptible=preemptible
+	  }
+	}
+      }
 
-# 	    script=compute_components_script,
-# 	    threads=threads,
-# 	    mem_base_gb=mem_base_gb,
-# 	    mem_per_thread_gb=mem_per_thread_gb,
-# 	    local_disk_gb=local_disk_gb,
-# 	    docker=docker,
-# 	    preemptible=preemptible
-# 	  }
-# 	}
-#       }
+      # should normalize_and_collate be done by blocks?
+      call normalize_and_collate {
+	input:
+	  pop_ids=get_pops_info.pops_info.pop_ids,
+	  pop_pairs=get_pops_info.pops_info.pop_pairs,
+	  sel_pop=sel_pop,
 
-#       # should normalize_and_collate be done by blocks?
-#       call normalize_and_collate {
-# 	input:
-# 	  pop_ids=pop_ids,
-# 	  pop_pairs=pop_infos.pop_pairs,
-# 	  sel_pop=sel_pop,
+	  ihs_out=compute_one_pop_cms2_components_for_selection.ihs,
+	  nsl_out=compute_one_pop_cms2_components_for_selection.nsl,
+	  ihh12_out=compute_one_pop_cms2_components_for_selection.ihh12,
 
-# 	  ihs_out=compute_one_pop_cms2_components_for_selection.ihs,
-# 	  nsl_out=compute_one_pop_cms2_components_for_selection.nsl,
-# 	  ihh12_out=compute_one_pop_cms2_components_for_selection.ihh12,
+	  xpehh_out=select_all(compute_two_pop_cms2_components_for_selection.xpehh),
 
-# 	  xpehh_out=compute_two_pop_cms2_components_for_selection.xpehh,
+	  n_bins_ihs=n_bins_ihs,
+	  n_bins_nsl=n_bins_nsl,
+	  n_bins_ihh12=n_bins_ihh12,
+	  n_bins_xpehh=n_bins_xpehh,
 
-# 	  n_bins_ihs=n_bins_ihs,
-# 	  n_bins_nsl=n_bins_nsl,
-# 	  n_bins_ihh12=n_bins_ihh12,
-# 	  n_bins_xpehh=n_bins_xpehh,
+	  norm_bins_ihs=compute_one_pop_bin_stats_for_normalization.norm_bins_ihs[sel_pop_idx],
+	  norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl[sel_pop_idx],
+	  norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12[sel_pop_idx],
 
-# 	  norm_bins_ihs=compute_one_pop_stats_for_normalization.norm_bins_ihs[sel_pop_idx],
-# 	  norm_bins_nsl=compute_one_pop_stats_for_normalization.norm_bins_nsl[sel_pop_idx],
-# 	  norm_bins_ihh12=compute_one_pop_stats_for_normalization.norm_bins_ihh12[sel_pop_idx],
+	  norm_bins_xpehh=norm_bins_xpehh[sel_pop_idx]
+      }
 
-# 	  norm_bins_xpehh=norm_bins_xpehh[sel_pop_idx][alt_pop_idx]
-#       }
-
-#       # CMS2_Components_Result sel_components_result = object {
-#       # 	replicaInfo: replicaInfo,
-#       # 	selection_sim_tar_gz: sel_sim.right,
-#       # 	ihsout: compute_cms2_components_for_selection.ihs,
-#       # 	ihsnormedout: compute_cms2_components_for_selection.ihs_normed,
-#       # 	nslout: compute_cms2_components_for_selection.nsl,
-#       # 	nslnormedout: compute_cms2_components_for_selection.nsl_normed,
-#       # 	ihh12out: compute_cms2_components_for_selection.ihh12,
-#       # 	ihh12normedout: compute_cms2_components_for_selection.ihh12_normed
-#       # 	#,
-#       # 	#xpehhout: compute_cms2_components_for_selection.xpehh
-#       # }
-#     }
-#   }
+      # CMS2_Components_Result sel_components_result = object {
+      # 	replicaInfo: replicaInfo,
+      # 	selection_sim_tar_gz: sel_sim.right,
+      # 	ihsout: compute_cms2_components_for_selection.ihs,
+      # 	ihsnormedout: compute_cms2_components_for_selection.ihs_normed,
+      # 	nslout: compute_cms2_components_for_selection.nsl,
+      # 	nslnormedout: compute_cms2_components_for_selection.nsl_normed,
+      # 	ihh12out: compute_cms2_components_for_selection.ihh12,
+      # 	ihh12normedout: compute_cms2_components_for_selection.ihh12_normed
+      # 	#,
+      # 	#xpehhout: compute_cms2_components_for_selection.xpehh
+      # }
+    }
+  }
 
 # ** Workflow outputs
   output {
