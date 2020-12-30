@@ -185,6 +185,7 @@ task compute_one_pop_bin_stats_for_normalization {
 
     Int n_bins_ihs
     Int n_bins_nsl
+    Int n_bins_ihh12
 
     Int threads
     Int mem_base_gb
@@ -197,7 +198,7 @@ task compute_one_pop_bin_stats_for_normalization {
   command <<<
     norm --ihs --bins ~{n_bins_ihs} --files @~{write_lines(ihs_out)} --save-bins ~{out_fnames_base}.norm_bins_ihs.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihs.log
     norm --nsl --bins ~{n_bins_nsl} --files @~{write_lines(nsl_out)} --save-bins ~{out_fnames_base}.norm_bins_nsl.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_nsl.log
-    norm --ihh12 --files @~{write_lines(ihh12_out)} --save-bins ~{out_fnames_base}.norm_bins_ihh12.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihh12.log
+    norm --ihh12 --bins ~{n_bins_ihh12} --files @~{write_lines(ihh12_out)} --save-bins ~{out_fnames_base}.norm_bins_ihh12.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihh12.log
   >>>
 
   output {
@@ -497,7 +498,7 @@ task compute_two_pop_cms2_components {
 # ** outputs
   output {
     #Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
-    File xpehh_raw = xpehh_out_fname
+    File xpehh_out = xpehh_out_fname
     File xpehh_log = xpehh_log_fname
     Int sel_pop_used = sel_pop
     Int alt_pop_used = alt_pop
@@ -771,83 +772,87 @@ workflow run_sims_and_compute_cms2_components {
 
 # ** Compute normalization stats
 # *** Compute one-pop CMS2 components for neutral sims
-#   scatter(sel_pop in pop_ids) {
-#     scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
-#       call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
-# 	input:
-# 	sel_pop=sel_pop,
-# 	region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+  scatter(sel_pop in get_pops_info.pops_info.pop_ids) {
+    scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
+      call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
+	input:
+	sel_pop=sel_pop,
+	region_haps_tar_gz=neut_sim_region_haps_tar_gz,
 
-# 	script=compute_components_script,
-# 	threads=threads,
-# 	mem_base_gb=mem_base_gb,
-# 	mem_per_thread_gb=mem_per_thread_gb,
-# 	local_disk_gb=local_disk_gb,
-# 	docker=docker,
-# 	preemptible=preemptible
-#       }
-#     }
+	script=compute_components_script,
+	threads=threads,
+	mem_base_gb=mem_base_gb,
+	mem_per_thread_gb=mem_per_thread_gb,
+	local_disk_gb=local_disk_gb,
+	docker=docker,
+	preemptible=preemptible
+      }
+    }
 
-# # *** Compute normalization stats for one-pop components for neutral sims
-#     call compute_one_pop_bin_stats_for_normalization {
-#       input:
-#       out_fnames_base = modelId + "__selpop_" + sel_pop,
+# *** Compute normalization stats for one-pop components for neutral sims
+    call compute_one_pop_bin_stats_for_normalization {
+      input:
+      out_fnames_base = modelId + "__selpop_" + sel_pop,
+      sel_pop=sel_pop,
 
-#       ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
-#       nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
-#       ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
+      ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
+      nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
+      ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
 
-#       n_bins_ihs=n_bins_ihs,
-#       n_bins_nsl=n_bins_nsl,
-#       n_bins_ihh12=n_bins_ihh12,
+      n_bins_ihs=n_bins_ihs,
+      n_bins_nsl=n_bins_nsl,
+      n_bins_ihh12=n_bins_ihh12,
 
-#       threads=1,
-#       mem_base_gb=64,
-#       mem_per_thread_gb=0,
-#       local_disk_gb=local_disk_gb,
-#       docker=docker,
-#       preemptible=preemptible
-#     }
-#   }
+      threads=1,
+      mem_base_gb=64,
+      mem_per_thread_gb=0,
+      local_disk_gb=local_disk_gb,
+      docker=docker,
+      preemptible=preemptible
+    }
+  }
 
-# # *** Compute two-pop CMS2 components for neutral sims
-#    scatter(sel_pop_idx in pop_idxes) {
-#      scatter(alt_pop_idx in pop_idxes) {
-#        if (alt_pop_idx > sel_pop_idx) {
-# 	 scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
-# 	   call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
-# 	     input:
-# 	     sel_pop=pop_ids[sel_pop_idx],
-# 	     alt_pop=pop_ids[alt_pop_idx],
-# 	     region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+# *** Compute two-pop CMS2 components for neutral sims
+   scatter(sel_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+     scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+       if (alt_pop_idx > sel_pop_idx) {
+	 scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
+	   call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
+	     input:
+	     sel_pop=get_pops_info.pops_info.pop_ids[sel_pop_idx],
+	     alt_pop=get_pops_info.pops_info.pop_ids[alt_pop_idx],
+	     region_haps_tar_gz=neut_sim_region_haps_tar_gz,
 	     
-# 	     script=compute_components_script,
-# 	     threads=threads,
-# 	     mem_base_gb=mem_base_gb,
-# 	     mem_per_thread_gb=mem_per_thread_gb,
-# 	     local_disk_gb=local_disk_gb,
-# 	     docker=docker,
-# 	     preemptible=preemptible
-# 	   }
-# 	 }
+	     script=compute_components_script,
+	     threads=threads,
+	     mem_base_gb=mem_base_gb,
+	     mem_per_thread_gb=mem_per_thread_gb,
+	     local_disk_gb=local_disk_gb,
+	     docker=docker,
+	     preemptible=preemptible
+	   }
+	 }
 
-# 	 call compute_two_pop_bin_stats_for_normalization {
-# 	   input:
-# 	   out_fnames_base = modelId,
-# 	   xphh_out=compute_two_pop_cms2_components_for_neutral.xpehh_out,
+	 call compute_two_pop_bin_stats_for_normalization {
+	   input:
+	   out_fnames_base = modelId,
+	   sel_pop=get_pops_info.pops_info.pop_ids[sel_pop_idx],
+	   alt_pop=get_pops_info.pops_info.pop_ids[alt_pop_idx],
 
-# 	   n_bins_xpehh=n_bins_xpehh,
+	   xpehh_out=compute_two_pop_cms2_components_for_neutral.xpehh_out,
 
-# 	   threads=1,
-# 	   mem_base_gb=64,
-# 	   mem_per_thread_gb=0,
-# 	   local_disk_gb=local_disk_gb,
-# 	   docker=docker,
-# 	   preemptible=preemptible
-# 	 }
-#        }
-#      }
-#   }
+	   n_bins_xpehh=n_bins_xpehh,
+
+	   threads=1,
+	   mem_base_gb=64,
+	   mem_per_thread_gb=0,
+	   local_disk_gb=local_disk_gb,
+	   docker=docker,
+	   preemptible=preemptible
+	 }
+       }
+     }
+  }
 
 #    scatter(sel_pop_idx in pop_idxes) {
 #      scatter(alt_pop_idx in pop_idxes) {
