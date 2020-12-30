@@ -570,6 +570,7 @@ task get_pops_info {
 struct NormalizeAndCollateInput {
     Array[Int] pop_ids
     Array[Pair[Int,Int]] pop_pairs
+    String replica_id_str
     Int sel_pop
     File ihs_out
     File nsl_out
@@ -596,11 +597,18 @@ task normalize_and_collate {
     File normalize_and_collate_script
   }
   command <<<
-    #python3 "~{normalize_and_collate_script}" --input "~{write_json(inp)}"
+    #python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
     touch "normed_and_collated.tsv"
   >>>  
   output {
-    File normed_collated_stats = "normed_and_collated.tsv"
+    File normed_collated_stats = "~{inp.replica_id_str}.normed_and_collated.tsv"
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    memory: "1 GB"
+    cpu: 1
+    disks: "local-disk 1 LOCAL"
   }
 }
 
@@ -670,8 +678,6 @@ workflow run_sims_and_compute_cms2_components {
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
-    Int n_bins_ihh12 = 20
-    Int n_bins_xpehh = 20
 
     Int threads = 1
     Int mem_base_gb = 0
@@ -682,6 +688,8 @@ workflow run_sims_and_compute_cms2_components {
     String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
     #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
+  Int n_bins_ihh12 = 1
+  Int n_bins_xpehh = 1
 
   #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
 
@@ -886,6 +894,7 @@ workflow run_sims_and_compute_cms2_components {
     if (sel_sim_replicaInfo.succeeded) {
       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
       Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
+      String sel_sim_replica_id_str = modelId + "__selpop_" + sel_pop + "__rep_" + sel_sim_replicaInfo.replicaId.replicaNumGlobal
       call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
@@ -922,6 +931,7 @@ workflow run_sims_and_compute_cms2_components {
       call normalize_and_collate {
 	input:
 	  inp = object {
+	    replica_id_str: sel_sim_replica_id_str,
 	    pop_ids: get_pops_info.pops_info.pop_ids,
 	    pop_pairs: get_pops_info.pops_info.pop_pairs,
 	    sel_pop: sel_pop,

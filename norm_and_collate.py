@@ -155,17 +155,19 @@ def execute(action, **kw):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--pops-info-json', help='info about populations')
-    parser.add_argument('--sel-pop', type=int, help='putatively selected pop')
+    parser.add_argument('--input-json', help='inputs passed as json')
 
-    parser.add_argument('--ihs-raw', help='raw ihs scores')
-    parser.add_argument('--nsl-raw', help='raw nsl scores')
-    parser.add_argument('--ihh12-raw', help='raw ihh12 scores')
-    parser.add_argument('--xpehh-raw', nargs='+', help='raw xpehh scores')
+    # parser.add_argument('--pops-info-json', help='info about populations')
+    # parser.add_argument('--sel-pop', type=int, help='putatively selected pop')
 
-    parser.add_argument('--norm-bins-ihs', help='IHS bins data from neutral sims, for normalization')
-    parser.add_argument('--norm-bins-nsl', help='IHS bins data from neutral sims, for normalization')
-    parser.add_argument('--norm-bins-ihh12', help='IHS bins data from neutral sims, for normalization')
+    # parser.add_argument('--ihs-raw', help='raw ihs scores')
+    # parser.add_argument('--nsl-raw', help='raw nsl scores')
+    # parser.add_argument('--ihh12-raw', help='raw ihh12 scores')
+    # parser.add_argument('--xpehh-raw', nargs='+', help='raw xpehh scores')
+
+    # parser.add_argument('--norm-bins-ihs', help='IHS bins data from neutral sims, for normalization')
+    # parser.add_argument('--norm-bins-nsl', help='IHS bins data from neutral sims, for normalization')
+    # parser.add_argument('--norm-bins-ihh12', help='IHS bins data from neutral sims, for normalization')
     
     
     return parser.parse_args()
@@ -327,19 +329,20 @@ def compute_component_scores(args):
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
 
 def normalize_and_collate_scores(args):
-    execute(f'norm --ihs --bins {args.n_bins_ihs} --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '
-            f'--log {args.replica_id_string}.ihs.out.{args.n_bins_ihs}bins.norm.log ')
+    execute(f'norm --ihs --bins {args["n_bins_ihs"]} --load-bins {args["norm_bins_ihs"]} --files {args["ihs_out"]} '
+            f'--log {args["ihs_out"]}.{args["n_bins_ihs"]}bins.norm.log ')
 
-    execute(f'norm --nsl --bins {args.n_bins_nsl} --load-bins {args.nsl_bins} --files {args.replica_id_string}.nsl.out '
-            f'--log {args.replica_id_string}.nsl.out.{args.n_bins_nsl}bins.norm.log ')
+    execute(f'norm --nsl --bins {args["n_bins_nsl"]} --load-bins {args["norm_bins_nsl"]} --files {args["nsl_out"]} '
+            f'--log {args["nsl_out"]}.{args["n_bins_nsl"]}bins.norm.log ')
 
-    execute(f'norm --ihh12 --bins {args.n_bins_ihh12} --load-bins {args.ihh12_bins} --files {args.replica_id_string}.ihh12.out '
-            f'--log {args.replica_id_string}.ihh12.out.{args.n_bins_ihh12}bins.norm.log ')
+    execute(f'norm --ihh12 --bins {args["n_bins_ihh12"]} --load-bins {args["norm_bins_ihh12"]} --files {args["ihh12_out"]} '
+            f'--log {args["ihh12_out"]}.norm.log ')
+
     
-    for alt_pop in args.pop_ids:
-        if alt_pop != args.sel_pop:
-            execute(f'norm --xpehh --bins {args.n_bins_xpehh} --load-bins {args.xpehh_bins} --files {args.replica_id_string}.xpehh.out '
-                    f'--log {args.replica_id_string}.xpehh.out.{args.n_bins_xpehh}bins.norm.log ')
+    for xpehh_out, norm_bins_xpehh in zip(args["xpehh_out"], args["norm_bins_xpehh"]):
+        execute(f'norm --xpehh --bins {args["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
+                f'--log {xpehh_out}.norm.log ')
+    
 
     #
     # compute fst and deltadaf
