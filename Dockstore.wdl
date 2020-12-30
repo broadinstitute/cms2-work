@@ -222,13 +222,13 @@ task compute_one_pop_bin_stats_for_normalization {
 task compute_two_pop_bin_stats_for_normalization {
   meta {
     description: "Compute the means and stds of component scores on neutral sims, for a pop pair, for the purpose of normalization"
-    email: "ilya_shl@alum.mit.edu"
   }
   input {
     String out_fnames_base
     Int sel_pop
     Int alt_pop
     Array[File]+ xpehh_out
+    Int n_bins_xpehh
 
     Int threads
     Int mem_base_gb
@@ -238,14 +238,26 @@ task compute_two_pop_bin_stats_for_normalization {
     Int preemptible
   }
 
+  String norm_bins_xpehh_fname = "${out_fnames_base}__selpop_${sel_pop}__altpop_${alt_pop}.norm_bins_xpehh.dat"
+  String norm_bins_xpehh_log_fname = "${out_fnames_base}__selpop_${sel_pop}__altpop_${alt_pop}.norm_bins_xpehh.dat"
+
+  String norm_bins_flip_pops_xpehh_fname = "${out_fnames_base}__selpop_${alt_pop}__altpop_${sel_pop}.norm_bins_xpehh.dat"
+  String norm_bins_flip_pops_xpehh_log_fname = "${out_fnames_base}__selpop_${alt_pop}__altpop_${sel_pop}.norm_bins_xpehh.log"
+
   command <<<
-    norm --xpehh --bins ~{n_bins_xpehh} --files @~{write_lines(xpehh_out)} --save-bins ~{out_fnames_base}.norm_bins_xpehh.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_xpehh.log
-    
+    norm --xpehh --bins ~{n_bins_xpehh} --files @~{write_lines(xpehh_out)} --save-bins "~{norm_bins_xpehh_fname}" --only-save-bins \
+        --log "~{norm_bins_xpehh_log_fname}"
+    norm --xpehh --xpehh-flip-pops --bins ~{n_bins_xpehh} --files @~{write_lines(xpehh_out)} --save-bins "~{norm_bins_flip_pops_xpehh_fname}" \
+        --only-save-bins \
+        --log "~{norm_bins_flip_pops_xpehh_log_fname}"
   >>>
 
   output {
-    File norm_bins_xpehh = out_fnames_base + ".norm_bins_xpehh.dat"
-    File norm_bins_xpehh_log = out_fnames_base + ".norm_bins_nsl.log"
+    File norm_bins_xpehh = norm_bins_xpehh_fname
+    File norm_bins_xpehh_log = norm_bins_xpehh_log_fname
+    
+    File norm_bins_flip_pops_xpehh = norm_bins_flip_pops_xpehh_fname
+    File norm_bins_flip_pops_xpehh_log = norm_bins_flip_pops_xpehh_log_fname
   }
 
   runtime {
@@ -256,8 +268,6 @@ task compute_two_pop_bin_stats_for_normalization {
     disks: "local-disk " + local_disk_gb + " LOCAL"
   }
 }
-
-
 
 # * task normalize_and_collate
 
@@ -283,10 +293,11 @@ task normalize_and_collate {
     File norm_and_collate_script = "./norm_and_collate.py"
   }
   command <<<
-    python3 "~{norm_and_collate_script}"
+    #python3 "~{norm_and_collate_script}"
+    touch "normed_and_collated.tsv"
   >>>  
   output {
-    File normed_collated_stats
+    File normed_collated_stats = "normed_and_collated.tsv"
   }
 }
 
@@ -479,7 +490,7 @@ task compute_two_pop_cms2_components {
     tar xvfz "~{region_haps_tar_gz}"
 
     cp "~{script}" "~{script_used_name}"
-    python3 "~{script}" --replica-info *.replicaInfo.json --out-basename ~{replica_id_string} \
+    python3 "~{script}" --replica-info *.replicaInfo.json --out-basename "~{out_basename}" \
         --sel-pop ~{sel_pop} --alt-pop ~{alt_pop} --threads ~{threads} --components xpehh
   >>>
 
@@ -488,6 +499,8 @@ task compute_two_pop_cms2_components {
     #Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
     File xpehh_raw = xpehh_out_fname
     File xpehh_log = xpehh_log_fname
+    Int sel_pop_used = sel_pop
+    Int alt_pop_used = alt_pop
     #Array[File] xpehh = glob("*.xpehh.out")
     Int threads_used = threads
     File script_used = script_used_name
@@ -565,7 +578,7 @@ task get_pops_info {
   String modelId = "model_"+basename(paramFile_demographic_model, ".par")
   String pops_info_fname = modelId + ".pops_info.json"
   command <<<
-    python3 "~{pop_ids_script}" --dem-model "~{paramFile_demographic_model}" \
+    python3 "~{get_pops_info_script}" --dem-model "~{paramFile_demographic_model}" \
        --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "${pops_info_fname}"
   >>>
   output {
@@ -653,7 +666,7 @@ workflow run_sims_and_compute_cms2_components {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File pops_info_script = "./get_pops_info.py"
+    File get_pops_info_script = "./get_pops_info.py"
     String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
     #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
@@ -664,7 +677,8 @@ workflow run_sims_and_compute_cms2_components {
 # *** call create_tar_gz as save_input_files
   call create_tar_gz as save_input_files {
     input:
-       files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation, script],
+       files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation, compute_components_script,
+                         get_pops_info_script],
                         paramFiles_selection]),
        out_basename = modelId
   }
@@ -674,12 +688,15 @@ workflow run_sims_and_compute_cms2_components {
     input:
        paramFile_demographic_model = paramFile_demographic_model,
        paramFiles_selection = paramFiles_selection,
-       pops_info_script = pops_info_script
+       get_pops_info_script = get_pops_info_script
   }
 
-  PopsInfo pops_info = get_pops_info.pops_info
-  Array[Int] pop_ids = pop_info.pop_ids
-  Int n_pops = length(pop_ids)
+  #PopsInfo pops_info = get_pops_info.pops_info
+  # Array[Int] pop_ids = pops_info.pop_ids
+  # Array[Int] pop_idxes = range(length(pop_ids))
+  # Int n_pops = length(pop_ids)
+  # Array[Pair[Int, Int]] pop_pairs = pops_info.pop_pairs
+  # Int n_pop_pairs = length(pop_pairs)
 
   ####################################################
   # Run neutral sims
@@ -754,183 +771,188 @@ workflow run_sims_and_compute_cms2_components {
 
 # ** Compute normalization stats
 # *** Compute one-pop CMS2 components for neutral sims
-  scatter(sel_pop in pop_ids) {
-    scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
-      call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
-	input:
-	sel_pop=sel_pop,
-	region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+#   scatter(sel_pop in pop_ids) {
+#     scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
+#       call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
+# 	input:
+# 	sel_pop=sel_pop,
+# 	region_haps_tar_gz=neut_sim_region_haps_tar_gz,
 
-	script=compute_components_script,
-	threads=threads,
-	mem_base_gb=mem_base_gb,
-	mem_per_thread_gb=mem_per_thread_gb,
-	local_disk_gb=local_disk_gb,
-	docker=docker,
-	preemptible=preemptible
-      }
-    }
+# 	script=compute_components_script,
+# 	threads=threads,
+# 	mem_base_gb=mem_base_gb,
+# 	mem_per_thread_gb=mem_per_thread_gb,
+# 	local_disk_gb=local_disk_gb,
+# 	docker=docker,
+# 	preemptible=preemptible
+#       }
+#     }
 
-# *** Compute normalization stats for one-pop components for neutral sims
-    call compute_one_pop_stats_for_normalization {
-      input:
-      out_fnames_base = modelId + "__selpop_" + sel_pop,
+# # *** Compute normalization stats for one-pop components for neutral sims
+#     call compute_one_pop_bin_stats_for_normalization {
+#       input:
+#       out_fnames_base = modelId + "__selpop_" + sel_pop,
 
-      ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
-      nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
-      ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
+#       ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
+#       nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
+#       ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
 
-      n_bins_ihs=n_bins_ihs,
-      n_bins_nsl=n_bins_nsl,
-      n_bins_ihh12=n_bins_ihh12,
+#       n_bins_ihs=n_bins_ihs,
+#       n_bins_nsl=n_bins_nsl,
+#       n_bins_ihh12=n_bins_ihh12,
 
-      threads=1,
-      mem_base_gb=64,
-      mem_per_thread_gb=0,
-      local_disk_gb=local_disk_gb,
-      docker=docker,
-      preemptible=preemptible
-    }
-  }
+#       threads=1,
+#       mem_base_gb=64,
+#       mem_per_thread_gb=0,
+#       local_disk_gb=local_disk_gb,
+#       docker=docker,
+#       preemptible=preemptible
+#     }
+#   }
 
-# *** Compute two-pop CMS2 components for neutral sims
-   scatter(pop_pair in pop_infos.pop_pairs) {
-     scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
-       call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
-	 input:
-	 sel_pop=pop_pair.left,
-	 alt_pop=pop_pair.right,
-	 region_haps_tar_gz=neut_sim_region_haps_tar_gz,
-	 
-	 script=compute_components_script,
-	 threads=threads,
-	 mem_base_gb=mem_base_gb,
-	 mem_per_thread_gb=mem_per_thread_gb,
-	 local_disk_gb=local_disk_gb,
-	 docker=docker,
-	 preemptible=preemptible
-       }
-     }
+# # *** Compute two-pop CMS2 components for neutral sims
+#    scatter(sel_pop_idx in pop_idxes) {
+#      scatter(alt_pop_idx in pop_idxes) {
+#        if (alt_pop_idx > sel_pop_idx) {
+# 	 scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
+# 	   call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
+# 	     input:
+# 	     sel_pop=pop_ids[sel_pop_idx],
+# 	     alt_pop=pop_ids[alt_pop_idx],
+# 	     region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+	     
+# 	     script=compute_components_script,
+# 	     threads=threads,
+# 	     mem_base_gb=mem_base_gb,
+# 	     mem_per_thread_gb=mem_per_thread_gb,
+# 	     local_disk_gb=local_disk_gb,
+# 	     docker=docker,
+# 	     preemptible=preemptible
+# 	   }
+# 	 }
 
-     call compute_two_pop_stats_for_normalization {
-       input:
-       out_fnames_base = modelId,
-       xphh_out=compute_two_pop_cms2_components_for_neutral.xpehh_out,
+# 	 call compute_two_pop_bin_stats_for_normalization {
+# 	   input:
+# 	   out_fnames_base = modelId,
+# 	   xphh_out=compute_two_pop_cms2_components_for_neutral.xpehh_out,
 
-       n_bins_xpehh=n_bins_xpehh,
+# 	   n_bins_xpehh=n_bins_xpehh,
 
-       threads=1,
-       mem_base_gb=64,
-       mem_per_thread_gb=0,
-       local_disk_gb=local_disk_gb,
-       docker=docker,
-       preemptible=preemptible
-     }
-   }
-  }
+# 	   threads=1,
+# 	   mem_base_gb=64,
+# 	   mem_per_thread_gb=0,
+# 	   local_disk_gb=local_disk_gb,
+# 	   docker=docker,
+# 	   preemptible=preemptible
+# 	 }
+#        }
+#      }
+#   }
 
-# ** Component stats for selection sims
-  Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.region_haps_tar_gz))
-
-  scatter(sel_pop in pop_ids) {
-    scatter(pop_pair_and_normed in zip(pops_info.pop_pairs
-      Pair[Int,Int] pop_pair = pops_info.pop_pairs[pop_pair_idx]
-      if((pops_info.pop_pairs[ == sel_pop) || (res.left.right == sel_pop)) {
-   	alt_pop_pair = pop_pair
-   	a_norm_bins_xpehh = res.right
-       }
-     }
-  }}
-
-
-  scatter(sel_sim in selection_sims) {
-    ReplicaInfo sel_sim_replicaInfo = sel_sim.left
-    if (sel_sim_replicaInfo.succeeded) {
-      Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
-      Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
-      call compute_one_pop_cms2_components_ as compute_one_pop_cms2_components_for_selection {
-	input:
-	sel_pop=sel_pop,
-	region_haps_tar_gz=sel_sim.right,
-
-	script=compute_components_script,
-	threads=threads,
-	mem_base_gb=mem_base_gb,
-	mem_per_thread_gb=mem_per_thread_gb,
-	local_disk_gb=local_disk_gb,
-	docker=docker,
-	preemptible=preemptible
-      }
-      scatter(alt_pop in pops_info.pop_alts) {
-	call compute_two_pop_cms2_components_ as compute_two_pop_cms2_components_for_selection {
-	  input:
-	  sel_pop=sel_pop,
-	  alt_pop=alt_pop,
-	  region_haps_tar_gz=sel_sim.right,
-
-	  script=compute_components_script,
-	  threads=threads,
-	  mem_base_gb=mem_base_gb,
-	  mem_per_thread_gb=mem_per_thread_gb,
-	  local_disk_gb=local_disk_gb,
-	  docker=docker,
-	  preemptible=preemptible
-	}
-      }
+#    scatter(sel_pop_idx in pop_idxes) {
+#      scatter(alt_pop_idx in pop_idxes) {
+#        File norm_bins_xpehh = 
+#           select_first([
+#             compute_two_pop_bin_stats_for_normalization[sel_pop_idx][alt_pop_idx].norm_bins_xpehh,
+#             compute_two_pop_bin_stats_for_normalization[alt_pop_idx][sel_pop_idx].norm_bins_flip_pops_xpehh
+#          ])
+#      }
+#    }
 
 
-      # should normalize_and_collate be done by blocks?
-      call normalize_and_collate {
-	input:
-	  pop_ids=pop_ids,
-	  pop_pairs=pop_infos.pop_pairs,
-	  sel_pop=sel_pop,
+# # ** Component stats for selection sims
+#   Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.region_haps_tar_gz))
 
-	  ihs_out=compute_one_pop_cms2_components_for_selection.ihs,
-	  nsl_out=compute_one_pop_cms2_components_for_selection.nsl,
-	  ihh12_out=compute_one_pop_cms2_components_for_selection.ihh12,
+#   scatter(sel_sim in selection_sims) {
+#     ReplicaInfo sel_sim_replicaInfo = sel_sim.left
+#     if (sel_sim_replicaInfo.succeeded) {
+#       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
+#       Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
+#       call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
+# 	input:
+# 	sel_pop=sel_pop,
+# 	region_haps_tar_gz=sel_sim.right,
 
-	  xpehh_out=compute_two_pop_cms2_components_for_selection.xpehh,
+# 	script=compute_components_script,
+# 	threads=threads,
+# 	mem_base_gb=mem_base_gb,
+# 	mem_per_thread_gb=mem_per_thread_gb,
+# 	local_disk_gb=local_disk_gb,
+# 	docker=docker,
+# 	preemptible=preemptible
+#       }
+#       scatter(alt_pop_idx in pop_idxes) {
+# 	if (alt_pop_idx != sel_pop_idx) {
+# 	  call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
+# 	    input:
+# 	    sel_pop=sel_pop,
+# 	    alt_pop=alt_pop,
+# 	    region_haps_tar_gz=sel_sim.right,
 
-	  n_bins_ihs=n_bins_ihs,
-	  n_bins_nsl=n_bins_nsl,
-	  n_bins_ihh12=n_bins_ihh12,
-	  n_bins_xpehh=n_bins_xpehh,
+# 	    script=compute_components_script,
+# 	    threads=threads,
+# 	    mem_base_gb=mem_base_gb,
+# 	    mem_per_thread_gb=mem_per_thread_gb,
+# 	    local_disk_gb=local_disk_gb,
+# 	    docker=docker,
+# 	    preemptible=preemptible
+# 	  }
+# 	}
+#       }
 
-	  norm_bins_ihs=compute_one_pop_stats_for_normalization.norm_bins_ihs[sel_pop_idx],
-	  norm_bins_nsl=compute_one_pop_stats_for_normalization.norm_bins_nsl[sel_pop_idx],
-	  norm_bins_ihh12=compute_one_pop_stats_for_normalization.norm_bins_ihh12[sel_pop_idx],
+#       # should normalize_and_collate be done by blocks?
+#       call normalize_and_collate {
+# 	input:
+# 	  pop_ids=pop_ids,
+# 	  pop_pairs=pop_infos.pop_pairs,
+# 	  sel_pop=sel_pop,
 
-	  norm_bins_xpehh=
-      }
+# 	  ihs_out=compute_one_pop_cms2_components_for_selection.ihs,
+# 	  nsl_out=compute_one_pop_cms2_components_for_selection.nsl,
+# 	  ihh12_out=compute_one_pop_cms2_components_for_selection.ihh12,
 
-      # CMS2_Components_Result sel_components_result = object {
-      # 	replicaInfo: replicaInfo,
-      # 	selection_sim_tar_gz: sel_sim.right,
-      # 	ihsout: compute_cms2_components_for_selection.ihs,
-      # 	ihsnormedout: compute_cms2_components_for_selection.ihs_normed,
-      # 	nslout: compute_cms2_components_for_selection.nsl,
-      # 	nslnormedout: compute_cms2_components_for_selection.nsl_normed,
-      # 	ihh12out: compute_cms2_components_for_selection.ihh12,
-      # 	ihh12normedout: compute_cms2_components_for_selection.ihh12_normed
-      # 	#,
-      # 	#xpehhout: compute_cms2_components_for_selection.xpehh
-      # }
-    }
-  }
+# 	  xpehh_out=compute_two_pop_cms2_components_for_selection.xpehh,
+
+# 	  n_bins_ihs=n_bins_ihs,
+# 	  n_bins_nsl=n_bins_nsl,
+# 	  n_bins_ihh12=n_bins_ihh12,
+# 	  n_bins_xpehh=n_bins_xpehh,
+
+# 	  norm_bins_ihs=compute_one_pop_stats_for_normalization.norm_bins_ihs[sel_pop_idx],
+# 	  norm_bins_nsl=compute_one_pop_stats_for_normalization.norm_bins_nsl[sel_pop_idx],
+# 	  norm_bins_ihh12=compute_one_pop_stats_for_normalization.norm_bins_ihh12[sel_pop_idx],
+
+# 	  norm_bins_xpehh=norm_bins_xpehh[sel_pop_idx][alt_pop_idx]
+#       }
+
+#       # CMS2_Components_Result sel_components_result = object {
+#       # 	replicaInfo: replicaInfo,
+#       # 	selection_sim_tar_gz: sel_sim.right,
+#       # 	ihsout: compute_cms2_components_for_selection.ihs,
+#       # 	ihsnormedout: compute_cms2_components_for_selection.ihs_normed,
+#       # 	nslout: compute_cms2_components_for_selection.nsl,
+#       # 	nslnormedout: compute_cms2_components_for_selection.nsl_normed,
+#       # 	ihh12out: compute_cms2_components_for_selection.ihh12,
+#       # 	ihh12normedout: compute_cms2_components_for_selection.ihh12_normed
+#       # 	#,
+#       # 	#xpehhout: compute_cms2_components_for_selection.xpehh
+#       # }
+#     }
+#   }
 
 # ** Workflow outputs
   output {
 # *** Bookkeeping outputs
     File saved_input_files = save_input_files.out_tar_gz
-    PopsInfo pops_info = pops_info
+    PopsInfo pops_info = get_pops_info.pops_info
 # *** Simulation outputs
-    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.region_haps_tar_gz)
-    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.region_haps_tar_gz)
+    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.region_haps_tar_gzs)
+    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.region_haps_tar_gzs)
     Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
     Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
-    Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
+    #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
 # *** Component scores
-    Array[CMS2_Components_Result?] sel_components_results = sel_components_result
+    #Array[File] sel_normed_and_collated = normalize_and_collate.normed_collated_stats
+    #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }
 }
