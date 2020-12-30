@@ -201,7 +201,7 @@ def run_one_replica(replicaNum, args, paramFile):
                                       replicaNumGlobalOutOf=args.numBlocks*args.numRepsPerBlock,
                                       randomSeed=randomSeed),
                        succeeded=False,
-                       tpeds_tar_gz=tpeds_tar_gz,
+                       region_haps_tar_gz=tpeds_tar_gz,
                        modelInfo=dict(modelId=args.modelId,
                                       modelIdParts=[os.path.basename(args.paramFileCommon),
                                                     os.path.basename(args.paramFile)],

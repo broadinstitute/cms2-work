@@ -584,7 +584,7 @@ task get_pops_info {
   String pops_info_fname = modelId + ".pops_info.json"
   command <<<
     python3 "~{get_pops_info_script}" --dem-model "~{paramFile_demographic_model}" \
-       --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "${pops_info_fname}"
+       --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "~{pops_info_fname}"
     touch empty_file
   >>>
   output {
