@@ -1,0 +1,35 @@
+name: cromwell_env
+channels:
+  - broad-viral
+  - conda-forge
+  - bioconda
+  - defaults
+  - notestaff
+  - r
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=1_gnu
+  - ca-certificates=2020.11.8=ha878542_0
+  - certifi=2020.11.8=py38h578d9bd_0
+  - cromwell=54=ha770c72_0
+  - findutils=4.6.0=h14c3975_1000
+  - gettext=0.19.8.1=hf34092f_1004
+  - ld_impl_linux-64=2.35.1=hed1e6ac_0
+  - libffi=3.2.1=he1b5a44_1007
+  - libgcc-ng=9.3.0=h5dbcf3e_17
+  - libgomp=9.3.0=h5dbcf3e_17
+  - libstdcxx-ng=9.3.0=h2ae2ef3_17
+  - ncurses=6.2=h58526e2_4
+  - openjdk=8.0.265=h516909a_0
+  - openssl=1.1.1h=h516909a_0
+  - pip=20.2.4=py_0
+  - python=3.8.6=h852b56e_0_cpython
+  - python_abi=3.8=1_cp38
+  - readline=8.0=he28a2e2_2
+  - setuptools=49.6.0=py38h924ce5b_2
+  - sqlite=3.33.0=h4cf870e_1
+  - tk=8.6.10=hed695b0_1
+  - wheel=0.35.1=pyh9f0ad1d_0
+  - xz=5.2.5=h516909a_1
+  - zlib=1.2.11=h516909a_1010
+prefix: /ilya/miniconda3/envs/cromwell_env
