@@ -270,42 +270,6 @@ task compute_two_pop_bin_stats_for_normalization {
   }
 }
 
-# * task normalize_and_collate
-
-task normalize_and_collate {
-  meta {
-    description: "Normalize raw scores to neutral sims, and collate component scores into one table."
-  }
-  input {
-    Array[Int] pop_ids
-    Array[Pair[Int,Int]] pop_pairs
-    Int sel_pop
-    File ihs_out
-    File nsl_out
-    File ihh12_out
-    Array[File] xpehh_out
-
-    File norm_bins_ihs
-    File norm_bins_nsl
-    File norm_bins_ihh12
-    Array[File] norm_bins_xpehh
-
-    Int n_bins_ihs
-    Int n_bins_nsl
-    Int n_bins_ihh12
-    Int n_bins_xpehh
-
-    File normalize_and_collate_script
-  }
-  command <<<
-    #python3 "~{normalize_and_collate_script}"
-    touch "normed_and_collated.tsv"
-  >>>  
-  output {
-    File normed_collated_stats = "normed_and_collated.tsv"
-  }
-}
-
 # * task compute_normed_scores
 # task compute_normed_scores {
 #   meta {
@@ -601,6 +565,45 @@ task get_pops_info {
   }
 }
 
+# * task normalize_and_collate
+
+struct NormalizeAndCollateInput {
+    Array[Int] pop_ids
+    Array[Pair[Int,Int]] pop_pairs
+    Int sel_pop
+    File ihs_out
+    File nsl_out
+    File ihh12_out
+    Array[File] xpehh_out
+
+    File norm_bins_ihs
+    File norm_bins_nsl
+    File norm_bins_ihh12
+    Array[File] norm_bins_xpehh
+
+    Int n_bins_ihs
+    Int n_bins_nsl
+    Int n_bins_ihh12
+    Int n_bins_xpehh
+}
+
+task normalize_and_collate {
+  meta {
+    description: "Normalize raw scores to neutral sims, and collate component scores into one table."
+  }
+  input {
+    NormalizeAndCollateInput inp
+    File normalize_and_collate_script
+  }
+  command <<<
+    #python3 "~{normalize_and_collate_script}" --input "~{write_json(inp)}"
+    touch "normed_and_collated.tsv"
+  >>>  
+  output {
+    File normed_collated_stats = "normed_and_collated.tsv"
+  }
+}
+
 # * struct CMS2_Components_Result
 struct CMS2_Components_Result {
    ReplicaInfo replicaInfo
@@ -862,18 +865,18 @@ workflow run_sims_and_compute_cms2_components {
      }
   }
 
-   scatter(sel_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
-     scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
-       if (alt_pop_idx != sel_pop_idx) {
-	 File norm_bins_xpehh_maybe = 
-         select_first([
-         compute_two_pop_bin_stats_for_normalization.norm_bins_xpehh[sel_pop_idx][alt_pop_idx],
-         compute_two_pop_bin_stats_for_normalization.norm_bins_flip_pops_xpehh[alt_pop_idx][sel_pop_idx]
-         ])
-       }
-     }
-     Array[File] norm_bins_xpehh = select_all(norm_bins_xpehh_maybe)
-   }
+  scatter(sel_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+    scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+      if (alt_pop_idx != sel_pop_idx) {
+	File norm_bins_xpehh_maybe = 
+        select_first([
+        compute_two_pop_bin_stats_for_normalization.norm_bins_xpehh[sel_pop_idx][alt_pop_idx],
+        compute_two_pop_bin_stats_for_normalization.norm_bins_flip_pops_xpehh[alt_pop_idx][sel_pop_idx]
+        ])
+      }
+    }
+    Array[File] norm_bins_xpehh = select_all(norm_bins_xpehh_maybe)
+  }
 
 # ** Component stats for selection sims
   Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.region_haps_tar_gzs))
@@ -918,26 +921,28 @@ workflow run_sims_and_compute_cms2_components {
       # should normalize_and_collate be done by blocks?
       call normalize_and_collate {
 	input:
-	  pop_ids=get_pops_info.pops_info.pop_ids,
-	  pop_pairs=get_pops_info.pops_info.pop_pairs,
-	  sel_pop=sel_pop,
+	  inp = object {
+	    pop_ids: get_pops_info.pops_info.pop_ids,
+	    pop_pairs: get_pops_info.pops_info.pop_pairs,
+	    sel_pop: sel_pop,
 
-	  ihs_out=compute_one_pop_cms2_components_for_selection.ihs,
-	  nsl_out=compute_one_pop_cms2_components_for_selection.nsl,
-	  ihh12_out=compute_one_pop_cms2_components_for_selection.ihh12,
+	    ihs_out: compute_one_pop_cms2_components_for_selection.ihs,
+	    nsl_out: compute_one_pop_cms2_components_for_selection.nsl,
+	    ihh12_out: compute_one_pop_cms2_components_for_selection.ihh12,
 
-	  xpehh_out=select_all(compute_two_pop_cms2_components_for_selection.xpehh),
+	    xpehh_out: select_all(compute_two_pop_cms2_components_for_selection.xpehh),
 
-	  n_bins_ihs=n_bins_ihs,
-	  n_bins_nsl=n_bins_nsl,
-	  n_bins_ihh12=n_bins_ihh12,
-	  n_bins_xpehh=n_bins_xpehh,
+	    n_bins_ihs: n_bins_ihs,
+	    n_bins_nsl: n_bins_nsl,
+	    n_bins_ihh12: n_bins_ihh12,
+	    n_bins_xpehh: n_bins_xpehh,
 
-	  norm_bins_ihs=compute_one_pop_bin_stats_for_normalization.norm_bins_ihs[sel_pop_idx],
-	  norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl[sel_pop_idx],
-	  norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12[sel_pop_idx],
+	    norm_bins_ihs: compute_one_pop_bin_stats_for_normalization.norm_bins_ihs[sel_pop_idx],
+	    norm_bins_nsl: compute_one_pop_bin_stats_for_normalization.norm_bins_nsl[sel_pop_idx],
+	    norm_bins_ihh12: compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12[sel_pop_idx],
 
-	  norm_bins_xpehh=norm_bins_xpehh[sel_pop_idx],
+	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx]
+	  },
 	  normalize_and_collate_script=normalize_and_collate_script
       }
 
