@@ -27,6 +27,8 @@ import sys
 import tempfile
 import time
 
+import pandas as pd
+
 # * Utils
 
 _log = logging.getLogger(__name__)
@@ -156,6 +158,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--input-json', help='inputs passed as json')
+    parser.add_argument('--out-normed-collated', help='output file for normed and collated results')
 
     # parser.add_argument('--pops-info-json', help='info about populations')
     # parser.add_argument('--sel-pop', type=int, help='putatively selected pop')
@@ -329,19 +332,64 @@ def compute_component_scores(args):
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
 
 def normalize_and_collate_scores(args):
-    execute(f'norm --ihs --bins {args["n_bins_ihs"]} --load-bins {args["norm_bins_ihs"]} --files {args["ihs_out"]} '
-            f'--log {args["ihs_out"]}.{args["n_bins_ihs"]}bins.norm.log ')
 
-    execute(f'norm --nsl --bins {args["n_bins_nsl"]} --load-bins {args["norm_bins_nsl"]} --files {args["nsl_out"]} '
-            f'--log {args["nsl_out"]}.{args["n_bins_nsl"]}bins.norm.log ')
+    def descr_df(df, msg):
+        """Describe a DataFrame"""
+        return
+        print('===BEG=======================\n', msg)
+        print(df.describe(), '\n')
+        df.info(verbose=True, null_counts=True)
+        print('===END=======================\n', msg)
+        
 
-    execute(f'norm --ihh12 --bins {args["n_bins_ihh12"]} --load-bins {args["norm_bins_ihh12"]} --files {args["ihh12_out"]} '
-            f'--log {args["ihh12_out"]}.norm.log ')
+    inps = _json_loadf(args.input_json)
+    execute(f'norm --ihs --bins {inps["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} --files {inps["ihs_out"]} '
+            f'--log {inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm.log ')
 
-    
-    for xpehh_out, norm_bins_xpehh in zip(args["xpehh_out"], args["norm_bins_xpehh"]):
-        execute(f'norm --xpehh --bins {args["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
+    ihs_normed = pd.read_table(f'{inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm',
+                               names='id pos p1 ihh1 ihh2 ihs ihsnormed ihs_outside_cutoff'.split(), index_col=('id', 'pos', 'p1'),
+                               low_memory=False)
+
+    descr_df(ihs_normed, 'ihs_normed')
+
+    collated = ihs_normed
+
+    execute(f'norm --nsl --bins {inps["n_bins_nsl"]} --load-bins {inps["norm_bins_nsl"]} --files {inps["nsl_out"]} '
+            f'--log {inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm.log ')
+
+    nsl_normed = pd.read_table(f'{inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm',
+                               names='id pos p1 ihh1_nsl ihh2_nsl nsl nslnormed nsl_outside_cutoff'.split(), index_col=('id', 'pos', 'p1'),
+                               low_memory=False)
+
+    descr_df(nsl_normed, 'nsl_normed')
+    collated = collated.join(nsl_normed, how='outer')
+    descr_df(collated, 'collated after nsl_normed')
+
+    execute(f'norm --ihh12 --bins {inps["n_bins_ihh12"]} --load-bins {inps["norm_bins_ihh12"]} --files {inps["ihh12_out"]} '
+            f'--log {inps["ihh12_out"]}.norm.log ')
+
+    ihh12_normed = pd.read_table(f'{inps["ihh12_out"]}.norm', index_col=('id', 'pos', 'p1'),
+                                 low_memory=False).rename(columns={'crit': 'ihh12_crit'})
+
+    descr_df(ihh12_normed, 'ihh12_normed')
+    collated = collated.join(ihh12_normed, how='outer')
+    descr_df(collated, 'collated after ihh12_normed')
+
+    for other_pop_idx, (xpehh_out, norm_bins_xpehh) in enumerate(zip(inps["xpehh_out"], inps["norm_bins_xpehh"])):
+        execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
                 f'--log {xpehh_out}.norm.log ')
+        xpehh_normed = pd.read_table(xpehh_out+".norm", index_col=('id', 'pos', 'p1'), low_memory=False).add_suffix(f'_{other_pop_idx}')
+        descr_df(xpehh_normed, f'xpehh_normed_{other_pop_idx}')
+        collated = collated.join(xpehh_normed, how='outer')
+        descr_df(collated, f'collated after xpehh_normed_{other_pop_idx}')
+
+    collated['max_xpehh'] = collated.filter(like='normxpehh').max(axis='columns')
+    descr_df(collated, 'collated final')
+    collated.reset_index().\
+        rename(columns={'ihsnormed':'ihs_normed', 'nslnormed': 'nsl_normed', 'normihh12': 'ihh12_normed',
+                        'max_xpehh': 'max_xpehh_normed'})\
+                    .to_csv(args.out_normed_collated, sep='\t', na_rep='nan', index=False)
+        
     
 
     #

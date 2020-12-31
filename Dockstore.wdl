@@ -598,12 +598,12 @@ task normalize_and_collate {
     NormalizeAndCollateInput inp
     File normalize_and_collate_script
   }
+  String normed_collated_stats_fname = inp.replica_id_str + ".normed_and_collated.tsv"
   command <<<
-    #python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
-    touch "normed_and_collated.tsv"
+    python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}" --out-normed-collated "~{normed_collated_stats_fname}"
   >>>  
   output {
-    File normed_collated_stats = "~{inp.replica_id_str}.normed_and_collated.tsv"
+    File normed_collated_stats = normed_collated_stats_fname
   }
   runtime {
     # docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
