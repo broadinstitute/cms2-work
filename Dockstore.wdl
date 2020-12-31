@@ -898,11 +898,12 @@ workflow run_sims_and_compute_cms2_components {
     if (sel_sim_replicaInfo.succeeded) {
       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
       Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
+      File sel_sim_region_haps_tar_gz = sel_sim.right
       String sel_sim_replica_id_str = modelId + "__selpop_" + sel_pop + "__rep_" + sel_sim_replicaInfo.replicaId.replicaNumGlobal
       call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
-	region_haps_tar_gz=sel_sim.right,
+	region_haps_tar_gz=sel_sim_region_haps_tar_gz,
 
 	script=compute_components_script,
 	threads=threads,
@@ -983,11 +984,12 @@ workflow run_sims_and_compute_cms2_components {
 # *** Simulation outputs
     Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.region_haps_tar_gzs)
     Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.region_haps_tar_gzs)
-    Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
-    Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
+    #Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
+    #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
 # *** Component scores
-    #Array[File] sel_normed_and_collated = normalize_and_collate.normed_collated_stats
+    Array[File?] sel_normed_and_collated = normalize_and_collate.normed_collated_stats
+    Array[File?] sel_sim_region_haps_tar_gzs = sel_sim_region_haps_tar_gz
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }
 }
