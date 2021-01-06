@@ -12,6 +12,6 @@ DEMOG=default_112115_825am__demography.par
 TMP_INPUTS="/data/$$.${TEST_INPUTS}"
 TMP_DEMOG="/data/$$.${DEMOG}"
 gpg --batch --yes --output ${TMP_DEMOG} --decrypt $DEMOG.gpg  
-sed s/$DEMOG/$TMP_DEMOG/g ${TEST_INPUTS} > ${TMP_INPUTS}
+sed s#$DEMOG#$TMP_DEMOG#g ${TEST_INPUTS} > ${TMP_INPUTS}
 #oliver submit $PWD/Dockstore.wdl ${TMP_INPUTS}
 cromshell submit $PWD/Dockstore.wdl ${TMP_INPUTS}
