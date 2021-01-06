@@ -59,11 +59,11 @@ check_out_staging_branch() {
 commit_staged_files() {
     echo "BEG: $FUNCNAME"
 
-    cp ${TRAVIS_BUILD_DIR}/*.py ${TRAVIS_BUILD_DIR}/*.wdl .
-    sed -i "s#\"./#\"https://raw.githubusercontent.com/${TRAVIS_REPO_SLUG}/${TRAVIS_COMMIT}/#g" *.wdl *.py
+    #cp ${TRAVIS_BUILD_DIR}/*.py ${TRAVIS_BUILD_DIR}/*.wdl .
+    sed -i "s#\"./#\"https://raw.githubusercontent.com/${TRAVIS_REPO_SLUG}/${TRAVIS_COMMIT}/#g" *.wdl *.wdl.json
     git status
     git diff
-    git add *.wdl *.py
+    git add .
     git diff --cached
     git commit -m "replaced file paths with github URLs under git commit ${TRAVIS_COMMIT}" || true
     git status
