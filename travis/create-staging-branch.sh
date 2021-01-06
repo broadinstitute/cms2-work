@@ -47,17 +47,21 @@ check_out_staging_branch() {
     mkdir -p tmp/wtree
 
     rm -rf "tmp/wtree/${STAGING_BRANCH}"
+    git worktree prune
 
     git remote rm origin-me || true
     git remote add origin-me "https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git"
+    git branch -D "${STAGING_BRANCH}" || true
     git fetch origin-me "${STAGING_BRANCH}" || true
 
-    git worktree prune
-    git worktree add tmp/wtree/${STAGING_BRANCH}
+    git worktree add --track -b ${STAGING_BRANCH} tmp/wtree/${STAGING_BRANCH} origin-me/${STAGING_BRANCH}
     #git merge "${TRAVIS_BRANCH}"
     pushd "tmp/wtree/${STAGING_BRANCH}"
-    git branch -vv
-    git branch --set-upstream-to=origin-me/${STAGING_BRANCH} ${STAGING_BRANCH}
+    echo "REMOTES:"
+    git remote -vv
+    echo "BRANCHES:"
+    git branch -vval
+    #git branch --set-upstream-to=origin-me/${STAGING_BRANCH} ${STAGING_BRANCH}
     git pull
     git checkout ${TRAVIS_COMMIT} .
 
@@ -88,7 +92,7 @@ upload_files() {
     if [ -z ${GH_TOKEN+x} ]; then
 	echo "GH_TOKEN is unset, not pushing"
     else
-	git push --set-upstream origin-me "${STAGING_BRANCH}"
+	git push
     fi
     git status
 
