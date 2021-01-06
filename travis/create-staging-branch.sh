@@ -42,6 +42,7 @@ check_out_staging_branch() {
     #echo "getpopids url: ${FILE_URL_GET_POP_IDS}"
     git --version
     echo "branch is ${TRAVIS_BRANCH}"
+    git fetch origin "${STAGING_BRANCH}" || true
     git status
     echo "CHECKING OUT ${STAGING_BRANCH}"
     mkdir -p tmp/wtree
@@ -51,6 +52,7 @@ check_out_staging_branch() {
     git worktree add "tmp/wtree/${STAGING_BRANCH}"
     #git merge "${TRAVIS_BRANCH}"
     pushd "tmp/wtree/${STAGING_BRANCH}"
+    git pull
     git checkout ${TRAVIS_COMMIT} .
 
     echo "END: $FUNCNAME"

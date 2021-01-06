@@ -5,6 +5,7 @@ os: linux
 
 git:
   depth: 5
+  submodules: false
 
 services:
   - docker
