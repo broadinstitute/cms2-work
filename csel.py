@@ -70,7 +70,7 @@ _write_json('tmp/submissions.json', **{'result': list(z.json())})
 for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)):
     print('looking at submission from', s['submissionDate'])
     submission_date = s['submissionDate']
-    if not submission_date.startswith('2020-12-'): 
+    if not submission_date.startswith('2021-01-'): 
         print('skipping submission date ', submission_date)
         continue
 
