@@ -108,7 +108,10 @@ commit_staged_files
 upload_files
 clean_up
 
+echo
+echo "---------------"
 echo "END SCRIPT: $0"
+echo "---------------"
 
 #git remote add me 
 #git --set-upstream push
