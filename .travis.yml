@@ -40,4 +40,4 @@ jdk:
 #  - bash install.sh
 
 script: 
-  - bash script.sh
+  - bash travis/create-staging-branch.sh
