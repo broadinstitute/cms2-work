@@ -42,6 +42,7 @@ check_out_staging_branch() {
     #echo "getpopids url: ${FILE_URL_GET_POP_IDS}"
     git --version
     echo "branch is ${TRAVIS_BRANCH}"
+    git fetch origin "${STAGING_BRANCH}" || true
     git status
     echo "CHECKING OUT ${STAGING_BRANCH}"
     mkdir -p tmp/wtree
@@ -51,6 +52,7 @@ check_out_staging_branch() {
     git worktree add "tmp/wtree/${STAGING_BRANCH}"
     #git merge "${TRAVIS_BRANCH}"
     pushd "tmp/wtree/${STAGING_BRANCH}"
+    git pull
     git checkout ${TRAVIS_COMMIT} .
 
     echo "END: $FUNCNAME"
@@ -59,11 +61,11 @@ check_out_staging_branch() {
 commit_staged_files() {
     echo "BEG: $FUNCNAME"
 
-    cp ${TRAVIS_BUILD_DIR}/*.py ${TRAVIS_BUILD_DIR}/*.wdl .
-    sed -i "s#\"./#\"https://raw.githubusercontent.com/${TRAVIS_REPO_SLUG}/${TRAVIS_COMMIT}/#g" *.wdl *.py
+    #cp ${TRAVIS_BUILD_DIR}/*.py ${TRAVIS_BUILD_DIR}/*.wdl .
+    sed -i "s#\"./#\"https://raw.githubusercontent.com/${TRAVIS_REPO_SLUG}/${TRAVIS_COMMIT}/#g" *.wdl *.wdl.json
     git status
     git diff
-    git add *.wdl *.py
+    git add .
     git diff --cached
     git commit -m "replaced file paths with github URLs under git commit ${TRAVIS_COMMIT}" || true
     git status
