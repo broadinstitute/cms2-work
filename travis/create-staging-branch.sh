@@ -51,6 +51,7 @@ check_out_staging_branch() {
     git worktree add "tmp/wtree/${STAGING_BRANCH}"
     #git merge "${TRAVIS_BRANCH}"
     pushd "tmp/wtree/${STAGING_BRANCH}"
+    git checkout ${TRAVIS_COMMIT}
 
     echo "END: $FUNCNAME"
 }
