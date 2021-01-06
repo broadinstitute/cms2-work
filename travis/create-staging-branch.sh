@@ -48,7 +48,8 @@ check_out_staging_branch() {
 
     rm -rf "tmp/wtree/${STAGING_BRANCH}"
 
-    git remote add origin-me "https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git" || true
+    git remote rm origin-me || true
+    git remote add origin-me "https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git"
     git fetch origin-me "${STAGING_BRANCH}" || true
 
     git worktree prune
