@@ -26,15 +26,19 @@ set -o xtrace
 #
 
 setup_git() {
-    echo "Setting up git"
+    echo "BEG: $FUNCNAME"
+
     git config --global user.email "travis@travis-ci.org"
     git config --global user.name "Travis CI"
-    echo "Git setup done"
+
+    echo "END: $FUNCNAME"
 }
 
 export STAGING_BRANCH="${TRAVIS_BRANCH}-staging"
 
 check_out_staging_branch() {
+    echo "BEG: $FUNCNAME"
+
     #echo "getpopids url: ${FILE_URL_GET_POP_IDS}"
     git --version
     echo "branch is ${TRAVIS_BRANCH}"
@@ -47,32 +51,55 @@ check_out_staging_branch() {
     git worktree add "tmp/wtree/${STAGING_BRANCH}"
     #git merge "${TRAVIS_BRANCH}"
     pushd "tmp/wtree/${STAGING_BRANCH}"
+    git checkout ${TRAVIS_COMMIT} .
+
+    echo "END: $FUNCNAME"
 }
 
 commit_staged_files() {
+    echo "BEG: $FUNCNAME"
+
     cp ${TRAVIS_BUILD_DIR}/*.py ${TRAVIS_BUILD_DIR}/*.wdl .
     sed -i "s#\"./#\"https://raw.githubusercontent.com/${TRAVIS_REPO_SLUG}/${TRAVIS_COMMIT}/#g" *.wdl *.py
     git status
     git diff
     git add *.wdl *.py
     git diff --cached
-    git commit -m "replaced file paths with github URLs under git commit ${TRAVIS_COMMIT}"
+    git commit -m "replaced file paths with github URLs under git commit ${TRAVIS_COMMIT}" || true
+    git status
+    echo "LAST COMMITS:"
+    git log -3
+    git show $(git rev-parse HEAD)
+
+    echo "END: $FUNCNAME"
 }
 
 upload_files() {
-    git remote add origin-me https://${GH_TOKEN}@github.com/notestaff/dockstore-tool-cms2.git
-    git push --set-upstream origin-me "${STAGING_BRANCH}"
+    echo "BEG: $FUNCNAME"
+
+    if [ -z ${GH_TOKEN+x} ]; then
+	echo "GH_TOKEN is unset, not pushing"
+    else
+	git remote add origin-me "https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git"
+	git push --set-upstream origin-me "${STAGING_BRANCH}"
+    fi
     git status
+
+    echo "END: $FUNCNAME"
 }
 
 clean_up() {
+    echo "BEG: $FUNCNAME"
+
     popd
     git status
     git worktree list
-    git worktree remove "tmp/wtree/${STAGING_BRANCH}"
-    git worktree prune
-    git worktree list
-    git status
+    #git worktree remove "tmp/wtree/${STAGING_BRANCH}"
+    #git worktree prune
+    #git worktree list
+    #git status
+
+    echo "END: $FUNCNAME"
 }
 
 setup_git
@@ -80,6 +107,8 @@ check_out_staging_branch
 commit_staged_files
 upload_files
 clean_up
+
+echo "END SCRIPT: $0"
 
 #git remote add me 
 #git --set-upstream push
