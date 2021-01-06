@@ -65,6 +65,10 @@ commit_staged_files() {
     git add *.wdl *.py
     git diff --cached
     git commit -m "replaced file paths with github URLs under git commit ${TRAVIS_COMMIT}" || true
+    git status
+    echo "LAST COMMITS:"
+    git log -3
+    git show $(git rev-parse HEAD)
 
     echo "END: $FUNCNAME"
 }
