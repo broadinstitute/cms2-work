@@ -42,16 +42,21 @@ check_out_staging_branch() {
     #echo "getpopids url: ${FILE_URL_GET_POP_IDS}"
     git --version
     echo "branch is ${TRAVIS_BRANCH}"
-    git fetch origin "${STAGING_BRANCH}" || true
     git status
     echo "CHECKING OUT ${STAGING_BRANCH}"
     mkdir -p tmp/wtree
 
     rm -rf "tmp/wtree/${STAGING_BRANCH}"
+
+    git remote add origin-me "https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git" || true
+    git fetch origin-me "${STAGING_BRANCH}" || true
+
     git worktree prune
-    git worktree add "tmp/wtree/${STAGING_BRANCH}"
+    git worktree add tmp/wtree/${STAGING_BRANCH}
     #git merge "${TRAVIS_BRANCH}"
     pushd "tmp/wtree/${STAGING_BRANCH}"
+    git branch -vv
+    git branch --set-upstream-to=origin-me/${STAGING_BRANCH} ${STAGING_BRANCH}
     git pull
     git checkout ${TRAVIS_COMMIT} .
 
@@ -82,7 +87,6 @@ upload_files() {
     if [ -z ${GH_TOKEN+x} ]; then
 	echo "GH_TOKEN is unset, not pushing"
     else
-	git remote add origin-me "https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git"
 	git push --set-upstream origin-me "${STAGING_BRANCH}"
     fi
     git status
