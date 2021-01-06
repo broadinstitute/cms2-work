@@ -47,7 +47,7 @@ check_out_staging_branch( {
 }
 
 commit_staged_files() {
-    cp ../../*.py ../../*.wdl .
+    cp ${TRAVIS_BUILD_DIR}/*.py ${TRAVIS_BUILD_DIR}/*.wdl .
     sed -i "s#\"./#\"https://raw.githubusercontent.com/${TRAVIS_REPO_SLUG}/${TRAVIS_COMMIT}/#g" *.wdl *.py
     git status
     git diff
