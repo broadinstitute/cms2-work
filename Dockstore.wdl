@@ -68,107 +68,8 @@ version 1.0
 # Computation of CMS2 component scores
 #
 
-# * Structs
 
-struct SweepInfo {
-  Int  selPop
-  Float selGen
-  Int selBegPop
-  Float selBegGen
-  Float selCoeff
-  Float selFreq
-}
-
-struct ModelInfo {
-  String modelId
-  Array[String] modelIdParts
-  Array[Int] popIds
-  Array[String] popNames
-  SweepInfo sweepInfo
-}
-
-struct ReplicaId {
-  Int replicaNumGlobal
-  Int replicaNumGlobalOutOf
-  Int blockNum
-  Int replicaNumInBlock
-  Int randomSeed
-}
-
-struct ReplicaInfo {
-  ReplicaId replicaId
-  ModelInfo modelInfo
-
-  File        region_haps_tar_gz
-
-  Boolean succeeded
-  Float durationSeconds
-}
-
-# * task cosi2_run_one_sim_block 
-task cosi2_run_one_sim_block {
-  meta {
-    description: "Run one block of cosi2 simulations for one demographic model."
-    email: "ilya_shl@alum.mit.edu"
-  }
-
-  parameter_meta {
-    # Inputs
-    ## required
-    paramFile: "parts cosi2 parameter file (concatenated to form the parameter file)"
-    recombFile: "recombination map"
-    simBlockId: "an ID of this simulation block (e.g. block number in a list of blocks)."
-
-    ## optional
-    numRepsPerBlock: "number of simulations in this block"
-    maxAttempts: "max number of attempts to simulate forward frequency trajectory before failing"
-
-    # Outputs
-    replicaInfos: "array of replica infos"
-  }
-
-  input {
-    File         paramFileCommon
-    File         paramFile
-    File         recombFile
-    String       simBlockId
-    String       modelId
-    Int          blockNum
-    Int          numBlocks
-    Int          numRepsPerBlock = 1
-    Int          numCpusPerBlock = numRepsPerBlock
-    Int          maxAttempts = 10000000
-    Int          repTimeoutSeconds = 300
-    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
-    String       memoryPerBlock = "3 GB"
-    Int          preemptible = 3
-    File         taskScript
-  }
-
-  String tpedPrefix = "tpeds__${simBlockId}"
-
-  command <<<
-    python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
-      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --numBlocks ~{numBlocks} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --tpedPrefix ~{tpedPrefix} --outJson replicaInfos.json
-  >>>
-
-  output {
-    Array[ReplicaInfo] replicaInfos = read_json("replicaInfos.json").replicaInfos
-    Array[File] region_haps_tar_gzs = prefix(tpedPrefix + "__tar_gz__rep_", range(numRepsPerBlock))
-
-#    String      cosi2_docker_used = ""
-  }
-  runtime {
-#    docker: "quay.io/ilya_broad/cms-dev:2.0.1-15-gd48e1db-is-cms2-new"
-    docker: cosi2_docker
-    memory: memoryPerBlock
-    cpu: numCpusPerBlock
-    dx_instance_type: "mem1_ssd1_v2_x4"
-    preemptible: preemptible
-    volatile: true  # FIXME: not volatile if random seeds specified
-  }
-}
-
+import "./run_sims.wdl"
 
 # * task compute_one_pop_bin_stats_for_normalization
 task compute_one_pop_bin_stats_for_normalization {
@@ -726,77 +627,38 @@ workflow run_sims_and_compute_cms2_components {
   # Run neutral sims
   ####################################################
 
-# ** Run neutral sims
-  Int numBlocksNeutral = nreps_neutral / numRepsPerBlock
-  scatter(blockNum in range(numBlocksNeutral)) {
-    call cosi2_run_one_sim_block as run_neutral_sims {
-      input:
-      paramFileCommon = paramFile_demographic_model,
-      paramFile = paramFile_neutral,
-      recombFile=recombFile,
 
-      modelId=modelId+"_neutral",
-      blockNum=blockNum,
-      simBlockId=modelId+"_neutral__block_"+blockNum+"__of_"+numBlocksNeutral,
-      numBlocks=numBlocksNeutral,
-
-      maxAttempts=maxAttempts,
-      repTimeoutSeconds=repTimeoutSeconds,
-      numRepsPerBlock=numRepsPerBlock,
-      numCpusPerBlock=numCpusPerBlock,
-      memoryPerBlock=memoryPerBlock,
-      cosi2_docker=cosi2_docker,
-      preemptible=preemptible,
-      taskScript=taskScript_simulation
-    }
+# ** Call the simulations
+  call run_sims {
+    experimentId = experimentId,
+    experiment_description = experiment_description,
+    paramFile_demographic_model = paramFile_demographic_model,
+    paramFile_neutral = paramFile_neutral,
+    modelId=modelId,
+    paramFiles_selection=paramFiles_selection,
+    recombFile=recombFile,
+    nreps_neutral=nreps_neutral,
+    nreps=nreps,
+    maxAttempts=maxAttempts,
+    numRepsPerBlock=numRepsPerBlock,
+    numCpusPerBlock=numCpusPerBlock,
+    repTimeoutSeconds=repTimeoutSeconds,
+    memoryPerBlock=memoryPerBlock,
+    cosi2_docker=cosi2_docker,
+    preemptible=preemptible,
+    taskScript_simulation=taskScript_simulation,
+    threads=threads,
+    mem_base_gb=mem_base_gb,
+    mem_per_thread_gb=mem_per_thread_gb,
+    local_disk_gb=local_disk_gb,
+    get_pops_info_script=get_pops_info_script,
+    docker=docker
   }
-
-# *** Gather successful neutral sims
-  Array[Pair[ReplicaInfo,File]] neutral_sims = 
-      zip(flatten(run_neutral_sims.replicaInfos), flatten(run_neutral_sims.region_haps_tar_gzs))
-
-  scatter(neut_sim in neutral_sims) {
-    if (neut_sim.left.succeeded) {
-      File neut_sim_region_haps_tar_gz_maybe = neut_sim.right
-    }
-  }
-  Array[File] neut_sim_region_haps_tar_gzs = select_all(neut_sim_region_haps_tar_gz_maybe)
-
-  ####################################################
-  # Run selection sims
-  ####################################################
-
-# ** Run selection sims
-  Int numBlocks = nreps / numRepsPerBlock
-  scatter(paramFile_blockNum in cross(paramFiles_selection, range(numBlocks))) {
-    call cosi2_run_one_sim_block as run_selection_sims {
-      input:
-      paramFileCommon = paramFile_demographic_model,
-      paramFile = paramFile_blockNum.left,
-      recombFile=recombFile,
-      modelId=modelId+"_"+basename(paramFile_blockNum.left, ".par"),
-      blockNum=paramFile_blockNum.right,
-      simBlockId=modelId+"_"+basename(paramFile_blockNum.left, ".par")+"__block_"+paramFile_blockNum.right+"__of_"+numBlocks,
-      numBlocks=numBlocks,
-      maxAttempts=maxAttempts,
-      repTimeoutSeconds=repTimeoutSeconds,
-      numRepsPerBlock=numRepsPerBlock,
-      numCpusPerBlock=numCpusPerBlock,
-      memoryPerBlock=memoryPerBlock,
-      cosi2_docker=cosi2_docker,
-      preemptible=preemptible,
-      taskScript=taskScript_simulation
-    }
-  }
-
-  ####################################################
-  # Compute CMS2 component stats for neutral sims
-  ####################################################
 
 # ** Compute normalization stats
 # *** Compute one-pop CMS2 components for neutral sims
   scatter(sel_pop in get_pops_info.pops_info.pop_ids) {
-    scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
+    scatter(neut_sim_region_haps_tar_gz in run_sims.neut_sim_region_haps_tar_gzs) {
       call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
 	input:
 	sel_pop=sel_pop,
@@ -839,12 +701,12 @@ workflow run_sims_and_compute_cms2_components {
    scatter(sel_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
      scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
        if (alt_pop_idx > sel_pop_idx) {
-	 scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
+	 scatter(neut_sim_region_haps_tar_gz in run_sims.neut_sim_region_haps_tar_gzs) {
 	   call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
 	     input:
 	     sel_pop=get_pops_info.pops_info.pop_ids[sel_pop_idx],
 	     alt_pop=get_pops_info.pops_info.pop_ids[alt_pop_idx],
-	     region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+	     region_haps_tar_gz=run_sims.neut_sim_region_haps_tar_gz,
 	     
 	     script=compute_components_script,
 	     threads=threads,
@@ -891,9 +753,8 @@ workflow run_sims_and_compute_cms2_components {
   }
 
 # ** Component stats for selection sims
-  Array[Pair[ReplicaInfo,File]] selection_sims = zip(flatten(run_selection_sims.replicaInfos), flatten(run_selection_sims.region_haps_tar_gzs))
 
-  scatter(sel_sim in selection_sims) {
+  scatter(sel_sim in run_sims.selection_sims) {
     ReplicaInfo sel_sim_replicaInfo = sel_sim.left
     if (sel_sim_replicaInfo.succeeded) {
       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
@@ -982,8 +843,8 @@ workflow run_sims_and_compute_cms2_components {
     File saved_input_files = save_input_files.out_tar_gz
     PopsInfo pops_info = get_pops_info.pops_info
 # *** Simulation outputs
-    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.region_haps_tar_gzs)
-    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.region_haps_tar_gzs)
+    Array[File] neutral_sims_tar_gzs = run_sims.neutral_sims_tar_gzs
+    Array[File] selection_sims_tar_gzs = run_sims.selection_sims_tar_gzs
     #Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
