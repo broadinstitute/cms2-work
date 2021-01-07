@@ -630,6 +630,7 @@ workflow run_sims_and_compute_cms2_components {
 
 # ** Call the simulations
   call run_sims {
+    input:
     experimentId = experimentId,
     experiment_description = experiment_description,
     paramFile_demographic_model = paramFile_demographic_model,
