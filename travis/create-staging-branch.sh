@@ -65,7 +65,7 @@ check_out_staging_branch() {
     echo "BRANCHES:"
     git branch -vval
     #git branch --set-upstream-to=origin-me/${STAGING_BRANCH} ${STAGING_BRANCH}
-    git pull
+    git pull --rebase
     git checkout ${TRAVIS_COMMIT} .
 
     echo "END: $FUNCNAME"
