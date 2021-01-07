@@ -101,8 +101,60 @@ task cosi2_run_one_sim_block {
   }
 }
 
+# * task get_pops_info
 
-workflow run_sims {
+#
+# ** struct PopsInfo
+#
+# Information about population ids and names.
+#
+# Each pop has: a pop id (a small integer); a pop name (a string); a pop index
+# (0-based index of the pop in the list of pop ids).
+#
+struct PopsInfo {
+    Array[Int] pop_ids  # population IDs, used throughout to identify populations
+    Array[String] pop_names
+    Map[Int,Int] pop_id_to_idx  # map from pop id to its index in pop_ids
+    Map[Int,Array[Int]] pop_alts  # map from pop id to list of all other pop ids
+    Array[Pair[Int,Int]] pop_pairs # all two-pop sets, for cross-pop comparisons
+
+    Array[Int] sel_pop_ids  # for each sweep definition in paramFiles_selection input to
+    # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
+}
+
+# ** task get_pops_info implemenation
+task get_pops_info {
+  meta {
+    description: "Extract population ids from cosi2 simulator param file"
+  }
+  input {
+    File paramFile_demographic_model
+    Array[File] paramFiles_selection
+
+    File get_pops_info_script
+  }
+  String modelId = "model_"+basename(paramFile_demographic_model, ".par")
+  String pops_info_fname = modelId + ".pops_info.json"
+  command <<<
+    python3 "~{get_pops_info_script}" --dem-model "~{paramFile_demographic_model}" \
+       --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "~{pops_info_fname}"
+    touch empty_file
+  >>>
+  output {
+    PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
+    File empty_file = "empty_file"
+  }
+  runtime {
+    #docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    docker: "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    memory: "500 MB"
+    cpu: 1
+    disks: "local-disk 1 LOCAL"
+  }
+}
+
+workflow run_sims_wf {
   meta {
     description: "Run simulations"
     email: "ilya_shl@alum.mit.edu"
@@ -152,15 +204,6 @@ workflow run_sims {
     #String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
     String docker = "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
     #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
-  }
-# ** Bookkeeping calls
-# *** call create_tar_gz as save_input_files
-  call create_tar_gz as save_input_files {
-    input:
-       files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation,
-                         get_pops_info_script],
-                        paramFiles_selection]),
-       out_basename = modelId
   }
 
 # *** call get_pops_info
@@ -247,7 +290,6 @@ workflow run_sims {
 # ** Workflow outputs
   output {
 # *** Bookkeeping outputs
-    File saved_input_files = save_input_files.out_tar_gz
     PopsInfo pops_info = get_pops_info.pops_info
 # *** Simulation outputs
     Array[File] neut_sim_region_haps_tar_gzs = select_all(neut_sim_region_haps_tar_gz_maybe)
@@ -261,8 +303,4 @@ workflow run_sims {
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
   }
-}
-
-
-
 }

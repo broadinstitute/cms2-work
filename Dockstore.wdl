@@ -415,59 +415,6 @@ task create_tar_gz {
   }
 }
 
-# * task get_pops_info
-
-#
-# ** struct PopsInfo
-#
-# Information about population ids and names.
-#
-# Each pop has: a pop id (a small integer); a pop name (a string); a pop index
-# (0-based index of the pop in the list of pop ids).
-#
-struct PopsInfo {
-    Array[Int] pop_ids  # population IDs, used throughout to identify populations
-    Array[String] pop_names
-    Map[Int,Int] pop_id_to_idx  # map from pop id to its index in pop_ids
-    Map[Int,Array[Int]] pop_alts  # map from pop id to list of all other pop ids
-    Array[Pair[Int,Int]] pop_pairs # all two-pop sets, for cross-pop comparisons
-
-    Array[Int] sel_pop_ids  # for each sweep definition in paramFiles_selection input to
-    # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
-}
-
-# ** task get_pops_info implemenation
-task get_pops_info {
-  meta {
-    description: "Extract population ids from cosi2 simulator param file"
-  }
-  input {
-    File paramFile_demographic_model
-    Array[File] paramFiles_selection
-
-    File get_pops_info_script
-  }
-  String modelId = "model_"+basename(paramFile_demographic_model, ".par")
-  String pops_info_fname = modelId + ".pops_info.json"
-  command <<<
-    python3 "~{get_pops_info_script}" --dem-model "~{paramFile_demographic_model}" \
-       --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "~{pops_info_fname}"
-    touch empty_file
-  >>>
-  output {
-    PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
-    File empty_file = "empty_file"
-  }
-  runtime {
-    #docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    docker: "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
-    #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
-    memory: "500 MB"
-    cpu: 1
-    disks: "local-disk 1 LOCAL"
-  }
-}
-
 # * task normalize_and_collate
 
 struct NormalizeAndCollateInput {
@@ -608,13 +555,6 @@ workflow run_sims_and_compute_cms2_components {
        out_basename = modelId
   }
 
-# *** call get_pops_info
-  call get_pops_info {
-    input:
-       paramFile_demographic_model = paramFile_demographic_model,
-       paramFiles_selection = paramFiles_selection,
-       get_pops_info_script = get_pops_info_script
-  }
 
   #PopsInfo pops_info = get_pops_info.pops_info
   # Array[Int] pop_ids = pops_info.pop_ids
@@ -629,7 +569,7 @@ workflow run_sims_and_compute_cms2_components {
 
 
 # ** Call the simulations
-  call run_sims {
+  call run_sims.run_sims_wf as sims_wf {
     input:
     experimentId = experimentId,
     experiment_description = experiment_description,
@@ -658,8 +598,8 @@ workflow run_sims_and_compute_cms2_components {
 
 # ** Compute normalization stats
 # *** Compute one-pop CMS2 components for neutral sims
-  scatter(sel_pop in get_pops_info.pops_info.pop_ids) {
-    scatter(neut_sim_region_haps_tar_gz in run_sims.neut_sim_region_haps_tar_gzs) {
+  scatter(sel_pop in sims_wf.pops_info.pop_ids) {
+    scatter(neut_sim_region_haps_tar_gz in sims_wf.neut_sim_region_haps_tar_gzs) {
       call compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
 	input:
 	sel_pop=sel_pop,
@@ -699,15 +639,15 @@ workflow run_sims_and_compute_cms2_components {
   }
 
 # *** Compute two-pop CMS2 components for neutral sims
-   scatter(sel_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
-     scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+   scatter(sel_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
+     scatter(alt_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
        if (alt_pop_idx > sel_pop_idx) {
-	 scatter(neut_sim_region_haps_tar_gz in run_sims.neut_sim_region_haps_tar_gzs) {
+	 scatter(neut_sim_region_haps_tar_gz in sims_wf.neut_sim_region_haps_tar_gzs) {
 	   call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
 	     input:
-	     sel_pop=get_pops_info.pops_info.pop_ids[sel_pop_idx],
-	     alt_pop=get_pops_info.pops_info.pop_ids[alt_pop_idx],
-	     region_haps_tar_gz=run_sims.neut_sim_region_haps_tar_gz,
+	     sel_pop=sims_wf.pops_info.pop_ids[sel_pop_idx],
+	     alt_pop=sims_wf.pops_info.pop_ids[alt_pop_idx],
+	     region_haps_tar_gz=neut_sim_region_haps_tar_gz,
 	     
 	     script=compute_components_script,
 	     threads=threads,
@@ -722,8 +662,8 @@ workflow run_sims_and_compute_cms2_components {
 	 call compute_two_pop_bin_stats_for_normalization {
 	   input:
 	   out_fnames_base = modelId,
-	   sel_pop=get_pops_info.pops_info.pop_ids[sel_pop_idx],
-	   alt_pop=get_pops_info.pops_info.pop_ids[alt_pop_idx],
+	   sel_pop=sims_wf.pops_info.pop_ids[sel_pop_idx],
+	   alt_pop=sims_wf.pops_info.pop_ids[alt_pop_idx],
 
 	   xpehh_out=compute_two_pop_cms2_components_for_neutral.xpehh,
 
@@ -740,8 +680,8 @@ workflow run_sims_and_compute_cms2_components {
      }
   }
 
-  scatter(sel_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
-    scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+  scatter(sel_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
+    scatter(alt_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
       if (alt_pop_idx != sel_pop_idx) {
 	File norm_bins_xpehh_maybe = 
         select_first([
@@ -755,7 +695,7 @@ workflow run_sims_and_compute_cms2_components {
 
 # ** Component stats for selection sims
 
-  scatter(sel_sim in run_sims.selection_sims) {
+  scatter(sel_sim in sims_wf.selection_sims) {
     ReplicaInfo sel_sim_replicaInfo = sel_sim.left
     if (sel_sim_replicaInfo.succeeded) {
       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
@@ -775,12 +715,12 @@ workflow run_sims_and_compute_cms2_components {
 	docker=docker,
 	preemptible=preemptible
       }
-      scatter(alt_pop_idx in range(length(get_pops_info.pops_info.pop_ids))) {
+      scatter(alt_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
 	if (alt_pop_idx != sel_pop_idx) {
 	  call compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
 	    input:
 	    sel_pop=sel_pop,
-	    alt_pop=get_pops_info.pops_info.pop_ids[alt_pop_idx],
+	    alt_pop=sims_wf.pops_info.pop_ids[alt_pop_idx],
 	    region_haps_tar_gz=sel_sim.right,
 
 	    script=compute_components_script,
@@ -799,8 +739,8 @@ workflow run_sims_and_compute_cms2_components {
 	input:
 	  inp = object {
 	    replica_id_str: sel_sim_replica_id_str,
-	    pop_ids: get_pops_info.pops_info.pop_ids,
-	    pop_pairs: get_pops_info.pops_info.pop_pairs,
+	    pop_ids: sims_wf.pops_info.pop_ids,
+	    pop_pairs: sims_wf.pops_info.pop_pairs,
 	    sel_pop: sel_pop,
 
 	    ihs_out: compute_one_pop_cms2_components_for_selection.ihs,
@@ -842,10 +782,10 @@ workflow run_sims_and_compute_cms2_components {
   output {
 # *** Bookkeeping outputs
     File saved_input_files = save_input_files.out_tar_gz
-    PopsInfo pops_info = get_pops_info.pops_info
+    PopsInfo pops_info = sims_wf.pops_info
 # *** Simulation outputs
-    Array[File] neutral_sims_tar_gzs = run_sims.neutral_sims_tar_gzs
-    Array[File] selection_sims_tar_gzs = run_sims.selection_sims_tar_gzs
+    Array[File] neutral_sims_tar_gzs = sims_wf.neutral_sims_tar_gzs
+    Array[File] selection_sims_tar_gzs = sims_wf.selection_sims_tar_gzs
     #Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
