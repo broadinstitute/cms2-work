@@ -52,7 +52,8 @@ check_out_staging_branch() {
     git remote rm origin-me || true
     git remote add origin-me "https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git"
     git branch -D "${STAGING_BRANCH}" || true
-    git fetch origin-me "${STAGING_BRANCH}" || true
+    git fetch origin-me "${STAGING_BRANCH}" || \
+	git push origin-me origin-me/${TRAVIS_BRANCH}:refs/heads/${STAGING_BRANCH}
 
     git worktree add --track -b ${STAGING_BRANCH} tmp/wtree/${STAGING_BRANCH} origin-me/${STAGING_BRANCH}
     #git merge "${TRAVIS_BRANCH}"
