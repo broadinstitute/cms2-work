@@ -51,8 +51,9 @@ jobs:
       script:
         - set -e
         - bash travis/create-staging-branch.sh
-        - printf '%s\n' "${GCLOUD_CREDS}" >gcloud_creds.json
-        - GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcloud_creds.json python3 travis/deploy-to-terra.py
+        - printf '%s\n' "${GCLOUD_CREDS}" >/home/travis/.config/gcloud/application_default_credentials.json
+        - ls -l /home/travis/.config/gcloud/application_default_credentials.json
+        - python3 travis/deploy-to-terra.py
 
 #language: java
 #jdk: 
