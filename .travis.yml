@@ -29,9 +29,34 @@ branches:
 #     rooms:
 #       - oicr:S9k4EowgQv9AnbCfEZHSzCsg
 
-language: java
-jdk: 
-  - openjdk11
+stages:
+  - main
+
+jobs:
+  fast_finish: true
+  include:
+    
+    - language: python
+      stage: main
+      python: "3.8"
+      env:
+        # GCLOUD_CREDS
+        - secure: "uge+BLTboP9keZ7g6HdFVMEoVwOoyt43yZ4cPnhGXQ5b/68RVZ87wqOrHtx9qwbMyjhEs8tVDD315RT2d222mEVcKE8PKBjrkqqv9E3vMvkz+CZ5021spkUTGANscjwAw83MLaOqYAcJ20eQ5+OluD501hR7Tfk3mR/edwmfx4q+Ebqdug23cdmwIIKSPjSW5lWTuiO0lVOpf1kdPEnzxbkR9zGQoF3Ub/0+fmKPAACbY1E35ZoowMsCZSwO0a/0UG5NMbr3c1nkPhcHTnZPttyMogOv8GZ934t+3lHnYwoDNrKwTLynN2SLTekcl69MjzrluwEocaMov5E2IliahwXPRHRYbuxc5jwrsUXJc9hq1CHVOi1fze8lS8pmwK7lfb8olGAMeEsbU6m/SwVWoxjPmiYMjEHwbNrVV7RTH8jG4pWq9PcqPfHyDmr/BhmnhG6PRhZ8VEM1CZGN0bwNdO7zXzuhihGNMbdAudBE2U2qa5KcyL5GYJlacXyLz1/Msgl74Q4BrINRFYzxq62H/TIwMfbLb7pRmhM8aQoLDLkrJgBxzIr3oH5OSxsAe0mjFsmTiY4TT2qFkc+GcFrdCxi4ouCeHwy+ixlj+A/gwf/wQO736gj63I5iRDzBR8Xg7hGxdx3bd5P0sZx6TheImNQOj7EiLOfPsuArDxFzS3o="
+#      before_install:
+#        - sudo apt-get update
+#        - sudo apt-get -y install shellcheck
+      install:
+#        - pip3 -q install miniwdl
+        - pip3 -q install firecloud
+      script:
+        - set -e
+        - bash travis/create-staging-branch.sh
+        - printf '%s\n' "${GCLOUD_CREDS}" >gcloud_creds.json
+        - GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcloud_creds.json python3 travis/deploy-to-terra.py
+
+#language: java
+#jdk: 
+#  - openjdk11
 
 #before_install:
 #  - docker build -t quay.io/ilya_broad/dockstore-tool-cosi2 .
@@ -40,5 +65,3 @@ jdk:
 #install: 
 #  - bash install.sh
 
-script: 
-  - bash travis/create-staging-branch.sh
