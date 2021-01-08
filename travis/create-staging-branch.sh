@@ -59,7 +59,7 @@ check_out_staging_branch() {
     git worktree add tmp/wtree/${STAGING_BRANCH}
     #git merge "${TRAVIS_BRANCH}"
     pushd "tmp/wtree/${STAGING_BRANCH}"
-    git branch --set-upstream-to=origin-me/${STAGING_BRANCH} is-try-subworkflows-staging
+    git branch --set-upstream-to=origin-me/${STAGING_BRANCH} ${STAGING_BRANCH}
     echo "REMOTES:"
     git remote -vv
     echo "BRANCHES:"
