@@ -14,8 +14,8 @@ env:
 #  - LANGUAGE=cwl
   global:
     - LANGUAGE=wdl
-  # GH_TOKEN
-    - secure: "rdnFRFHOzBinOqgh9K4WmNS3s5j6gIgEoPFhfnwyVvgAghembl3srbPOYnGIYD9QQTetHcQ1qrN0DRDKLEBupDO7mugRhRg4nyZnfsW6qggefH1ypBnUGfdPp5yhaULmv5Rj9e70SZ8I+TeRcw0zhQ6vLlpEnT43K1enKpaiv/96xuff5MWvsjoT8bgHDRUdLomm1fdloSGs8xcaHzCLWDhJZpODiVIr+iKFb98vUVanDhptWcYxpZlPAPbeNdFLYqQO6rtWOriz9YkbHRYwIX/erJQd1h+9WBbmjwJCDYzHh2REjfPlK1OYyl9P69K5PqVvZ/dM6zDbEKvQqxuecVxV/+e0ymjUQQdITQ3lZG7iyn7Tfh0zTQruhk7x5CYUatG1T1uL2v1tVTBjyNRuZJyEPYGPnDr1eycfTxdQUkBBLsdYVZIDPCgVpaD41lNVM5Ti/TBVWl6E7e+jo8XYccAblj0763v8J0jPodCBClNcf8bN6fo0oWo8YLi8x9RRJ8G2zc6ROAAAjs4Hq25jg+n4QpBWOZMVyfYWRMSiAXJAo48Vx/3Ml7ITH4MWL5khaqZa0CaR9i6MAhecMcPsZ/hlpnDNX3D8/adluUTTD9LqZhtud1G1stK5h9zl1OuxToULDus2v3av9cbiJmFNz6oPigCpjmu7Kp1hGZLNNDs="
+    # GH_TOKEN
+    - secure: "R1YJ8rUhLtu6pTuvIhKKCVLrxlBocdD4Ckdxgw0DbjqXkQT6WIWhCwrd8PFlubuEmjiQz2IoxdEDlosEceQveoLR66SnJq9iLuaxq9jI7cFfr/bqGUgCEyWiSk97V2YH3LFYf8RiUrfTPL1YfoucWplqZL4kYWOPnl8dZI51apWuJzgZggyIfXTdQvllZYaB7u431zEj5AMJ9LD/SEZJUcI/FgM1BczobHby8reYtgUmP4Oaz0kN6hOwp4urh7TIu+vtCXBBamIOq6wZvvFRd6RxMEfN0c44oWTcwbh5QPPErq6iWLfBDim/LctC2d67U8NbmcfqoEs01qGYNFR6o8U7+8Rpx78vGLtr3d8yAZ0mgwlEtulAIT0DS+h2sRBDgxZTN8PoKvgCEGA35GysvcaPy7gcKU72CPGAUDo/QlnFtVtt2ruJ5YIURgF+v+Mbu6wc0iXkN0LFziQ9xWgfGmyqtSvvppQiDIDso0YXkSRn1cIGFWBZHKGRBdlfzCOtsTS6LTqvTKih1CMZySYhvs0y/5cM9LqCxZ886xbMYKS6ieW3FaK40dYtW3kKDTWJTZOo645Z0EmAaKGfav3lm+u8SJzbcnMH2oUZxE35dZL38sQ6fLvTtZRMAUdiUq0hVhit4fNY4eXD5lhIVPUQSekk8i5rNSwV/MGprDVHjVo="
 #  - LANGUAGE=nfl
 
 branches:
@@ -39,9 +39,6 @@ jobs:
     - language: python
       stage: main
       python: "3.8"
-      env:
-        # GCLOUD_CREDS
-        - secure: "uge+BLTboP9keZ7g6HdFVMEoVwOoyt43yZ4cPnhGXQ5b/68RVZ87wqOrHtx9qwbMyjhEs8tVDD315RT2d222mEVcKE8PKBjrkqqv9E3vMvkz+CZ5021spkUTGANscjwAw83MLaOqYAcJ20eQ5+OluD501hR7Tfk3mR/edwmfx4q+Ebqdug23cdmwIIKSPjSW5lWTuiO0lVOpf1kdPEnzxbkR9zGQoF3Ub/0+fmKPAACbY1E35ZoowMsCZSwO0a/0UG5NMbr3c1nkPhcHTnZPttyMogOv8GZ934t+3lHnYwoDNrKwTLynN2SLTekcl69MjzrluwEocaMov5E2IliahwXPRHRYbuxc5jwrsUXJc9hq1CHVOi1fze8lS8pmwK7lfb8olGAMeEsbU6m/SwVWoxjPmiYMjEHwbNrVV7RTH8jG4pWq9PcqPfHyDmr/BhmnhG6PRhZ8VEM1CZGN0bwNdO7zXzuhihGNMbdAudBE2U2qa5KcyL5GYJlacXyLz1/Msgl74Q4BrINRFYzxq62H/TIwMfbLb7pRmhM8aQoLDLkrJgBxzIr3oH5OSxsAe0mjFsmTiY4TT2qFkc+GcFrdCxi4ouCeHwy+ixlj+A/gwf/wQO736gj63I5iRDzBR8Xg7hGxdx3bd5P0sZx6TheImNQOj7EiLOfPsuArDxFzS3o="
       before_install:
         - openssl aes-256-cbc -K $encrypted_833b0d9c0b92_key -iv $encrypted_833b0d9c0b92_iv -in gcloud-config.tar.gz.enc -out gcloud-config.tar.gz -d
 #      before_install:
