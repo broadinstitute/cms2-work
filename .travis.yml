@@ -52,7 +52,7 @@ jobs:
         - pip3 -q install firecloud
       script:
         - set -e
-        - tar xvfz -C $HOME gcloud-config.tar.gz 
+        - tar -xzf gcloud-config.tar.gz -C $HOME
         - bash travis/create-staging-branch.sh
         - python3 travis/deploy-to-terra.py
 
