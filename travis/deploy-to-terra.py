@@ -196,7 +196,7 @@ print('CONFIG_NOW_IS', z, z.json())
 
 inputs = dict(_json_loadf(f'tmp/wtree/{staging_branch}/test.02.wdl.json'))
 
-config_json = config_template
+config_json = copy.copy(config_template)
 print('CONFIG_JSON before deleting rootEntityType', config_json)
 del config_json['rootEntityType']
 print('CONFIG_JSON after deleting rootEntityType', config_json)
@@ -207,6 +207,7 @@ print('CONFIG_JSON AFTER UPDATING with inputs:', config_json)
 
 orig_template = copy.copy(config_template)
 print('ORIG_TEMPLATE is', orig_template)
+del orig_template['rootEntityType']
 z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=orig_template)
 print('CREATED CONFIG WITH ORIG TEMPLATE:', z, z.json())
 
