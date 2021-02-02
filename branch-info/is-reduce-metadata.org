@@ -1,0 +1,5 @@
+#+TITLE: branch is-reduce-metadata
+
+Reduce metadata that is carried around.
+
+
