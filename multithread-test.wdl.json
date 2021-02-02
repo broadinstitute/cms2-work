@@ -3,14 +3,14 @@
     "run_sims_and_compute_cms2_components.nreps": 4,
     "run_sims_and_compute_cms2_components.numRepsPerBlock": 2,
     "run_sims_and_compute_cms2_components.paramFile_demographic_model": "default_112115_825am__demography.par",
-    "run_sims_and_compute_cms2_components.paramFile_neutral": "./test.neutral.cosiParams",
-    "run_sims_and_compute_cms2_components.paramFiles_selection": ["./sel1_origin1.par", "./sel3_origin2.par"],
-    "run_sims_and_compute_cms2_components.recombFile": "./test_recom.recom",
-    "run_sims_and_compute_cms2_components.get_pops_info_script": "./get_pops_info.py",
-    "run_sims_and_compute_cms2_components.normalize_and_collate_script": "./norm_and_collate.py",
+    "run_sims_and_compute_cms2_components.paramFile_neutral": "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/830f22e585a6de935144f0d7d14adc795f040fd0/test.neutral.cosiParams",
+    "run_sims_and_compute_cms2_components.paramFiles_selection": ["https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/830f22e585a6de935144f0d7d14adc795f040fd0/sel1_origin1.par", "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/830f22e585a6de935144f0d7d14adc795f040fd0/sel3_origin2.par"],
+    "run_sims_and_compute_cms2_components.recombFile": "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/830f22e585a6de935144f0d7d14adc795f040fd0/test_recom.recom",
+    "run_sims_and_compute_cms2_components.get_pops_info_script": "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/830f22e585a6de935144f0d7d14adc795f040fd0/get_pops_info.py",
+    "run_sims_and_compute_cms2_components.normalize_and_collate_script": "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/830f22e585a6de935144f0d7d14adc795f040fd0/norm_and_collate.py",
 
-    "run_sims_and_compute_cms2_components.taskScript_simulation": "./runcosi.py",
-    "run_sims_and_compute_cms2_components.compute_components_script": "./remodel_components.py",
+    "run_sims_and_compute_cms2_components.taskScript_simulation": "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/830f22e585a6de935144f0d7d14adc795f040fd0/runcosi.py",
+    "run_sims_and_compute_cms2_components.compute_components_script": "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/830f22e585a6de935144f0d7d14adc795f040fd0/remodel_components.py",
     "run_sims_and_compute_cms2_components.threads": 8
 }
 
