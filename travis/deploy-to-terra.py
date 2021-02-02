@@ -158,36 +158,38 @@ def execute(action, **kw):
 
 SEL_NAMESPACE='um1-encode-y2s1'
 SEL_WORKSPACE='selection-sim'
+TERRA_METHOD_NAME='test-cosi2-method-01'
+TERRA_CONFIG_NAME='dockstore-tool-cms2'
 
 #dir(fapi)
 #help(fapi)
 z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
 print(z)
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
-                              config='dockstore-tool-cosi2', cnamespace=SEL_NAMESPACE)
+                              config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
 print('CONFIG_IS', z, z.json())
 
-z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name='test-cosi2-method-01').json()
+z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
 print('METHODS LIST BEF', z)
 
 staging_branch = os.environ['TRAVIS_BRANCH'] + '-staging'
-z = fapi.update_repository_method(namespace=SEL_NAMESPACE, method='test-cosi2-method-01', synopsis='run sims',
+z = fapi.update_repository_method(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, synopsis='run sims and compute component stats',
                                   wdl=os.path.abspath(f'tmp/wtree/{staging_branch}/Dockstore.wdl'))
 print('UPDATE IS', z, z.json())
 new_method = z.json()
 
-z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name='test-cosi2-method-01').json()
+z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
 print('METHODS LIST AFT', z)
 
-z = fapi.get_config_template(namespace=SEL_NAMESPACE, method='test-cosi2-method-01', version=new_method['snapshotId'])
+z = fapi.get_config_template(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, version=new_method['snapshotId'])
 print('CONFIG TEMPLATE AFT IS', z, z.json())
 config_template = z.json()
 
 z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
 print(z)
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
-                              config='dockstore-tool-cosi2', cnamespace=SEL_NAMESPACE)
+                              config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
 print('CONFIG_NOW_IS', z, z.json())
 
@@ -195,19 +197,19 @@ inputs = _json_loadf(f'tmp/wtree/{staging_branch}/test.02.wdl.json')
 
 config_json = config_template
 del config_json['rootEntityType']
-config_json.update(namespace=SEL_NAMESPACE, name='test-cosi2-method-01', inputs=inputs, outputs={})
+config_json.update(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME, inputs=inputs, outputs={})
 
 z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=config_json)
 print('CREATED CONFIG:', z, z.json())
 
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
-                              config='test-cosi2-method-01', cnamespace=SEL_NAMESPACE)
+                              config=TERRA_METHOD_NAME, cnamespace=SEL_NAMESPACE)
 
 print('CONFIG_NOW_IS', z, z.json())
 
 
 z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
-                           cnamespace=SEL_NAMESPACE, config='test-cosi2-method-01')
+                           cnamespace=SEL_NAMESPACE, config=TERRA_METHOD_NAME)
 print('SUBMISSION IS', z, z.json())
 
 sys.exit(0)
@@ -218,10 +220,10 @@ def dump_file(fname, value):
         out.write(str(value))
 
 #z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
-#                           cnamespace=SEL_NAMESPACE, config='dockstore-tool-cosi2')
+#                           cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
 #print('SUBMISSION IS', z, z.json())
 
-#z = fapi.get_config_template(namespace='dockstore', method='dockstore-tool-cosi2', version=1)
+#z = fapi.get_config_template(namespace='dockstore', method=TERRA_CONFIG_NAME, version=1)
 #print(z.json())
 
 def _pretty_print_json(json_dict, sort_keys=True):
