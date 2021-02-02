@@ -204,8 +204,14 @@ print('CONFIG_JSON about to be updated with inputs:', inputs)
 config_json.update(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME, inputs=inputs, outputs={})
 print('CONFIG_JSON AFTER UPDATING with inputs:', config_json)
 
+
+orig_template = copy.copy(config_template)
+print('ORIG_TEMPLATE is', orig_template)
+z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=orig_template)
+print('CREATED CONFIG WITH ORIG TEMPLATE:', z, z.json())
+
 z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=config_json)
-print('CREATED CONFIG:', z, z.json())
+print('CREATED CONFIG WITH OUR INPUTS:', z, z.json())
 
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
                               config=TERRA_METHOD_NAME, cnamespace=SEL_NAMESPACE)
