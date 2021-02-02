@@ -178,6 +178,7 @@ z = fapi.update_repository_method(namespace=SEL_NAMESPACE, method=TERRA_METHOD_N
                                   wdl=os.path.abspath(f'tmp/wtree/{staging_branch}/Dockstore.wdl'))
 print('UPDATE IS', z, z.json())
 new_method = z.json()
+print('NEW_METHOD IS', new_method)
 
 z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
 print('METHODS LIST AFT', z)
@@ -196,8 +197,12 @@ print('CONFIG_NOW_IS', z, z.json())
 inputs = _json_loadf(f'tmp/wtree/{staging_branch}/test.02.wdl.json')
 
 config_json = config_template
+print('CONFIG_JSON before deleting rootEntityType', config_json)
 del config_json['rootEntityType']
+print('CONFIG_JSON after deleting rootEntityType', config_json)
+print('CONFIG_JSON about to be updated with inputs:', inputs)
 config_json.update(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME, inputs=inputs, outputs={})
+print('CONFIG_JSON AFTER UPDATING with inputs:', inputs)
 
 z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=config_json)
 print('CREATED CONFIG:', z, z.json())
