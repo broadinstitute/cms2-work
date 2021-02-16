@@ -217,15 +217,17 @@ config_json['methodConfigVersion'] = new_method['snapshotId']
 print('methodConfigVersion now is', config_json['methodConfigVersion'])
 config_json['namespace'] = SEL_NAMESPACE
 config_json['name'] = TERRA_CONFIG_NAME
+if 'rootEntityType' in config_json:
+    del config_json['rootEntityType']
 
 print('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
 
 z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=config_json)
 print('CREATED CONFIG WITH OUR INPUTS:', z, z.json())
 
-z = fapi.overwrite_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
-                                    cnamespace=SEL_NAMESPACE, configname=TERRA_CONFIG_NAME, body=config_json)
-print('OVERWROTE', z, z.json())
+# z = fapi.overwrite_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
+#                                     cnamespace=SEL_NAMESPACE, configname=TERRA_CONFIG_NAME, body=config_json)
+# print('OVERWROTE', z, z.json())
 
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
                               config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
