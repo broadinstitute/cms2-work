@@ -210,8 +210,9 @@ config_json = copy.copy(config_template)
 # del orig_template['rootEntityType']
 # z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=orig_template)
 # print('CREATED CONFIG WITH ORIG TEMPLATE:', z, z.json())
-print('methodConfigVersion was', config_json['methodConfigVersion']
+print('methodConfigVersion was', config_json['methodConfigVersion'])
 config_json['methodConfigVersion'] = new_method['snapshotId']
+print('methodConfigVersion now is', config_json['methodConfigVersion'])
 
 print('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
 
