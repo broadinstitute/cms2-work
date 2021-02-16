@@ -165,8 +165,8 @@ TERRA_CONFIG_NAME='dockstore-tool-cms2'
 #help(fapi)
 z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
 #print('LIST_WORKSPACE_CONFIGS result is', z)
-z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
-                              config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
+#z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
+#                              config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
 #print('CONFIG_IS', z, z.json())
 
@@ -183,12 +183,14 @@ print('NEW_METHOD IS', new_method)
 z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
 #print('METHODS LIST AFT', z)
 
-z = fapi.get_config_template(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, version=new_method['snapshotId'])
+snapshot_id = new_method['snapshotId']
+z = fapi.get_config_template(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, version=snapshot_id)
 #print('CONFIG TEMPLATE AFT IS', z, z.json())
 config_template = z.json()
 
 #z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
 #print('LIST_WORKSPACE_CONFIGS allRepos', z)
+TERRA_CONFIG_NAME += f'_cfg_{snapshot_id}' 
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
                               config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
@@ -222,17 +224,17 @@ z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPAC
 print('CREATED CONFIG WITH OUR INPUTS:', z, z.json())
 
 z = fapi.overwrite_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
-                                    cnamespace=SEL_NAMESPACE, configname=TERRA_METHOD_NAME, body=config_json)
+                                    cnamespace=SEL_NAMESPACE, configname=TERRA_CONFIG_NAME, body=config_json)
 print('OVERWROTE', z, z.json())
 
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
-                              config=TERRA_METHOD_NAME, cnamespace=SEL_NAMESPACE)
+                              config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
 print('CONFIG_NOW_IS_2', z, z.json())
 
 
 z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
-                           cnamespace=SEL_NAMESPACE, config=TERRA_METHOD_NAME)
+                           cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
 print('SUBMISSION IS', z, z.json())
 
 sys.exit(0)
