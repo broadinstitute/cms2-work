@@ -164,45 +164,45 @@ TERRA_CONFIG_NAME='dockstore-tool-cms2'
 #dir(fapi)
 #help(fapi)
 z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
-print(z)
+#print('LIST_WORKSPACE_CONFIGS result is', z)
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
                               config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
-print('CONFIG_IS', z, z.json())
+#print('CONFIG_IS', z, z.json())
 
 z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
-print('METHODS LIST BEF', z)
+#print('METHODS LIST BEF', z)
 
 staging_branch = os.environ['TRAVIS_BRANCH'] + '-staging'
 z = fapi.update_repository_method(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, synopsis='run sims and compute component stats',
                                   wdl=os.path.abspath(f'tmp/wtree/{staging_branch}/Dockstore.wdl'))
-print('UPDATE IS', z, z.json())
+#print('UPDATE IS', z, z.json())
 new_method = z.json()
 print('NEW_METHOD IS', new_method)
 
 z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
-print('METHODS LIST AFT', z)
+#print('METHODS LIST AFT', z)
 
 z = fapi.get_config_template(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, version=new_method['snapshotId'])
-print('CONFIG TEMPLATE AFT IS', z, z.json())
+#print('CONFIG TEMPLATE AFT IS', z, z.json())
 config_template = z.json()
 
 z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
-print(z)
+#print('LIST_WORKSPACE_CONFIGS allRepos', z)
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
                               config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
-print('CONFIG_NOW_IS', z, z.json())
+#print('CONFIG_NOW_IS', z, z.json())
 
 inputs = dict(_json_loadf(f'tmp/wtree/{staging_branch}/test.02.wdl.json'))
 
 config_json = copy.copy(config_template)
-print('CONFIG_JSON before deleting rootEntityType', config_json)
-del config_json['rootEntityType']
-print('CONFIG_JSON after deleting rootEntityType', config_json)
-print('CONFIG_JSON about to be updated with inputs:', inputs)
+#print('CONFIG_JSON before deleting rootEntityType', config_json)
+#del config_json['rootEntityType']
+#print('CONFIG_JSON after deleting rootEntityType', config_json)
+#print('CONFIG_JSON about to be updated with inputs:', inputs)
 #config_json.update(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME, inputs=inputs, outputs={})
-print('CONFIG_JSON AFTER UPDATING with inputs:', config_json)
+#print('CONFIG_JSON AFTER UPDATING with inputs:', config_json)
 
 
 # orig_template = copy.copy(config_template)
