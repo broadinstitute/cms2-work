@@ -187,12 +187,12 @@ z = fapi.get_config_template(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, 
 #print('CONFIG TEMPLATE AFT IS', z, z.json())
 config_template = z.json()
 
-z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
+#z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
 #print('LIST_WORKSPACE_CONFIGS allRepos', z)
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
                               config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
-#print('CONFIG_NOW_IS', z, z.json())
+print('WORKSPACE_CONFIG_NOW_IS', z, z.json())
 
 inputs = dict(_json_loadf(f'tmp/wtree/{staging_branch}/test.02.wdl.json'))
 
@@ -210,7 +210,8 @@ config_json = copy.copy(config_template)
 # del orig_template['rootEntityType']
 # z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=orig_template)
 # print('CREATED CONFIG WITH ORIG TEMPLATE:', z, z.json())
-config_json['methodConfigVersion'] = config_json['methodVersion']
+print('methodConfigVersion was', config_json['methodConfigVersion']
+config_json['methodConfigVersion'] = new_method['snapshotId']
 
 print('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
 
