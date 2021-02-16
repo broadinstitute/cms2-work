@@ -69,7 +69,7 @@ version 1.0
 #
 
 
-import "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/0827f8023cee532ca4ce441d1ae0851f06928512/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/69d3c7022abe89f5dd39568a4a6c5feab0f9e909/run_sims.wdl"
 
 # * task compute_one_pop_bin_stats_for_normalization
 task compute_one_pop_bin_stats_for_normalization {
@@ -525,7 +525,7 @@ workflow run_sims_and_compute_cms2_components {
     #Array[File] region_haps_tar_gzs
     #Array[File] neutral_region_haps_tar_gzs
 
-    File compute_components_script = "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/0827f8023cee532ca4ce441d1ae0851f06928512/remodel_components.py"
+    File compute_components_script = "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/69d3c7022abe89f5dd39568a4a6c5feab0f9e909/remodel_components.py"
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
@@ -534,8 +534,8 @@ workflow run_sims_and_compute_cms2_components {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File get_pops_info_script = "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/0827f8023cee532ca4ce441d1ae0851f06928512/get_pops_info.py"
-    File normalize_and_collate_script = "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/0827f8023cee532ca4ce441d1ae0851f06928512/norm_and_collate.py"
+    File get_pops_info_script = "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/69d3c7022abe89f5dd39568a4a6c5feab0f9e909/get_pops_info.py"
+    File normalize_and_collate_script = "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/69d3c7022abe89f5dd39568a4a6c5feab0f9e909/norm_and_collate.py"
     #String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
     String docker = "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
     #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
