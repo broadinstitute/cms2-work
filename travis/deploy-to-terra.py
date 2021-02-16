@@ -219,6 +219,7 @@ config_json['namespace'] = SEL_NAMESPACE
 config_json['name'] = TERRA_CONFIG_NAME
 if 'rootEntityType' in config_json:
     del config_json['rootEntityType']
+config_json['inputs'].update(inputs)
 
 print('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
 
