@@ -210,6 +210,9 @@ print('CONFIG_JSON AFTER UPDATING with inputs:', config_json)
 # del orig_template['rootEntityType']
 # z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=orig_template)
 # print('CREATED CONFIG WITH ORIG TEMPLATE:', z, z.json())
+config_json['methodConfigVersion'] = config_json['methodVersion']
+
+print('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
 
 z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=config_json)
 print('CREATED CONFIG WITH OUR INPUTS:', z, z.json())
@@ -221,7 +224,7 @@ print('OVERWROTE', z, z.json())
 z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
                               config=TERRA_METHOD_NAME, cnamespace=SEL_NAMESPACE)
 
-print('CONFIG_NOW_IS', z, z.json())
+print('CONFIG_NOW_IS_2', z, z.json())
 
 
 z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
