@@ -213,6 +213,8 @@ config_json = copy.copy(config_template)
 print('methodConfigVersion was', config_json['methodConfigVersion'])
 config_json['methodConfigVersion'] = new_method['snapshotId']
 print('methodConfigVersion now is', config_json['methodConfigVersion'])
+config_json['namespace'] = SEL_NAMESPACE
+config_json['name'] = TERRA_CONFIG_NAME
 
 print('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
 
