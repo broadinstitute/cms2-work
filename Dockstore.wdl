@@ -51,7 +51,7 @@ version 1.0
 
 #
 # jvitti's score norming incl xpehh
-# /idi/sabeti-scratch/jvitti/cms/cms/dists/scores_func.py
+#gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/idgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/sabeti-scratcgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/jvittgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cmgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cmgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/distgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/scores_func.py
 #
 
 #
@@ -69,7 +69,7 @@ version 1.0
 #
 
 
-import "./run_sims.wdl"
+import "httpsgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d//raw.githubusercontent.cogs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/notestafgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/dockstore-tool-cmsgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d-stagings://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/run_sims.wdl"
 
 # * task compute_one_pop_bin_stats_for_normalization
 task compute_one_pop_bin_stats_for_normalization {
@@ -405,9 +405,9 @@ task create_tar_gz {
     File out_tar_gz = out_fname_tar_gz
   }
   runtime {
-    #docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    docker: "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
-    #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    #docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    #docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/broadinstitutgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     # docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
     memory: "500 MB"
     cpu: 1
@@ -454,9 +454,9 @@ task normalize_and_collate {
     File normed_collated_stats = normed_collated_stats_fname
   }
   runtime {
-    # docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    docker: "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
-    #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    # docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    #docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/broadinstitutgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     memory: "1 GB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
@@ -514,7 +514,7 @@ workflow run_sims_and_compute_cms2_components {
     Int numCpusPerBlock = numRepsPerBlock
     Int repTimeoutSeconds = 600
     String       memoryPerBlock = "3 GB"
-    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
+    String       cosi2_docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     Int preemptible = 3
     File taskScript_simulation
 
@@ -525,7 +525,7 @@ workflow run_sims_and_compute_cms2_components {
     #Array[File] region_haps_tar_gzs
     #Array[File] neutral_region_haps_tar_gzs
 
-    File compute_components_script = "./remodel_components.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/remodel_components.py"
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
@@ -534,11 +534,11 @@ workflow run_sims_and_compute_cms2_components {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File get_pops_info_script = "./get_pops_info.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
-    #String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    String docker = "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
-    #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    File get_pops_info_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/get_pops_info.py"
+    File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/norm_and_collate.py"
+    #String docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    String docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    #String docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/broadinstitutgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/9ba0d46441b75dc5cf163f3f5ff849eb0732d54d/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
   Int n_bins_ihh12 = 1
   Int n_bins_xpehh = 1
