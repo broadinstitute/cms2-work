@@ -50,7 +50,6 @@ jobs:
       script:
         - set -e
         - tar -xzf gcloud-config.tar.gz -C $HOME
-        - bash travis/create-staging-branch.sh
         - python3 travis/deploy-to-terra.py
 
 #language: java

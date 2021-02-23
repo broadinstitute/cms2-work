@@ -160,6 +160,13 @@ SEL_NAMESPACE='um1-encode-y2s1'
 SEL_WORKSPACE='selection-sim'
 TERRA_METHOD_NAME='test-cosi2-method-01'
 TERRA_CONFIG_NAME='dockstore-tool-cms2'
+TERRA_GS_BUCKET='fc-21baddbc-5142-4983-a26e-7d85a72c830b'
+GITHUB_REPO='dockstore-tools-cms2'
+TRAVIS_COMMIT=os.environ['TRAVIS_COMMIT']
+
+TERRA_DEST=f'gs://{TERRA_GS_BUCKET}/{GITHUB_REPO}/{TRAVIS_COMMIT}/'
+execute(f'gsutil -m cp *.py *.wdl *.cosiParams *.par *.recom {TERRA_DEST}')
+execute(f'sed -i "s#\"./#\"{TERRA_DEST}#g" *.wdl *.wdl.json')
 
 #dir(fapi)
 #help(fapi)
