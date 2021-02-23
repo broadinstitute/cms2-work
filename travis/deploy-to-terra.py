@@ -177,7 +177,7 @@ for wdl_fname in glob.glob('*.wdl'):
         print('Replaced in file', wdl_fname)
         dump_file(wdl_fname, wdl_repl)
 
-execute(f'sed -i "s#\"./#\"{TERRA_DEST}#g" *.wdl *.wdl.json')
+execute(f'sed -i "s#\\"./#\\"{TERRA_DEST}#g" *.wdl *.wdl.json')
 execute(f'gsutil -m cp *.py *.wdl *.cosiParams *.par *.recom {TERRA_DEST}')
 execute('git config --global user.email "travis@travis-ci.org"')
 execute('git config --global user.name "Travis CI"')
