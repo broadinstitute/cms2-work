@@ -178,7 +178,7 @@ for wdl_fname in glob.glob('*.wdl'):
 execute(f'sed -i "s#\"./#\"{TERRA_DEST}#g" *.wdl *.wdl.json')
 execute(f'gsutil -m cp *.py *.wdl *.cosiParams *.par *.recom {TERRA_DEST}')
 execute('git config --global user.email "travis@travis-ci.org"')
-execute('git config --global user.name "Travis CI"'
+execute('git config --global user.name "Travis CI"')
 execute(f'git checkout -b {STAGING_BRANCH}')
 execute(f'git add .')
 execute(f'git commit -m "created staging branch {STAGING_BRANCH}"')
