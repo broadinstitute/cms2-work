@@ -71,7 +71,7 @@ task cosi2_run_one_sim_block {
     Int          numCpusPerBlock = numRepsPerBlock
     Int          maxAttempts = 10000000
     Int          repTimeoutSeconds = 300
-    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
+    String       cosi2_docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     String       memoryPerBlock = "3 GB"
     Int          preemptible = 3
     File         taskScript
@@ -91,7 +91,7 @@ task cosi2_run_one_sim_block {
 #    String      cosi2_docker_used = ""
   }
   runtime {
-#    docker: "quay.io/ilya_broad/cms-dev:2.0.1-15-gd48e1db-is-cms2-new"
+#    docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/cms-dev:2.0.1-15-gd48e1db-is-cms2-new"
     docker: cosi2_docker
     memory: memoryPerBlock
     cpu: numCpusPerBlock
@@ -145,9 +145,9 @@ task get_pops_info {
     File empty_file = "empty_file"
   }
   runtime {
-    #docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    docker: "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
-    #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    #docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    #docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/broadinstitutgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
@@ -191,7 +191,7 @@ workflow run_sims_wf {
     Int numCpusPerBlock = numRepsPerBlock
     Int repTimeoutSeconds = 600
     String       memoryPerBlock = "3 GB"
-    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
+    String       cosi2_docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     Int preemptible = 3
     File taskScript_simulation
 
@@ -200,10 +200,10 @@ workflow run_sims_wf {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File get_pops_info_script = "./get_pops_info.py"
-    #String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    String docker = "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
-    #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    File get_pops_info_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/get_pops_info.py"
+    #String docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
+    String docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ilya_broags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    #String docker = "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/broadinstitutgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
   }
 
 # *** call get_pops_info
@@ -226,7 +226,7 @@ workflow run_sims_wf {
   ####################################################
 
 # ** Run neutral sims
-  Int numBlocksNeutral = nreps_neutral / numRepsPerBlock
+  Int numBlocksNeutral = nreps_neutralgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ numRepsPerBlock
   scatter(blockNum in range(numBlocksNeutral)) {
     call cosi2_run_one_sim_block as run_neutral_sims {
       input:
@@ -265,7 +265,7 @@ workflow run_sims_wf {
   ####################################################
 
 # ** Run selection sims
-  Int numBlocks = nreps / numRepsPerBlock
+  Int numBlocks = nrepsgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/ numRepsPerBlock
   scatter(paramFile_blockNum in cross(paramFiles_selection, range(numBlocks))) {
     call cosi2_run_one_sim_block as run_selection_sims {
       input:
