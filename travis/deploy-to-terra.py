@@ -165,8 +165,8 @@ GITHUB_REPO='dockstore-tools-cms2'
 TRAVIS_COMMIT=os.environ['TRAVIS_COMMIT']
 
 TERRA_DEST=f'gs://{TERRA_GS_BUCKET}/{GITHUB_REPO}/{TRAVIS_COMMIT}/'
-execute(f'gsutil -m cp *.py *.wdl *.cosiParams *.par *.recom {TERRA_DEST}')
 execute(f'sed -i "s#\"./#\"{TERRA_DEST}#g" *.wdl *.wdl.json')
+execute(f'gsutil -m cp *.py *.wdl *.cosiParams *.par *.recom {TERRA_DEST}')
 
 #dir(fapi)
 #help(fapi)
@@ -182,7 +182,7 @@ z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME
 
 staging_branch = os.environ['TRAVIS_BRANCH'] + '-staging'
 z = fapi.update_repository_method(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, synopsis='run sims and compute component stats',
-                                  wdl=os.path.abspath(f'tmp/wtree/{staging_branch}/Dockstore.wdl'))
+                                  wdl=os.path.abspath(f'./Dockstore.wdl'))
 #print('UPDATE IS', z, z.json())
 new_method = z.json()
 print('NEW_METHOD IS', new_method)
@@ -203,7 +203,7 @@ z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
 
 print('WORKSPACE_CONFIG_NOW_IS', z, z.json())
 
-inputs = dict(_json_loadf(f'tmp/wtree/{staging_branch}/test.02.wdl.json'))
+inputs = dict(_json_loadf(f'./test.02.wdl.json'))
 
 config_json = copy.copy(config_template)
 #print('CONFIG_JSON before deleting rootEntityType', config_json)
