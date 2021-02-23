@@ -163,10 +163,29 @@ TERRA_CONFIG_NAME='dockstore-tool-cms2'
 TERRA_GS_BUCKET='fc-21baddbc-5142-4983-a26e-7d85a72c830b'
 GITHUB_REPO='dockstore-tools-cms2'
 TRAVIS_COMMIT=os.environ['TRAVIS_COMMIT']
+TRAVIS_REPO_SLUG=os.environ['TRAVIS_REPO_SLUG']
+STAGING_BRANCH=f'{TRAVIS_COMMIT}-staging'
 
 TERRA_DEST=f'gs://{TERRA_GS_BUCKET}/{GITHUB_REPO}/{TRAVIS_COMMIT}/'
+GH_TOKEN=os.environ['GH_TOKEN']
+
+for wdl_fname in glob.glob('*.wdl'):
+    wdl = slurp_file(wdl_fname)
+    wdl = re.sub(r'import "./([^"]+)"', f'import "https://raw.githubusercontent.com/{TRAVIS_REPO_SLUG}/{STAGING_BRANCH}/\\1"',
+                 wdl, flags=re.MULTILINE)
+    dump_file(wdl_fname, wdl)
+
 execute(f'sed -i "s#\"./#\"{TERRA_DEST}#g" *.wdl *.wdl.json')
 execute(f'gsutil -m cp *.py *.wdl *.cosiParams *.par *.recom {TERRA_DEST}')
+execute('git config --global user.email "travis@travis-ci.org"')
+execute('git config --global user.name "Travis CI"'
+execute(f'git checkout -b {STAGING_BRANCH}')
+execute(f'git add .')
+execute(f'git commit -m "created staging branch {STAGING_BRANCH}"')
+
+execute(f'git remote rm origin-me || true')
+execute(f'git remote add origin-me "https://{GH_TOKEN}@github.com/{TRAVIS_REPO_SLUG}.git"')
+execute(f'git push --set-upstream origin-me {STAGING_BRANCH}')
 
 #dir(fapi)
 #help(fapi)
@@ -247,47 +266,47 @@ z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
                            cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
 print('SUBMISSION IS', z, z.json())
 
-sys.exit(0)
+# sys.exit(0)
 
-def dump_file(fname, value):
-    """store string in file"""
-    with open(fname, 'w')  as out:
-        out.write(str(value))
+# def dump_file(fname, value):
+#     """store string in file"""
+#     with open(fname, 'w')  as out:
+#         out.write(str(value))
 
-#z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
-#                           cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
-#print('SUBMISSION IS', z, z.json())
+# #z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
+# #                           cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
+# #print('SUBMISSION IS', z, z.json())
 
-#z = fapi.get_config_template(namespace='dockstore', method=TERRA_CONFIG_NAME, version=1)
-#print(z.json())
+# #z = fapi.get_config_template(namespace='dockstore', method=TERRA_CONFIG_NAME, version=1)
+# #print(z.json())
 
-def _pretty_print_json(json_dict, sort_keys=True):
-    """Return a pretty-printed version of a dict converted to json, as a string."""
-    return json.dumps(json_dict, indent=4, separators=(',', ': '), sort_keys=sort_keys)
+# def _pretty_print_json(json_dict, sort_keys=True):
+#     """Return a pretty-printed version of a dict converted to json, as a string."""
+#     return json.dumps(json_dict, indent=4, separators=(',', ': '), sort_keys=sort_keys)
 
-def _write_json(fname, **json_dict):
-    dump_file(fname=fname, value=_pretty_print_json(json_dict))
+# def _write_json(fname, **json_dict):
+#     dump_file(fname=fname, value=_pretty_print_json(json_dict))
 
 
 
-#print('ENTITIES ARE', fapi.list_entity_types(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE).json())
-z = fapi.list_submissions(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE)
-#print('SUBMISSIONS ARE', z, z.json())
-for s in sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)[:1]:
-    #if not s['submissionDate'].startswith('2020-06-29'): continue
+# #print('ENTITIES ARE', fapi.list_entity_types(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE).json())
+# z = fapi.list_submissions(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE)
+# #print('SUBMISSIONS ARE', z, z.json())
+# for s in sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)[:1]:
+#     #if not s['submissionDate'].startswith('2020-06-29'): continue
 
-    print('====================================================')
-    print(s)
-    y = fapi.get_submission(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=s['submissionId']).json()
+#     print('====================================================')
+#     print(s)
+#     y = fapi.get_submission(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=s['submissionId']).json()
 
-    zz = fapi.get_workflow_metadata(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=s['submissionId'],
-                                    workflow_id=y['workflows'][0]['workflowId']).json()
-    _write_json('tmp/j2.json', **zz)
-    dump_file(fname='tmp/w.wdl', value=zz['submittedFiles']['workflow'])
+#     zz = fapi.get_workflow_metadata(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=s['submissionId'],
+#                                     workflow_id=y['workflows'][0]['workflowId']).json()
+#     _write_json('tmp/j2.json', **zz)
+#     dump_file(fname='tmp/w.wdl', value=zz['submittedFiles']['workflow'])
 
-    # zzz = fapi.get_workflow_metadata(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=s['submissionId'],
-    #                                 workflow_id='ad1e8271-fe66-4e05-9005-af570e9e5884').json()
-    # _write_json('tmp/jz.json', **zzz)
+#     # zzz = fapi.get_workflow_metadata(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=s['submissionId'],
+#     #                                 workflow_id='ad1e8271-fe66-4e05-9005-af570e9e5884').json()
+#     # _write_json('tmp/jz.json', **zzz)
 
 
 
