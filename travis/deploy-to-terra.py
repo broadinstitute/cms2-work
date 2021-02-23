@@ -171,16 +171,20 @@ GH_TOKEN=os.environ['GH_TOKEN']
 
 for wdl_fname in glob.glob('*.wdl'):
     wdl = slurp_file(wdl_fname)
-    wdl = re.sub(r'import "./([^"]+)"', f'import "https://raw.githubusercontent.com/{TRAVIS_REPO_SLUG}/{STAGING_BRANCH}/\\1"',
-                 wdl, flags=re.MULTILINE)
-    dump_file(wdl_fname, wdl)
+    wdl_repl = re.sub(r'import "./([^"]+)"', f'import "https://raw.githubusercontent.com/{TRAVIS_REPO_SLUG}/{STAGING_BRANCH}/\\1"',
+                      wdl, flags=re.MULTILINE)
+    if wdl_repl != wdl:
+        print('Replaced in file', wdl_fname)
+        dump_file(wdl_fname, wdl_repl)
 
 execute(f'sed -i "s#\"./#\"{TERRA_DEST}#g" *.wdl *.wdl.json')
 execute(f'gsutil -m cp *.py *.wdl *.cosiParams *.par *.recom {TERRA_DEST}')
 execute('git config --global user.email "travis@travis-ci.org"')
 execute('git config --global user.name "Travis CI"')
+execute('git status')
 execute(f'git checkout -b {STAGING_BRANCH}')
 execute(f'git add .')
+execute('git status')
 execute(f'git commit -m "created staging branch {STAGING_BRANCH}"')
 
 execute(f'git remote rm origin-me || true')
