@@ -516,7 +516,7 @@ workflow run_sims_and_compute_cms2_components {
     String       memoryPerBlock = "3 GB"
     String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     Int preemptible = 3
-    File taskScript_simulation
+    File taskScript_simulation = "./runcosi.py"
 
     #
     # Component score computation params
