@@ -193,24 +193,23 @@ execute(f'git push --set-upstream origin-me {STAGING_BRANCH}')
 
 #dir(fapi)
 #help(fapi)
-z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
+#z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
 #print('LIST_WORKSPACE_CONFIGS result is', z)
 #z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
 #                              config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
 #print('CONFIG_IS', z, z.json())
 
-z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
+#z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
 #print('METHODS LIST BEF', z)
 
-staging_branch = os.environ['TRAVIS_BRANCH'] + '-staging'
 z = fapi.update_repository_method(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, synopsis='run sims and compute component stats',
                                   wdl=os.path.abspath(f'./Dockstore.wdl'))
 #print('UPDATE IS', z, z.json())
 new_method = z.json()
 print('NEW_METHOD IS', new_method)
 
-z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
+#z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
 #print('METHODS LIST AFT', z)
 
 snapshot_id = new_method['snapshotId']
