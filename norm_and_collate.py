@@ -152,6 +152,10 @@ def execute(action, **kw):
     finally:
         _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
 
+def chk(cond, msg='condition failed'):
+    if not cond:
+        raise RuntimeError(f'Error: {msg}') 
+
 # * Parsing args
 
 def parse_args():
@@ -343,6 +347,21 @@ def normalize_and_collate_scores(args):
         
 
     inps = _json_loadf(args.input_json)
+
+    def make_local(inp):
+        if isinstance(inps[inp], list):
+            inps[inp] = list(map(make_local, inps[inp]))
+        else:
+            local_fname = os.path.basename(inps[inp])
+            os.symlink(inps[inp], local_fname)
+            inps[inp] = local_fname
+        return inps[inp]
+
+    make_local('ihs_out')
+    make_local('nsl_out')
+    make_local('ihh12_out')
+    make_local('xpehh_out')
+
     execute(f'norm --ihs --bins {inps["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} --files {inps["ihs_out"]} '
             f'--log {inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm.log ')
 
@@ -389,8 +408,6 @@ def normalize_and_collate_scores(args):
         rename(columns={'ihsnormed':'ihs_normed', 'nslnormed': 'nsl_normed', 'normihh12': 'ihh12_normed',
                         'max_xpehh': 'max_xpehh_normed'})\
                     .to_csv(args.out_normed_collated, sep='\t', na_rep='nan', index=False)
-        
-    
 
     #
     # compute fst and deltadaf
