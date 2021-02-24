@@ -218,6 +218,13 @@ snapshot_id = new_method['snapshotId']
 z = fapi.get_repository_method_acl(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, snapshot_id=snapshot_id)
 print('ACL:', z, z.json())
 
+z = fapi.update_repository_method_acl(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, snapshot_id=snapshot_id,
+                                      acl_updates=[{'role': 'OWNER', 'user': 'sgosai@broadinstitute.org'},
+                                                   {'role': 'OWNER', 'user': 'sreilly@broadinstitute.org'}])
+print('ACL UPDATE:', z, z.json())
+z = fapi.get_repository_method_acl(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, snapshot_id=snapshot_id)
+print('ACL AFTER UPDATE:', z, z.json())
+
 z = fapi.get_config_template(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, version=snapshot_id)
 #print('CONFIG TEMPLATE AFT IS', z, z.json())
 config_template = z.json()
@@ -225,10 +232,10 @@ config_template = z.json()
 #z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
 #print('LIST_WORKSPACE_CONFIGS allRepos', z)
 TERRA_CONFIG_NAME += f'_cfg_{snapshot_id}' 
-z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
-                              config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
+# z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
+#                               config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
-print('WORKSPACE_CONFIG_NOW_IS', z, z.json())
+# print('WORKSPACE_CONFIG_NOW_IS', z, z.json())
 
 inputs = dict(_json_loadf(f'./test.02.wdl.json'))
 
@@ -263,7 +270,7 @@ print('CREATED CONFIG WITH OUR INPUTS:', z, z.json())
 z = fapi.validate_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
 print('VALIDATE_CONFIG:', z, z.json())
 
-z = fapi.get_repository_config_acl(namespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME, snapshot_id=snapshot_id)
+z = fapi.get_repository_config_acl(namespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME, snapshot_id=1)
 print('REPO CONFIG ACL:', z, z.json())
 
 z = fapi.get_workspace_acl(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE)
