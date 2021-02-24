@@ -350,7 +350,12 @@ def normalize_and_collate_scores(args):
 
     def make_local(inp):
         if isinstance(inps[inp], list):
-            inps[inp] = list(map(make_local, inps[inp]))
+            new_inps = []
+            for f in inps[inp]:
+                local_fname = os.path.basename(f)
+                os.symlink(f, local_fname)
+                new_inps.append(local_fname)
+            inps[inp] = new_inps
         else:
             local_fname = os.path.basename(inps[inp])
             os.symlink(inps[inp], local_fname)
