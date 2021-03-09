@@ -1,7 +1,7 @@
 version 1.0
 
 
-import "./run_sims_and_compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/dockstore-tool-cms2/74951128468ce64d1008aa5aec4aa5e1a15e3662-staging/run_sims_and_compute_cms2_components.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow cms2_main {
