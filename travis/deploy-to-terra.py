@@ -255,7 +255,7 @@ config_json = copy.copy(config_template)
 print('methodConfigVersion was', config_json['methodConfigVersion'])
 config_json['methodConfigVersion'] = snapshot_id
 print('methodConfigVersion now is', config_json['methodConfigVersion'])
-config_json['namespace'] = SEL_NAMESPACE
+config_json['namespace'] = SEL_NAMESPACE   # configuration namespace
 config_json['name'] = TERRA_CONFIG_NAME
 if 'rootEntityType' in config_json:
     del config_json['rootEntityType']
