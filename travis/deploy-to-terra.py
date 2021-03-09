@@ -60,7 +60,6 @@ def _json_loads(s):
 def _json_loadf(fname):
     return _json_loads(slurp_file(fname))
 
-
 def slurp_file(fname, maxSizeMb=50):
     """Read entire file into one string.  If file is gzipped, uncompress it on-the-fly.  If file is larger
     than `maxSizeMb` megabytes, throw an error; this is to encourage proper use of iterators for reading
@@ -153,8 +152,6 @@ def execute(action, **kw):
         succeeded = True
     finally:
         _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
-
-
 
 SEL_NAMESPACE='um1-encode-y2s1'
 SEL_WORKSPACE='selection-sim'
