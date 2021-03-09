@@ -3,14 +3,14 @@
     "run_sims_and_compute_cms2_components.nreps": "4",
     "run_sims_and_compute_cms2_components.numRepsPerBlock": "2",
     "run_sims_and_compute_cms2_components.paramFile_demographic_model": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/defdef15_hard_sel1_common.citest.par\"",
-    "run_sims_and_compute_cms2_components.paramFile_neutral": "\"./test.neutral.cosiParams\"",
-    "run_sims_and_compute_cms2_components.paramFiles_selection": "[\"./sel1_origin1.par\", \"./sel3_origin2.par\"]",
-    "run_sims_and_compute_cms2_components.recombFile": "\"./test_recom.recom\"",
-    "run_sims_and_compute_cms2_components.get_pops_info_script": "\"./get_pops_info.py\"",
-    "run_sims_and_compute_cms2_components.normalize_and_collate_script": "\"./norm_and_collate.py\"",
+    "run_sims_and_compute_cms2_components.paramFile_neutral": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/e0a72d39348c6041146204d6e2ecad3ce12316cc/test.neutral.cosiParams\"",
+    "run_sims_and_compute_cms2_components.paramFiles_selection": "[\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/e0a72d39348c6041146204d6e2ecad3ce12316cc/sel1_origin1.par\", \"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/e0a72d39348c6041146204d6e2ecad3ce12316cc/sel3_origin2.par\"]",
+    "run_sims_and_compute_cms2_components.recombFile": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/e0a72d39348c6041146204d6e2ecad3ce12316cc/test_recom.recom\"",
+    "run_sims_and_compute_cms2_components.get_pops_info_script": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/e0a72d39348c6041146204d6e2ecad3ce12316cc/get_pops_info.py\"",
+    "run_sims_and_compute_cms2_components.normalize_and_collate_script": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/e0a72d39348c6041146204d6e2ecad3ce12316cc/norm_and_collate.py\"",
 
-    "run_sims_and_compute_cms2_components.taskScript_simulation": "\"./runcosi.py\"",
-    "run_sims_and_compute_cms2_components.compute_components_script": "\"./remodel_components.py\"",
+    "run_sims_and_compute_cms2_components.taskScript_simulation": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/e0a72d39348c6041146204d6e2ecad3ce12316cc/runcosi.py\"",
+    "run_sims_and_compute_cms2_components.compute_components_script": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/e0a72d39348c6041146204d6e2ecad3ce12316cc/remodel_components.py\"",
     "run_sims_and_compute_cms2_components.threads": "4"
 }
 
