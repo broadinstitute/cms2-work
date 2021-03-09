@@ -391,16 +391,3 @@ task normalize_and_collate {
     disks: "local-disk 1 LOCAL"
   }
 }
-
-# * struct CMS2_Components_Result
-struct CMS2_Components_Result {
-   ReplicaInfo replicaInfo
-   File selection_sim_tar_gz
-   File ihsout
-   File ihsnormedout
-   File nslout
-   File nslnormedout
-   File ihh12out
-   File ihh12normedout
-   #Array[File] xpehhout
-}
