@@ -41,7 +41,6 @@ jobs:
       python: "3.8"
       before_install:
         - openssl aes-256-cbc -K $encrypted_833b0d9c0b92_key -iv $encrypted_833b0d9c0b92_iv -in gcloud-config.tar.gz.enc -out gcloud-config.tar.gz -d
-      before_install:
         - sudo apt-get update
         - sudo apt-get -y install openjdk-8-jre-headless
       install:
