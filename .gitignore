@@ -3,3 +3,4 @@ cromwell-workflow-logs/
 default_112115_825am__demography.par
 gcloud-config.tar.gz
 __pycache__/
+womtool-*.jar

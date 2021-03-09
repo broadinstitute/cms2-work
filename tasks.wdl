@@ -391,3 +391,4 @@ task normalize_and_collate {
     disks: "local-disk 1 LOCAL"
   }
 }
+
