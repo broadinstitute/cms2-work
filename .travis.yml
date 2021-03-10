@@ -1,0 +1,64 @@
+sudo: required
+
+dist: focal
+os: linux
+
+git:
+  depth: 5
+  submodules: false
+
+services:
+  - docker
+
+env:
+#  - LANGUAGE=cwl
+  global:
+    - LANGUAGE=wdl
+    # GH_TOKEN
+    - secure: "R1YJ8rUhLtu6pTuvIhKKCVLrxlBocdD4Ckdxgw0DbjqXkQT6WIWhCwrd8PFlubuEmjiQz2IoxdEDlosEceQveoLR66SnJq9iLuaxq9jI7cFfr/bqGUgCEyWiSk97V2YH3LFYf8RiUrfTPL1YfoucWplqZL4kYWOPnl8dZI51apWuJzgZggyIfXTdQvllZYaB7u431zEj5AMJ9LD/SEZJUcI/FgM1BczobHby8reYtgUmP4Oaz0kN6hOwp4urh7TIu+vtCXBBamIOq6wZvvFRd6RxMEfN0c44oWTcwbh5QPPErq6iWLfBDim/LctC2d67U8NbmcfqoEs01qGYNFR6o8U7+8Rpx78vGLtr3d8yAZ0mgwlEtulAIT0DS+h2sRBDgxZTN8PoKvgCEGA35GysvcaPy7gcKU72CPGAUDo/QlnFtVtt2ruJ5YIURgF+v+Mbu6wc0iXkN0LFziQ9xWgfGmyqtSvvppQiDIDso0YXkSRn1cIGFWBZHKGRBdlfzCOtsTS6LTqvTKih1CMZySYhvs0y/5cM9LqCxZ886xbMYKS6ieW3FaK40dYtW3kKDTWJTZOo645Z0EmAaKGfav3lm+u8SJzbcnMH2oUZxE35dZL38sQ6fLvTtZRMAUdiUq0hVhit4fNY4eXD5lhIVPUQSekk8i5rNSwV/MGprDVHjVo="
+#  - LANGUAGE=nfl
+
+branches:
+  except:
+    - /.*-staging$/
+    - /^staging-.*/
+
+# notifications:
+#   slack: 
+#     on_success: never
+#     on_failure: always
+#     rooms:
+#       - oicr:S9k4EowgQv9AnbCfEZHSzCsg
+
+stages:
+  - main
+
+jobs:
+  fast_finish: true
+  include:
+    
+    - language: python
+      stage: main
+      python: "3.8"
+      # before_install:
+      #   - sudo apt-get update
+      #   - sudo apt-get -y install openjdk-8-jre-headless
+#       install:
+# #        - pip3 -q install miniwdl
+#         - pip3 -q install firecloud
+      script:
+        - set -e
+        - ./travis/test-wdl.sh
+        - tar -xzf gcloud-config.tar.gz -C $HOME
+        - python3 travis/deploy-to-terra.py
+
+#language: java
+#jdk: 
+#  - openjdk11
+
+#before_install:
+#  - docker build -t quay.io/ilya_broad/dockstore-tool-cosi2 .
+#  - pyenv global 3.6
+
+#install: 
+#  - bash install.sh
