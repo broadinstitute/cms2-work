@@ -21,6 +21,7 @@ env:
 branches:
   except:
     - /.*-staging$/
+    - /^staging-.*/
 
 # notifications:
 #   slack: 
