@@ -283,7 +283,7 @@ z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
 print('CONFIG_NOW_IS_2', z, z.json())
 
 
-if True:
+if False:
     z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
                                cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
     print('SUBMISSION IS', z, z.json())
