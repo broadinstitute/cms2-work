@@ -158,17 +158,19 @@ SEL_WORKSPACE='selection-sim'
 TERRA_METHOD_NAME='test-cosi2-method-01'
 TERRA_CONFIG_NAME='dockstore-tool-cms2'
 TERRA_GS_BUCKET='fc-21baddbc-5142-4983-a26e-7d85a72c830b'
-GITHUB_REPO='dockstore-tools-cms2'
 TRAVIS_COMMIT=os.environ['TRAVIS_COMMIT']
+TRAVIS_BRANCH=os.environ['TRAVIS_BRANCH']
 TRAVIS_REPO_SLUG=os.environ['TRAVIS_REPO_SLUG']
-STAGING_BRANCH=f'{TRAVIS_COMMIT}-staging'
+STAGING_TRAVIS_REPO_SLUG='notestaff/cms2-staging'
+STAGING_BRANCH=f'staging-{TRAVIS_BRANCH}--{TRAVIS_COMMIT}'
+GITHUB_REPO=TRAVIS_REPO_SLUG.split('/')[1]
 
-TERRA_DEST=f'gs://{TERRA_GS_BUCKET}/{GITHUB_REPO}/{TRAVIS_COMMIT}/'
+TERRA_DEST=f'gs://{TERRA_GS_BUCKET}/{GITHUB_REPO}/{TRAVIS_BRANCH}/{TRAVIS_COMMIT}/'
 GH_TOKEN=os.environ['GH_TOKEN']
 
 for wdl_fname in glob.glob('*.wdl'):
     wdl = slurp_file(wdl_fname)
-    wdl_repl = re.sub(r'import "./([^"]+)"', f'import "https://raw.githubusercontent.com/{TRAVIS_REPO_SLUG}/{STAGING_BRANCH}/\\1"',
+    wdl_repl = re.sub(r'import "./([^"]+)"', f'import "https://raw.githubusercontent.com/{TRAVIS_STAGING_REPO_SLUG}/{STAGING_BRANCH}/\\1"',
                       wdl, flags=re.MULTILINE)
     if wdl_repl != wdl:
         print('Replaced in file', wdl_fname)
@@ -184,9 +186,9 @@ execute(f'git add .')
 execute('git status')
 execute(f'git commit -m "created staging branch {STAGING_BRANCH}"')
 
-execute(f'git remote rm origin-me || true')
-execute(f'git remote add origin-me "https://{GH_TOKEN}@github.com/{TRAVIS_REPO_SLUG}.git"')
-execute(f'git push --set-upstream origin-me {STAGING_BRANCH}')
+execute(f'git remote rm origin-staging || true')
+execute(f'git remote add origin-staging "https://{GH_TOKEN}@github.com/{STAGING_TRAVIS_REPO_SLUG}.git"')
+execute(f'git push --set-upstream origin-staging {STAGING_BRANCH}')
 
 #dir(fapi)
 #help(fapi)
@@ -283,7 +285,7 @@ z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
 print('CONFIG_NOW_IS_2', z, z.json())
 
 
-if False:
+if True:
     z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
                                cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
     print('SUBMISSION IS', z, z.json())
