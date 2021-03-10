@@ -7,7 +7,7 @@ task bamstats {
 
 
 	command {
-		bash /usr/local/bin/bamstats ${mem_gb} ${bam_input}
+		bashgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/usgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/locags://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/bigs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/bamstats ${mem_gb} ${bam_input}
 	}
 
 	output {
@@ -15,7 +15,7 @@ task bamstats {
 	}
 
 	runtime {
-		docker: "quay.io/collaboratory/dockstore-tool-bamstats:1.25-7"
+		docker: "quay.igs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/collaboratorgs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tools-cms2/bbb1c3caa96531715a9ca6aa37ad89c205e7341b/dockstore-tool-bamstats:1.25-7"
 		memory: mem_gb + "GB"
 	}
 
