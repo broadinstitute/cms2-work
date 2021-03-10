@@ -5,7 +5,7 @@ os: linux
 
 git:
   depth: 5
-  submodules: false
+#  submodules: false
 
 services:
   - docker
@@ -48,9 +48,7 @@ jobs:
 #         - pip3 -q install firecloud
       script:
         - set -e
-        - ./travis/test-wdl.sh
-        - tar -xzf gcloud-config.tar.gz -C $HOME
-        - python3 travis/deploy-to-terra.py
+        - ./travis/build-recipes.sh
 
 #language: java
 #jdk: 
