@@ -170,7 +170,8 @@ GH_TOKEN=os.environ['GH_TOKEN']
 
 for wdl_fname in glob.glob('*.wdl'):
     wdl = slurp_file(wdl_fname)
-    wdl_repl = re.sub(r'import "./([^"]+)"', f'import "https://raw.githubusercontent.com/{TRAVIS_STAGING_REPO_SLUG}/{STAGING_BRANCH}/\\1"',
+    wdl_repl = re.sub(r'import "./([^"]+)"',
+                      f'import "https://raw.githubusercontent.com/{STAGING_TRAVIS_REPO_SLUG}/{STAGING_BRANCH}/\\1"',
                       wdl, flags=re.MULTILINE)
     if wdl_repl != wdl:
         print('Replaced in file', wdl_fname)
