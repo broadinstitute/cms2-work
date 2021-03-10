@@ -68,9 +68,9 @@ version 1.0
 # Computation of CMS2 component scores
 #
 
-
 import "./run_sims.wdl"
 import "./tasks.wdl"
+import "./compute_normalization_stats.wdl"
 import "./component_stats_for_sel_sims.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
@@ -195,99 +195,23 @@ workflow run_sims_and_compute_cms2_components_wf {
 
 # ** Compute normalization stats
 # *** Compute one-pop CMS2 components for neutral sims
-  scatter(sel_pop in sims_wf.pops_info.pop_ids) {
-    scatter(neut_sim_region_haps_tar_gz in sims_wf.neut_sim_region_haps_tar_gzs) {
-      call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
-	input:
-	sel_pop=sel_pop,
-	region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+  call compute_normalization_stats.compute_normalization_stats_wf {
+    input:
+    modelId=modelId,
+    pops_info=sims_wf.pops_info,
+    neut_sim_region_haps_tar_gzs=sims_wf.neut_sim_region_haps_tar_gzs,
 
-	script=compute_components_script,
-	threads=threads,
-	mem_base_gb=mem_base_gb,
-	mem_per_thread_gb=mem_per_thread_gb,
-	local_disk_gb=local_disk_gb,
-	docker=docker,
-	preemptible=preemptible
-      }
-    }
+    n_bins_ihs=n_bins_ihs,
+    n_bins_nsl=n_bins_nsl,
+    n_bins_ihh12=n_bins_ihh12,
+    n_bins_xpehh=n_bins_xpehh,
 
-# *** Compute normalization stats for one-pop components for neutral sims
-    call tasks.compute_one_pop_bin_stats_for_normalization {
-      input:
-      out_fnames_base = modelId + "__selpop_" + sel_pop,
-      sel_pop=sel_pop,
-
-      ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
-      nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
-      ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
-
-      n_bins_ihs=n_bins_ihs,
-      n_bins_nsl=n_bins_nsl,
-      n_bins_ihh12=n_bins_ihh12,
-
-      threads=1,
-      mem_base_gb=64,
-      mem_per_thread_gb=0,
-      local_disk_gb=local_disk_gb,
-      docker=docker,
-      preemptible=preemptible
-    }  # end: call tasks.compute_one_pop_bin_stats_for_normalization
-  }  # end: scatter(sel_pop in sims_wf.pops_info.pop_ids)
-
-# *** Compute two-pop CMS2 components for neutral sims
-   scatter(sel_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
-     scatter(alt_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
-       if (alt_pop_idx > sel_pop_idx) {
-	 scatter(neut_sim_region_haps_tar_gz in sims_wf.neut_sim_region_haps_tar_gzs) {
-	   call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
-	     input:
-	     sel_pop=sims_wf.pops_info.pop_ids[sel_pop_idx],
-	     alt_pop=sims_wf.pops_info.pop_ids[alt_pop_idx],
-	     region_haps_tar_gz=neut_sim_region_haps_tar_gz,
-	     
-	     script=compute_components_script,
-	     threads=threads,
-	     mem_base_gb=mem_base_gb,
-	     mem_per_thread_gb=mem_per_thread_gb,
-	     local_disk_gb=local_disk_gb,
-	     docker=docker,
-	     preemptible=preemptible
-	   }
-	 }
-
-	 call tasks.compute_two_pop_bin_stats_for_normalization {
-	   input:
-	   out_fnames_base = modelId,
-	   sel_pop=sims_wf.pops_info.pop_ids[sel_pop_idx],
-	   alt_pop=sims_wf.pops_info.pop_ids[alt_pop_idx],
-
-	   xpehh_out=compute_two_pop_cms2_components_for_neutral.xpehh,
-
-	   n_bins_xpehh=n_bins_xpehh,
-
-	   threads=1,
-	   mem_base_gb=64,
-	   mem_per_thread_gb=0,
-	   local_disk_gb=local_disk_gb,
-	   docker=docker,
-	   preemptible=preemptible
-	 }
-       }
-     }
-  }
-
-  scatter(sel_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
-    scatter(alt_pop_idx in range(length(sims_wf.pops_info.pop_ids))) {
-      if (alt_pop_idx != sel_pop_idx) {
-	File norm_bins_xpehh_maybe = 
-        select_first([
-        compute_two_pop_bin_stats_for_normalization.norm_bins_xpehh[sel_pop_idx][alt_pop_idx],
-        compute_two_pop_bin_stats_for_normalization.norm_bins_flip_pops_xpehh[alt_pop_idx][sel_pop_idx]
-        ])
-      }
-    }
-    Array[File] norm_bins_xpehh = select_all(norm_bins_xpehh_maybe)
+    threads=threads,
+    mem_base_gb=mem_base_gb,
+    mem_per_thread_gb=mem_per_thread_gb,
+    local_disk_gb=local_disk_gb,
+    docker=docker,
+    preemptible=preemptible
   }
 
 # ** Component stats for selection sims
@@ -302,10 +226,10 @@ workflow run_sims_and_compute_cms2_components_wf {
     n_bins_ihh12=n_bins_ihh12,
     n_bins_xpehh=n_bins_xpehh,
 
-    norm_bins_ihs=compute_one_pop_bin_stats_for_normalization.norm_bins_ihs,
-    norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl,
-    norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12,
-    norm_bins_xpehh=norm_bins_xpehh,
+    norm_bins_ihs=compute_normalization_stats_wf.norm_bins_ihs,
+    norm_bins_nsl=compute_normalization_stats_wf.norm_bins_nsl,
+    norm_bins_ihh12=compute_normalization_stats_wf.norm_bins_ihh12,
+    norm_bins_xpehh=compute_normalization_stats_wf.norm_bins_xpehh,
 
     threads=threads,
     mem_base_gb=mem_base_gb,
