@@ -42,10 +42,15 @@ RUN /opt/docker/install-miniconda.sh
 
 ENV PATH="$MINICONDA_PATH/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-RUN conda install numpy scipy matplotlib pandas selscan=1.3.0a04 conda-build
+RUN mkdir -p /tmp/miniconda/miniconda/conda-bld
+COPY conda-bld /tmp/miniconda/miniconda/conda-bld
 
-COPY model .
-RUN make
+RUN conda install -c file:///tmp/miniconda/miniconda/conda-bld numpy scipy matplotlib pandas selscan=1.3.0a04
+
+RUN rm -rf /tmp/miniconda
+
+#COPY model .
+#RUN make
 
 # switch back to the ubuntu user so this tool (and the files written) are not owned by root
 RUN groupadd -r -g 1000 ubuntu && useradd -r -g ubuntu -u 1000 -m ubuntu
