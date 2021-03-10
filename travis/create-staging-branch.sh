@@ -52,17 +52,20 @@ check_out_staging_branch() {
     git remote rm origin-me || true
     git remote add origin-me "https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git"
     git branch -D "${STAGING_BRANCH}" || true
-    git fetch origin-me "${STAGING_BRANCH}" || true
+    git fetch origin-me "${STAGING_BRANCH}" || \
+	(git branch ${STAGING_BRANCH}&& \
+	     git push --set-upstream origin-me ${STAGING_BRANCH} && git fetch origin-me ${STAGING_BRANCH})
 
-    git worktree add --track -b ${STAGING_BRANCH} tmp/wtree/${STAGING_BRANCH} origin-me/${STAGING_BRANCH}
+    git worktree add tmp/wtree/${STAGING_BRANCH}
     #git merge "${TRAVIS_BRANCH}"
     pushd "tmp/wtree/${STAGING_BRANCH}"
+    git branch --set-upstream-to=origin-me/${STAGING_BRANCH} ${STAGING_BRANCH}
     echo "REMOTES:"
     git remote -vv
     echo "BRANCHES:"
     git branch -vval
     #git branch --set-upstream-to=origin-me/${STAGING_BRANCH} ${STAGING_BRANCH}
-    git pull
+    git pull --rebase
     git checkout ${TRAVIS_COMMIT} .
 
     echo "END: $FUNCNAME"
@@ -74,13 +77,13 @@ commit_staged_files() {
     #cp ${TRAVIS_BUILD_DIR}/*.py ${TRAVIS_BUILD_DIR}/*.wdl .
     sed -i "s#\"./#\"https://raw.githubusercontent.com/${TRAVIS_REPO_SLUG}/${TRAVIS_COMMIT}/#g" *.wdl *.wdl.json
     git status
-    git diff
+    #git diff
     git add .
-    git diff --cached
+    #git diff --cached
     git commit -m "replaced file paths with github URLs under git commit ${TRAVIS_COMMIT}" || true
     git status
-    echo "LAST COMMITS:"
-    git log -3
+    #echo "LAST COMMITS:"
+    #git log -3
     git show $(git rev-parse HEAD)
 
     echo "END: $FUNCNAME"

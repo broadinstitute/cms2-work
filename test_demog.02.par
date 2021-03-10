@@ -1,0 +1,22 @@
+length 1000000
+mutation_rate 1.25e-08
+recomb_file /idi/sabeti-scratch/jvitti/params/test_recom.recom
+#/Users/vitti/Desktop/cms_ml_2/params/test_recom.recom
+gene_conversion_relative_rate 1.5
+
+pop_define 1 YRI
+sample_size 1 50
+pop_size 1 650000
+pop_define 2 CEU
+sample_size 2 50
+pop_size 2 200000
+pop_define 3 CHB
+sample_size 3 50
+pop_size 3 550000
+
+pop_event migration_rate "mig CEU->YRI" 2 1 0 0.001
+pop_event migration_rate "mig CHB->CEU" 3 2 0 0.0002
+pop_event migration_rate "mig CHB->YRI" 3 1 0 0.01
+pop_event migration_rate "mig YRI->CEU" 1 2 0 0.001
+pop_event migration_rate "mig YRI->CHB" 1 3 0 0.01
+
