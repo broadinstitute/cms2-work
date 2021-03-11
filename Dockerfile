@@ -45,7 +45,7 @@ ENV PATH="$MINICONDA_PATH/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/us
 RUN mkdir -p /tmp/miniconda/miniconda/conda-bld
 COPY conda-bld /tmp/miniconda/miniconda/conda-bld
 
-RUN conda install -c file:///tmp/miniconda/miniconda/conda-bld numpy scipy matplotlib pandas selscan=1.3.0a04
+RUN conda install -c file:///tmp/miniconda/miniconda/conda-bld numpy scipy matplotlib pandas selscan=1.3.0a06
 
 RUN rm -rf /tmp/miniconda
 
