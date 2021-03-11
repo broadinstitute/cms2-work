@@ -335,7 +335,7 @@ task create_tar_gz {
   }
   runtime {
     #docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    docker: "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    docker: "quay.io/ilya_broad/cms@sha256:1834a9e5eb9db5253b4cf051c39d23e51ca6c3f812b6d17f5d2c87d9506f5e8a"  # selscan=1.3.0a06
     #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     # docker: "ubuntu@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87555295e4c"
     memory: "500 MB"
@@ -384,7 +384,7 @@ task normalize_and_collate {
   }
   runtime {
     # docker: "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    docker: "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    docker: "quay.io/ilya_broad/cms@sha256:1834a9e5eb9db5253b4cf051c39d23e51ca6c3f812b6d17f5d2c87d9506f5e8a"  # selscan=1.3.0a06
     #docker: "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
     memory: "1 GB"
     cpu: 1

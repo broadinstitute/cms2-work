@@ -26,7 +26,7 @@ workflow component_stats_for_sel_sims_wf {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    String docker = "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    String docker = "quay.io/ilya_broad/cms@sha256:1834a9e5eb9db5253b4cf051c39d23e51ca6c3f812b6d17f5d2c87d9506f5e8a"  # selscan=1.3.0a06
     Int preemptible
   }
 
