@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e -o pipefail
 
-MINICONDA_VERSION="4.8.3"
-MINICONDA_INSTALLER="Miniconda3-py37_${MINICONDA_VERSION}-Linux-x86_64.sh"
+MINICONDA_VERSION="4.9.2"
+MINICONDA_INSTALLER="Miniconda3-py38_${MINICONDA_VERSION}-Linux-x86_64.sh"
 MINICONDA_URL="https://repo.anaconda.com/miniconda/${MINICONDA_INSTALLER}"
 
 # download and run miniconda installer script
