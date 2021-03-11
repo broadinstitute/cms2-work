@@ -9,3 +9,6 @@
 [submodule "cms2-work"]
 	path = cms2-work
 	url = ../cms2-work.git
+[submodule "docker/cms2-docker-component-stats"]
+	path = docker/cms2-docker-component-stats
+	url = ../cms2-docker-component-stats
