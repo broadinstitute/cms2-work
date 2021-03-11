@@ -1,7 +1,3 @@
-[submodule "selscan"]
-	path = selscan
-	url = ../selscan.git
-	branch = is-norm-add-saving-and-loading-of-means
 [submodule "bioconda-recipes"]
 	path = bioconda-recipes
 	url = ../bioconda-recipes.git
