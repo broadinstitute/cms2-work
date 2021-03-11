@@ -18,10 +18,11 @@ all : freqs_stats calc_fst_deldaf  bootstrap_freq_popstats_regions bootstrap_ld_
 
 
 freqs_stats.o : freqs_stats.c
-	$(CC) $(MODEL_CFLAGS) -c freqs_stats.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(MODEL_CFLAGS) -c freqs_stats.c
 
 freqs_stats : freqs_stats.o coal_data_tped_vers.c coal_data_tped_vers.h
-	$(CC) $(MODEL_CFLAGS) -o freqs_stats freqs_stats.o coal_data_tped_vers.c
+	$(CC) $(CFLAGS) $(MODEL_CFLAGS) -o freqs_stats freqs_stats.o coal_data_tped_vers.c
+
 
 
 
