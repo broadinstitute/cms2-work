@@ -2,3 +2,7 @@
 	path = bioconda-recipes
 	url = ../bioconda-recipes.git
 	branch = is-update-selscan-to-1.3.0a02-draft
+[submodule "selscan"]
+	path = selscan
+	url = ../selscan.git
+	branch = is-norm-add-saving-and-loading-of-means
