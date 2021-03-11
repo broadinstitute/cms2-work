@@ -1,0 +1,6 @@
+*.o
+freqs_stats
+calc_fst_deldaf
+bootstrap_freq_popstats_regions
+bootstrap_ld_popstats_regions
+bootstrap_fst_popstats_regions

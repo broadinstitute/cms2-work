@@ -21,17 +21,13 @@ freqs_stats.o : freqs_stats.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(MODEL_CFLAGS) -c freqs_stats.c
 
 freqs_stats : freqs_stats.o coal_data_tped_vers.c coal_data_tped_vers.h
-	$(CC) $(CFLAGS) $(MODEL_CFLAGS) -o freqs_stats freqs_stats.o coal_data_tped_vers.c
-
-
-
-
+	$(CC) $(CFLAGS) $(MODEL_CFLAGS) $(LDFLAGS) -o freqs_stats freqs_stats.o coal_data_tped_vers.c
 
 calc_fst_deldaf.o : calc_fst_deldaf.c
-	$(CC) $(MODEL_CFLAGS) -c calc_fst_deldaf.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(MODEL_CFLAGS) -c calc_fst_deldaf.c
 
 calc_fst_deldaf : calc_fst_deldaf.o coal_data_tped_vers.c coal_data_tped_vers.h
-	$(CC) $(MODEL_CFLAGS) -o calc_fst_deldaf calc_fst_deldaf.o coal_data_tped_vers.c
+	$(CC) $(CFLAGS) $(MODEL_CFLAGS) $(LDFLAGS) -o calc_fst_deldaf calc_fst_deldaf.o coal_data_tped_vers.c
 
 
 #calc_fst_deldaf_fromzipped.o : calc_fst_deldaf_fromzipped.c
@@ -42,24 +38,24 @@ calc_fst_deldaf : calc_fst_deldaf.o coal_data_tped_vers.c coal_data_tped_vers.h
 
 
 bootstrap_freq_popstats_regions.o : bootstrap_freq_popstats_regions.c 
-	$(CC) $(MODEL_CFLAGS) -c bootstrap_freq_popstats_regions.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(MODEL_CFLAGS) -c bootstrap_freq_popstats_regions.c
 
 bootstrap_freq_popstats_regions : bootstrap_freq_popstats_regions.o coal_data_tped_vers.c coal_data_tped_vers.h
-	$(CC) $(MODEL_CFLAGS) -o bootstrap_freq_popstats_regions bootstrap_freq_popstats_regions.o coal_data_tped_vers.c
+	$(CC) $(CFLAGS) $(MODEL_CFLAGS) $(LDFLAGS) -o bootstrap_freq_popstats_regions bootstrap_freq_popstats_regions.o coal_data_tped_vers.c
 
 
 bootstrap_ld_popstats_regions.o : bootstrap_ld_popstats_regions.c 
-	$(CC) $(MODEL_CFLAGS) -c bootstrap_ld_popstats_regions.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(MODEL_CFLAGS) -c bootstrap_ld_popstats_regions.c
 
 bootstrap_ld_popstats_regions : bootstrap_ld_popstats_regions.o coal_data_tped_vers.c coal_data_tped_vers.h
-	$(CC) $(MODEL_CFLAGS) -o bootstrap_ld_popstats_regions bootstrap_ld_popstats_regions.o coal_data_tped_vers.c
+	$(CC) $(CFLAGS) $(MODEL_CFLAGS) $(LDFLAGS) -o bootstrap_ld_popstats_regions bootstrap_ld_popstats_regions.o coal_data_tped_vers.c
 
 
 bootstrap_fst_popstats_regions.o : bootstrap_fst_popstats_regions.c 
-	$(CC) $(MODEL_CFLAGS) -c bootstrap_fst_popstats_regions.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(MODEL_CFLAGS) -c bootstrap_fst_popstats_regions.c
 
 bootstrap_fst_popstats_regions : bootstrap_fst_popstats_regions.o coal_data_tped_vers.c coal_data_tped_vers.h
-	$(CC) $(MODEL_CFLAGS) -o bootstrap_fst_popstats_regions bootstrap_fst_popstats_regions.o coal_data_tped_vers.c
+	$(CC) $(CFLAGS) $(MODEL_CFLAGS) $(LDFLAGS) -o bootstrap_fst_popstats_regions bootstrap_fst_popstats_regions.o coal_data_tped_vers.c
 
 
 clean :
