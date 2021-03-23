@@ -284,6 +284,9 @@ task compute_two_pop_cms2_components {
   String xpehh_out_fname = out_basename + ".xpehh.out"
   String xpehh_log_fname = out_basename + ".xpehh.log"
 
+#  String _out_fname = out_basename + ".xpehh.out"
+#  String xpehh_log_fname = out_basename + ".xpehh.log"
+
 # ** command
   command <<<
     tar xvfz "~{region_haps_tar_gz}"
@@ -291,7 +294,7 @@ task compute_two_pop_cms2_components {
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --out-basename "~{out_basename}" \
         --replica-id-string "~{out_basename}" --sel-pop ~{sel_pop} --alt-pop ~{alt_pop} \
-        --threads ~{threads} --components xpehh
+        --threads ~{threads} --components xpehh fst deltaDAF
   >>>
 
 # ** outputs

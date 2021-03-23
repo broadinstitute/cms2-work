@@ -164,7 +164,7 @@ def parse_args():
     parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'xpehh'),
+    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'xpehh', 'fst', 'deltaDAF'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
 
@@ -292,8 +292,11 @@ def compute_component_scores(args):
         f'selscan --threads {args.threads} --tped {sel_pop_tped} ' \
         f'--out {args.out_basename}'
     for component in args.components:
-        alt_pop_tped = '' if component not in ('xpehh',) else f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
-        cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component}'
+        if component == 'fst':
+            cmd = f'freqs_stats {sel_pop_tped} {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
+        else:
+            alt_pop_tped = '' if component not in ('xpehh',) else f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
+            cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component}'
         execute(cmd)
 
     if False:
