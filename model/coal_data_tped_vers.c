@@ -12,6 +12,10 @@
 /************************/
 
 double getGenDist(coal_data* data, int pos_i, int pos_j){
+  assert(data);
+  assert(data->physPos);
+  assert(data->genPos);
+
 		int pointer_i = (data->nRecom - 1);
 		int pointer_j = (data->nRecom - 1);
 		int dist, dist_i, dist_j, interval, ibin, jbin;
@@ -239,8 +243,19 @@ void get_coal_data_tped_vers(coal_data* data, char tpedfilename[], char recomfil
 	free(newLine);
 } // end function
 
+/* static int EndsWith(const char *str, const char *suffix) */
+/* // from https://stackoverflow.com/questions/744766/how-to-compare-ends-of-strings-in-c */
+/* { */
+/*   if (!str || !suffix) */
+/*     return 0; */
+/*   size_t lenstr = strlen(str); */
+/*   size_t lensuffix = strlen(suffix); */
+/*   if (lensuffix >  lenstr) */
+/*     return 0; */
+/*   return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0; */
+/* } */
 
-void get_coal_data_tped_vers_gz(coal_data* data, char tpedfilename[], char recomfilename[]) {
+void get_coal_data_tped_vers_gz(coal_data* data, const char* tpedfilename, const char *recomfilename) {
 	const int line_size = 999999999; // upper limit
 	const int numRecomLines = 500000;
 	//char cmd[600];
@@ -274,7 +289,8 @@ void get_coal_data_tped_vers_gz(coal_data* data, char tpedfilename[], char recom
 
 	fprintf(stderr, "Getting information from file: %s\n", tpedfilename);
 	// Count number of SNPs in tped
-	zinf = gzopen(tpedfilename, "rb");
+
+	zinf = gzopen(tpedfilename, "rb") ;
 	if (zinf == NULL) {fprintf(stderr, "Missing TPED file: %s\n", tpedfilename);}
 	assert (zinf != NULL);
 	while (gzgets(zinf, newLine, line_size) != NULL) { 
@@ -297,14 +313,16 @@ void get_coal_data_tped_vers_gz(coal_data* data, char tpedfilename[], char recom
 	fprintf(stderr, "nSample: %d\n", data->nsample);
 		
 	// Count number of lines in recombination file
-	inf = fopen(recomfilename, "r"); assert(inf != NULL);
-	fgets(newLine, line_size, inf); //header
-	if (inf == NULL) {fprintf(stderr, "Missing recombination file: %s\n", recomfilename);}
-	while (fgets(newLine, line_size, inf) != NULL) {
-		assert(strlen(newLine) < line_size);
-		data->nRecom++;
+	if (recomfilename) {
+	  inf = fopen(recomfilename, "r"); assert(inf != NULL);
+	  fgets(newLine, line_size, inf); //header
+	  if (inf == NULL) {fprintf(stderr, "Missing recombination file: %s\n", recomfilename);}
+	  while (fgets(newLine, line_size, inf) != NULL) {
+	    assert(strlen(newLine) < line_size);
+	    data->nRecom++;
+	  }
+	  fclose(inf);
 	}
-	fclose(inf);
 
 	// Allocate memory; initialize
 	data->samp_id = malloc(data->nsample * sizeof(char*)); assert(data->samp_id != NULL);
@@ -330,8 +348,8 @@ void get_coal_data_tped_vers_gz(coal_data* data, char tpedfilename[], char recom
 	data->snp_base[2] = calloc(data->nsnp, sizeof(char*)); // STRIKE?
 	data->snp_base[3] = calloc(data->nsnp, sizeof(char*)); // STRIKE?
 	data->nallele = malloc(data->nsnp * sizeof(int)); assert(data->nallele != NULL);
-	data->genPos = malloc(numRecomLines * sizeof(double)); assert(data->genPos !=NULL);
-	data->physPos = malloc(numRecomLines * sizeof(int)); assert(data->physPos != NULL);
+	data->genPos = !recomfilename ? NULL : malloc(numRecomLines * sizeof(double)); assert(data->genPos !=NULL);
+	data->physPos = !recomfilename ? NULL : malloc(numRecomLines * sizeof(int)); assert(data->physPos != NULL);
 
 	///
 	//GET DATA FROM TPED
@@ -370,25 +388,27 @@ void get_coal_data_tped_vers_gz(coal_data* data, char tpedfilename[], char recom
 	///
 	///GET DATA FROM RECOMB FILE
 	////
-	inf = fopen(recomfilename, "r");
-	if (inf == NULL) {fprintf(stderr, "Missing recombination file: %s\n", recomfilename);}
-	assert(inf != NULL);
-	fgets(newLine, line_size, inf); //header
-	iRecom = 0;
-	while (fgets(newLine, line_size, inf) != NULL) {
-		for (running = newLine, itoken = 0; (token = strsep(&running, "\t")) != NULL; itoken++) {
-			if (itoken == 1) {
-				data->physPos[iRecom] = atoi(token);
-			}
-			else if (itoken == 2) {
-					genrate = atof(token);
-				data->genPos[iRecom] = (genrate / 1000000.); //per Mb rate
-				iRecom++;
-				break;
-			} // end else if
-		} // end for running
-	} // end while fgets 
-	fclose(inf);
+	if (recomfilename) {
+	  inf = fopen(recomfilename, "r");
+	  if (inf == NULL) {fprintf(stderr, "Missing recombination file: %s\n", recomfilename);}
+	  assert(inf != NULL);
+	  fgets(newLine, line_size, inf); //header
+	  iRecom = 0;
+	  while (fgets(newLine, line_size, inf) != NULL) {
+	    for (running = newLine, itoken = 0; (token = strsep(&running, "\t")) != NULL; itoken++) {
+	      if (itoken == 1) {
+		data->physPos[iRecom] = atoi(token);
+	      }
+	      else if (itoken == 2) {
+		genrate = atof(token);
+		data->genPos[iRecom] = (genrate / 1000000.); //per Mb rate
+		iRecom++;
+		break;
+	      } // end else if
+	    } // end for running
+	  } // end while fgets 
+	  fclose(inf);
+	}
 	free(newLine);
 } // end function
 
@@ -420,4 +440,162 @@ void free_coal_data(coal_data* data) {
 	data->nsnp = 0;
 	data->nsample = 0;
 	data->nRecom = 0;
+} // end function
+
+
+void get_coal_data_tped_vers_nogz(coal_data* data, const char* tpedfilename, const char *recomfilename) {
+	const int line_size = 999999999; // upper limit
+	const int numRecomLines = 500000;
+	//char cmd[600];
+	char *newLine, *token, *running, *firstLine;
+	int isamp, isnp, itoken, iRecom;
+	double genrate;
+	FILE *inf=NULL;
+	//gzFile zinf=NULL;
+
+	//
+	//INITIALIZATION, ALLOCATION,
+	//COUNTING nsample nsnp nrecom
+	//	
+	newLine = malloc((line_size+1) * sizeof(char));
+	firstLine = malloc((line_size+1) * sizeof(char));
+	
+	assert(newLine != NULL); 
+	data->nsample = 0;
+	data->nsnp = 0;
+	data->nRecom = 0;
+	data->samp_id = NULL;
+	data->pos = NULL;
+	data->snp_id = NULL;
+	data->chrom = NULL;
+	data->genotype = NULL;
+	data->anc_base = NULL; 
+	data->nallele = NULL;
+	data->genPos = NULL;
+	data->physPos = NULL;
+	data->genloc = NULL;
+
+	fprintf(stderr, "Getting information from file: %s\n", tpedfilename);
+	// Count number of SNPs in tped
+
+	inf = fopen(tpedfilename, "rb") ;
+	if (inf == NULL) {fprintf(stderr, "Missing TPED file: %s\n", tpedfilename);}
+	assert (inf != NULL);
+	while (fgets(newLine, line_size, inf) != NULL) { 
+		assert(strlen(newLine) < line_size);
+		data->nsnp++;
+		if (data->nsnp == 1){strcpy(firstLine, newLine);
+
+		}
+	}
+	//get number of samples from first line
+	int ik = 0;
+	char *pch=strchr(firstLine,' ');
+	while (pch!=NULL) {
+		ik++;
+		pch=strchr(pch+1,' ');
+	}
+	data->nsample = ik-3;
+	fclose(inf);
+	fprintf(stderr, "nSNP: %d\n", data->nsnp);
+	fprintf(stderr, "nSample: %d\n", data->nsample);
+		
+	// Count number of lines in recombination file
+	if (recomfilename) {
+	  inf = fopen(recomfilename, "r"); assert(inf != NULL);
+	  fgets(newLine, line_size, inf); //header
+	  if (inf == NULL) {fprintf(stderr, "Missing recombination file: %s\n", recomfilename);}
+	  while (fgets(newLine, line_size, inf) != NULL) {
+	    assert(strlen(newLine) < line_size);
+	    data->nRecom++;
+	  }
+	  fclose(inf);
+	}
+
+	// Allocate memory; initialize
+	data->samp_id = malloc(data->nsample * sizeof(char*)); assert(data->samp_id != NULL);
+	data->genotype = malloc(data->nsample * sizeof(int*)); assert(data->genotype != NULL);
+	for (isamp = 0; isamp < data->nsample; isamp++) {
+		data->samp_id[isamp] = malloc(64 * sizeof(char)); assert(data->samp_id[isamp] != NULL);
+		data->genotype[isamp] = malloc(data->nsnp * sizeof(int)); assert(data->genotype[isamp] !=NULL);
+	}
+	data->snp_id = malloc(data->nsnp * sizeof(char*)); assert(data->snp_id != NULL);
+	for (isnp = 0; isnp < data->nsnp; isnp++) {
+		data->snp_id[isnp] = malloc(64 * sizeof(char)); assert(data->snp_id[isnp] != NULL);
+	}
+	data->pos = malloc(data->nsnp * sizeof(long int)); assert(data->pos != NULL);
+	data->chrom = malloc(data->nsnp * sizeof(int)); assert(data->chrom != NULL);
+	data->anc_base = malloc(data->nsnp * sizeof(int)); assert(data->anc_base != NULL);
+	data->snp_base[0] = malloc(data->nsnp * sizeof(char*)); assert(data->snp_base[0] != NULL);
+	data->snp_base[1] = malloc(data->nsnp * sizeof(char*)); assert(data->snp_base[1] != NULL);
+	for (isnp = 0; isnp < data->nsnp; isnp++) {
+		data->snp_base[0][isnp] = malloc(3 * sizeof(char)); assert(data->snp_base[0][isnp] != NULL);
+		data->snp_base[1][isnp] = malloc(3 * sizeof(char)); assert(data->snp_base[1][isnp] != NULL);
+	}
+	data->genloc = malloc(data->nsnp * sizeof(double)); assert(data->genloc != NULL);
+	data->snp_base[2] = calloc(data->nsnp, sizeof(char*)); // STRIKE?
+	data->snp_base[3] = calloc(data->nsnp, sizeof(char*)); // STRIKE?
+	data->nallele = malloc(data->nsnp * sizeof(int)); assert(data->nallele != NULL);
+	data->genPos = !recomfilename ? NULL : malloc(numRecomLines * sizeof(double)); assert(data->genPos !=NULL);
+	data->physPos = !recomfilename ? NULL : malloc(numRecomLines * sizeof(int)); assert(data->physPos != NULL);
+
+	///
+	//GET DATA FROM TPED
+	///
+	//handle zipped
+	inf = fopen(tpedfilename, "rb");
+	if (inf == NULL) {fprintf(stderr, "Missing TPED file: %s\n", tpedfilename);}
+	assert(inf != NULL);
+
+	isnp = 0;
+	while (fgets(newLine, line_size, inf) != NULL) { 
+		for (running = newLine, itoken = 0; (token = strsep(&running, " \t")) != NULL; itoken++) {
+			if (itoken == 0) {
+				//data->chrom[isnp] = chromosome;
+				data->nallele[isnp] = 2; //only biallelics in tped
+			}	
+			else if (itoken == 1) {
+					strcpy(data->snp_id[isnp], token);
+			}
+			else if (itoken == 2){
+				data->genloc[isnp] = atof(token);
+			}
+
+			else if (itoken == 3) {
+				data->pos[isnp] = atoi(token); 
+			}
+			else if (itoken >= 4) {
+				isamp = itoken - 4; //RIGHT?
+				data->genotype[isamp][isnp] = atoi(token);
+			}
+		} // END for running=newLine
+		isnp++;
+	} //END while(fgets(newLine))
+	fclose(inf);
+
+	///
+	///GET DATA FROM RECOMB FILE
+	////
+	if (recomfilename) {
+	  inf = fopen(recomfilename, "r");
+	  if (inf == NULL) {fprintf(stderr, "Missing recombination file: %s\n", recomfilename);}
+	  assert(inf != NULL);
+	  fgets(newLine, line_size, inf); //header
+	  iRecom = 0;
+	  while (fgets(newLine, line_size, inf) != NULL) {
+	    for (running = newLine, itoken = 0; (token = strsep(&running, "\t")) != NULL; itoken++) {
+	      if (itoken == 1) {
+		data->physPos[iRecom] = atoi(token);
+	      }
+	      else if (itoken == 2) {
+		genrate = atof(token);
+		data->genPos[iRecom] = (genrate / 1000000.); //per Mb rate
+		iRecom++;
+		break;
+	      } // end else if
+	    } // end for running
+	  } // end while fgets 
+	  fclose(inf);
+	}
+	free(newLine);
 } // end function

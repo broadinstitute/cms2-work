@@ -6,7 +6,7 @@
 ######################
 
 #CC = gcc
-MODEL_CFLAGS = -O0 -ggdb3 -lm -lz -Wall  
+MODEL_CFLAGS = -O0 -ggdb3 -lm -lz -Wall -UNDEBUG
 
 #-lz for gzlib, some issues here?
 

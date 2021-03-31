@@ -32,5 +32,6 @@ int getLowerIndexOfItem(int *values, int numVals, int itemToFind);
 int getUpperIndexOfItem(int *values, int numVals, int itemToFind);
 /*manipulating datastrucutre*/
 void get_coal_data_tped_vers(coal_data* data, char tpedfilename[], char recomfilename[]);
-void get_coal_data_tped_vers_gz(coal_data* data, char tpedfilename[], char recomfilename[]);
+void get_coal_data_tped_vers_gz(coal_data* data, const char *tpedfilename, const char *recomfilename);
+void get_coal_data_tped_vers_nogz(coal_data* data, const char *tpedfilename, const char *recomfilename);
 void free_coal_data(coal_data* data);

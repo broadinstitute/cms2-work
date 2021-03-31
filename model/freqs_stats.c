@@ -11,12 +11,12 @@
 
 int main(int argc, char **argv) {
 	coal_data data;
-	char filename[264];
+	const char *filename = NULL;
 	FILE *outf=NULL;
-	char inTped1[264], inTped2[264], inRecomfile[264];
+	const char *inTped1=NULL, *inTped2=NULL;
 	int *nall0[2]={NULL}, *nall1[2]={NULL};
 	int isamp, isnp, nsnp;
-	int nai[2], naj[2], na_both[2];
+	int nai[2], naj[2] /*, na_both[2]*/;
 	int ni, nj;
 	double p[2];
 	double pmean, nic, njc, nc, msp, msg, num, denom;
@@ -25,22 +25,26 @@ int main(int argc, char **argv) {
 	double fst, delDAF; //per site
 	double T; // transformation on Fst cf Cavalli-Sforza 1969
 	
-	if (argc != 5) {
-		fprintf(stderr, "Usage: freqs_stats <inTped1> <inTped2> <recomfilename> <writefilename>\n");
-		exit(0);
+	if (argc != 4) {
+		fprintf(stderr, "Usage: freqs_stats <inTped1> <inTped2> <writefilename>\n");
+		exit(1);
 	}
-	strcpy(inTped1, argv[1]);
-	strcpy(inTped2, argv[2]);
-	strcpy(inRecomfile, argv[3]);
-	strcpy(filename, argv[4]);
+	inTped1 = argv[1];
+	inTped2 = argv[2];
+	filename = argv[3];
+
 	outf = fopen(filename, "w");
-	assert(outf != NULL);
+	if (!outf) {
+	  fprintf(stderr, "Error opening output file %s", filename);
+	  exit(1);
+	}
+
 	fprintf(outf, "physPos\tgenPos\tpopDAF\tdelDAF\tFst\tT\n"); //header 
 
 	////////////////////////////
 	// COUNT ALLELES FOR pop0 //
 	////////////////////////////
-	get_coal_data_tped_vers_gz(&data, inTped1, inRecomfile);   
+	get_coal_data_tped_vers_nogz(&data, inTped1, NULL /*inRecomfile*/);   
 	nall0[0] = calloc(data.nsnp, sizeof(int));
 	nall1[0] = calloc(data.nsnp, sizeof(int));
 	for (isnp = 0; isnp < data.nsnp; isnp++) {
@@ -55,7 +59,7 @@ int main(int argc, char **argv) {
 	////////////////////////////
 	// COUNT ALLELES FOR pop1 //
 	////////////////////////////
-	get_coal_data_tped_vers_gz(&data, inTped2, inRecomfile);
+	get_coal_data_tped_vers_nogz(&data, inTped2, /*inRecomfile*/ NULL);
 	nall0[1] = calloc(data.nsnp, sizeof(int));
 	nall1[1] = calloc(data.nsnp, sizeof(int));
 	for (isnp = 0; isnp < data.nsnp; isnp++) {
@@ -87,9 +91,9 @@ int main(int argc, char **argv) {
 		//fprintf(stderr, "number of 0 alleles in pop 1: %d\n", naj[0]);
 		naj[1] = nall1[1][isnp]; //number of 1 alleles in pop 1
 		//fprintf(stderr, "number of 1 alleles in pop 1: %d\n", naj[1]);
-		na_both[0] = nai[0] + naj[0]; //combined number of 0 alleles
+		//na_both[0] = nai[0] + naj[0]; //combined number of 0 alleles
 		//fprintf(stderr, "number of 0 alleles total: %d\n", na_both[0]);
-		na_both[1] = nai[1] + naj[1]; //combined number of 1 alleles
+		//na_both[1] = nai[1] + naj[1]; //combined number of 1 alleles
 		//fprintf(stderr, "number of 1 alleles total: %d\n", na_both[1]);
 		nj = naj[0] + naj[1]; //number of alleles, pop 1
 		//fprintf(stderr, "number of alleles in pop 1: %d\n", nj);

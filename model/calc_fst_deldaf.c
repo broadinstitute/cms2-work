@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     char inTped1[264], inTped2[264], inRecomfile[264];
     int *nall0[2]={NULL}, *nall1[2]={NULL};
     int isamp, isnp, nsnp;
-    int nai[2], naj[2], na_both[2];
+    int nai[2], naj[2]/*, na_both[2]*/;
     int ni, nj;
     double p[2];
     double pmean, nic, njc, nc, msp, msg, num, denom;
@@ -95,9 +95,9 @@ int main(int argc, char **argv) {
         //fprintf(stderr, "number of 0 alleles in pop 1: %d\n", naj[0]);
         naj[1] = nall1[1][isnp]; //number of 1 alleles in pop 1
         //fprintf(stderr, "number of 1 alleles in pop 1: %d\n", naj[1]);
-        na_both[0] = nai[0] + naj[0]; //combined number of 0 alleles
+        //na_both[0] = nai[0] + naj[0]; //combined number of 0 alleles
         //fprintf(stderr, "number of 0 alleles total: %d\n", na_both[0]);
-        na_both[1] = nai[1] + naj[1]; //combined number of 1 alleles
+        //na_both[1] = nai[1] + naj[1]; //combined number of 1 alleles
         //fprintf(stderr, "number of 1 alleles total: %d\n", na_both[1]);
         nj = naj[0] + naj[1]; //number of alleles, pop 1
         //fprintf(stderr, "number of alleles in pop 1: %d\n", nj);
