@@ -1,7 +1,7 @@
 version 1.0
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-add-missing-one-pop-stats--f1707977f8c6eb0215f2236c295d28e9a97b7b80/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-add-missing-one-pop-stats--f1707977f8c6eb0215f2236c295d28e9a97b7b80/tasks.wdl"
 
 workflow compute_normalization_stats_wf {
   input {
@@ -9,7 +9,7 @@ workflow compute_normalization_stats_wf {
     PopsInfo pops_info
     Array[File] neut_sim_region_haps_tar_gzs
 
-    File compute_components_script = "./remodel_components.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-missing-one-pop-stats/f1707977f8c6eb0215f2236c295d28e9a97b7b80/remodel_components.py"
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
@@ -21,7 +21,7 @@ workflow compute_normalization_stats_wf {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File get_pops_info_script = "./get_pops_info.py"
+    File get_pops_info_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-missing-one-pop-stats/f1707977f8c6eb0215f2236c295d28e9a97b7b80/get_pops_info.py"
     #String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
     String docker = "quay.io/ilya_broad/cms@sha256:1834a9e5eb9db5253b4cf051c39d23e51ca6c3f812b6d17f5d2c87d9506f5e8a"  # selscan=1.3.0a06
     Int preemptible
