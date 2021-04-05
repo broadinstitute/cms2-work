@@ -164,7 +164,7 @@ def parse_args():
     parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'xpehh', 'fst', 'deltaDAF'),
+    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'xpehh', 'fst', 'delDAF'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
 
@@ -298,7 +298,7 @@ def compute_component_scores(args):
             cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component}'
             execute(cmd)
 
-    if 'fst' in args.components or 'deltaDAF' in args.components:
+    if 'fst' in args.components or 'delDAF' in args.components:
         fst_and_delDAF_out_fname = args.out_basename + '.fst_and_delDAF.tsv'
         cmd = \
             f'freqs_stats {sel_pop_tped} {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} ' \
