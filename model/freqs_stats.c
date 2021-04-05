@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 
 			T= -1 * log(1. - fst);
 
-			fprintf(outf, "%d\t%f\t%f\t%f\t%f\t%f\n", data.pos[isnp], data.genloc[isnp], p[0], delDAF, fst, T); // "physPos\tgenPos\tpopDAF\tdelDAF\tFst\tT\n
+			fprintf(outf, "%d\t%.9f\t%.9f\t%.9f\t%.9f\t%.9f\n", data.pos[isnp], data.genloc[isnp], p[0], delDAF, fst, T); // "physPos\tgenPos\tpopDAF\tdelDAF\tFst\tT\n
 		} //end Weir Hill estimator
 	} //end snp loop
 	free_coal_data(&data);
