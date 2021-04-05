@@ -40,6 +40,8 @@ double getGenDist(coal_data* data, int pos_i, int pos_j){
 				return (dist*data->genPos[pointer_i]);
 		} // end if pointer_i
 		else{
+		  assert(data->physPos);
+		  assert(data->genPos);
 				dist_i = (data->physPos[pointer_i+1] - pos_i);
 				dist_j = (pos_j - data->physPos[pointer_j]);
 				totaldist = (double)((dist_i*data->genPos[pointer_i]) + (dist_j*data->genPos[pointer_j])); //bookends
@@ -224,6 +226,8 @@ void get_coal_data_tped_vers(coal_data* data, char tpedfilename[], char recomfil
 	inf = fopen(recomfilename, "r");
 	if (inf == NULL) {fprintf(stderr, "Missing recombination file: %s\n", recomfilename);}
 	assert(inf != NULL);
+	assert(data->physPos);
+	assert(data->genPos);
 	fgets(newLine, line_size, inf); //header
 	iRecom = 0;
 	while (fgets(newLine, line_size, inf) != NULL) {
@@ -389,6 +393,8 @@ void get_coal_data_tped_vers_gz(coal_data* data, const char* tpedfilename, const
 	///GET DATA FROM RECOMB FILE
 	////
 	if (recomfilename) {
+	  assert(data->physPos);
+	  assert(data->genPos);
 	  inf = fopen(recomfilename, "r");
 	  if (inf == NULL) {fprintf(stderr, "Missing recombination file: %s\n", recomfilename);}
 	  assert(inf != NULL);
@@ -536,8 +542,8 @@ void get_coal_data_tped_vers_nogz(coal_data* data, const char* tpedfilename, con
 	data->snp_base[2] = calloc(data->nsnp, sizeof(char*)); // STRIKE?
 	data->snp_base[3] = calloc(data->nsnp, sizeof(char*)); // STRIKE?
 	data->nallele = malloc(data->nsnp * sizeof(int)); assert(data->nallele != NULL);
-	data->genPos = !recomfilename ? NULL : malloc(numRecomLines * sizeof(double)); assert(data->genPos !=NULL);
-	data->physPos = !recomfilename ? NULL : malloc(numRecomLines * sizeof(int)); assert(data->physPos != NULL);
+	data->genPos = !recomfilename ? NULL : malloc(numRecomLines * sizeof(double)); assert(!recomfilename || (data->genPos !=NULL));
+	data->physPos = !recomfilename ? NULL : malloc(numRecomLines * sizeof(int)); assert(!recomfilename || (data->physPos != NULL));
 
 	///
 	//GET DATA FROM TPED
