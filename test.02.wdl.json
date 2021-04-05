@@ -3,8 +3,8 @@
     "cms2_main.nreps": "4",
     "cms2_main.numRepsPerBlock": "2",
     "cms2_main.paramFile_demographic_model": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/defdef15_hard_sel1_common.citest.par\"",
-    "cms2_main.paramFile_neutral": "\"./test.neutral.cosiParams\"",
-    "cms2_main.paramFiles_selection": "[\"./sel1_origin1.par\", \"./sel3_origin2.par\"]",
-    "cms2_main.recombFile": "\"./test_recom.recom\""
+    "cms2_main.paramFile_neutral": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-missing-one-pop-stats/807f49bae088fa2c1f04089697600c1e80d42e3f/test.neutral.cosiParams\"",
+    "cms2_main.paramFiles_selection": "[\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-missing-one-pop-stats/807f49bae088fa2c1f04089697600c1e80d42e3f/sel1_origin1.par\", \"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-missing-one-pop-stats/807f49bae088fa2c1f04089697600c1e80d42e3f/sel3_origin2.par\"]",
+    "cms2_main.recombFile": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-missing-one-pop-stats/807f49bae088fa2c1f04089697600c1e80d42e3f/test_recom.recom\""
 }
 

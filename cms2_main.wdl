@@ -1,7 +1,7 @@
 version 1.0
 
 
-import "./run_sims_and_compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-add-missing-one-pop-stats--807f49bae088fa2c1f04089697600c1e80d42e3f/run_sims_and_compute_cms2_components.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow cms2_main {
