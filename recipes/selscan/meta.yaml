@@ -1,5 +1,5 @@
-{% set version = "1.3.0a07" %}
-{% set sha256 = "24306a9d3a3c702f35f50a5240790cf284dc7578a3ba00976d7790f7acc8ee6b" %}
+{% set version = "1.3.0a09" %}
+{% set sha256 = "b1bdb311043575b7f7825e67d490bfeb97c7f2a098bad3a51ae2ed9c8edd0f30" %}
 
 package:
   name: selscan
