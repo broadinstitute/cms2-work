@@ -284,6 +284,8 @@ task compute_two_pop_cms2_components {
   String xpehh_out_fname = out_basename + ".xpehh.out"
   String xpehh_log_fname = out_basename + ".xpehh.log"
 
+  String fst_and_delDAF_out_fname = out_basename + ".fst_and_delDAF.tsv"
+
 # ** command
   command <<<
     tar xvfz "~{region_haps_tar_gz}"
@@ -291,7 +293,7 @@ task compute_two_pop_cms2_components {
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --out-basename "~{out_basename}" \
         --replica-id-string "~{out_basename}" --sel-pop ~{sel_pop} --alt-pop ~{alt_pop} \
-        --threads ~{threads} --components xpehh
+        --threads ~{threads} --components xpehh fst delDAF
   >>>
 
 # ** outputs
@@ -299,6 +301,7 @@ task compute_two_pop_cms2_components {
     #Object replicaInfo = read_json(replica_id_string + ".replica_info.json")
     File xpehh = xpehh_out_fname
     File xpehh_log = xpehh_log_fname
+    File fst_and_delDAF = fst_and_delDAF_out_fname
     Int sel_pop_used = sel_pop
     Int alt_pop_used = alt_pop
     #Array[File] xpehh = glob("*.xpehh.out")
@@ -308,7 +311,8 @@ task compute_two_pop_cms2_components {
 
 # ** runtime
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:5749323900fafc59b9091e9a94f5a9c56e79b0a9be58119f6540b318ca5708d9"  # selscan=1.3.0a06
+    #docker: "quay.io/ilya_broad/cms@sha256:5749323900fafc59b9091e9a94f5a9c56e79b0a9be58119f6540b318ca5708d9"  # selscan=1.3.0a06
+    docker: "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
     preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
