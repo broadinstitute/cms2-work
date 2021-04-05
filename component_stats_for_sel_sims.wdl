@@ -83,6 +83,7 @@ workflow component_stats_for_sel_sims_wf {
 	    ihh12_out: compute_one_pop_cms2_components_for_selection.ihh12,
 
 	    xpehh_out: select_all(compute_two_pop_cms2_components_for_selection.xpehh),
+	    fst_and_delDAF_out: select_all(compute_two_pop_cms2_components_for_selection.fst_and_delDAF),
 
 	    n_bins_ihs: n_bins_ihs,
 	    n_bins_nsl: n_bins_nsl,

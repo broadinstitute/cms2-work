@@ -359,6 +359,7 @@ struct NormalizeAndCollateInput {
     File nsl_out
     File ihh12_out
     Array[File] xpehh_out
+    Array[File] fst_and_delDAF_out
 
     File norm_bins_ihs
     File norm_bins_nsl

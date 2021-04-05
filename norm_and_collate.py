@@ -366,6 +366,7 @@ def normalize_and_collate_scores(args):
     make_local('nsl_out')
     make_local('ihh12_out')
     make_local('xpehh_out')
+    make_local('fst_and_delDAF_out')
 
     execute(f'norm --ihs --bins {inps["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} --files {inps["ihs_out"]} '
             f'--log {inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm.log ')
@@ -407,7 +408,20 @@ def normalize_and_collate_scores(args):
         collated = collated.join(xpehh_normed, how='outer')
         descr_df(collated, f'collated after xpehh_normed_{other_pop_idx}')
 
+    for other_pop_idx, fst_and_delDAF_out in enumerate(inps["fst_and_delDAF_out"]):
+        execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
+                f'--log {xpehh_out}.norm.log ')
+        fst_and_delDAF_tsv = \
+            pd.read_table(fst_and_delDAF_out, index_col='physPos', low_memory=False).rename_axis('pos').\
+            add_suffix(f'_{other_pop_idx}')
+        descr_df(fst_and_delDAF_tsv, f'fst_and_delDAF_tsv_{other_pop_idx}')
+        collated = collated.join(fst_and_delDAF_tsv, on='pos', how='outer')
+        descr_df(collated, f'collated after fst_and_delDAF_tsv_{other_pop_idx}')
+
+
     collated['max_xpehh'] = collated.filter(like='normxpehh').max(axis='columns')
+    collated['mean_fst'] = collated.filter(like='Fst').mean(axis='columns')
+    collated['mean_delDAF'] = collated.filter(like='delDAF').mean(axis='columns')
     descr_df(collated, 'collated final')
     collated.reset_index().\
         rename(columns={'ihsnormed':'ihs_normed', 'nslnormed': 'nsl_normed', 'normihh12': 'ihh12_normed',
