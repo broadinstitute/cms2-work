@@ -1,14 +1,14 @@
 version 1.0
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-add-missing-one-pop-stats--de3dcbd70fede3a8812835eb12d0053df122dd62/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-add-missing-one-pop-stats--de3dcbd70fede3a8812835eb12d0053df122dd62/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
     Array[Pair[ReplicaInfo, File]] selection_sims
-    File compute_components_script = "./remodel_components.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-missing-one-pop-stats/de3dcbd70fede3a8812835eb12d0053df122dd62/remodel_components.py"
+    File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-missing-one-pop-stats/de3dcbd70fede3a8812835eb12d0053df122dd62/norm_and_collate.py"
     PopsInfo pops_info
 
     Int n_bins_ihs = 20
