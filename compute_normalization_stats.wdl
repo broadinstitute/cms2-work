@@ -52,10 +52,12 @@ workflow compute_normalization_stats_wf {
       ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
       nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
       ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
+      delihh_out=compute_one_pop_cms2_components_for_neutral.delihh,
 
       n_bins_ihs=n_bins_ihs,
       n_bins_nsl=n_bins_nsl,
       n_bins_ihh12=n_bins_ihh12,
+      n_bins_delihh=n_bins_delihh,
 
       threads=1,
       mem_base_gb=64,
@@ -126,6 +128,7 @@ workflow compute_normalization_stats_wf {
     Array[File] norm_bins_ihs=compute_one_pop_bin_stats_for_normalization.norm_bins_ihs
     Array[File] norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl
     Array[File] norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12
+    Array[File] norm_bins_delihh=compute_one_pop_bin_stats_for_normalization.norm_bins_delihh
     Array[Array[File]] norm_bins_xpehh = norm_bins_xpehh_vals
   }
 }
