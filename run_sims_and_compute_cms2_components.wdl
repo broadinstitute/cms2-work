@@ -137,9 +137,6 @@ workflow run_sims_and_compute_cms2_components_wf {
     String docker = "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
   }
 
-  Int n_bins_ihh12 = 1
-  Int n_bins_xpehh = 1
-
 # ** Bookkeeping calls
 # *** call create_tar_gz as save_input_files
   call tasks.create_tar_gz as save_input_files {
@@ -192,9 +189,7 @@ workflow run_sims_and_compute_cms2_components_wf {
 
     n_bins_ihs=n_bins_ihs,
     n_bins_nsl=n_bins_nsl,
-    n_bins_ihh12=n_bins_ihh12,
     n_bins_delihh=n_bins_delihh,
-    n_bins_xpehh=n_bins_xpehh,
 
     threads=threads,
     mem_base_gb=mem_base_gb,
@@ -213,9 +208,7 @@ workflow run_sims_and_compute_cms2_components_wf {
 
     n_bins_ihs=n_bins_ihs,
     n_bins_nsl=n_bins_nsl,
-    n_bins_ihh12=n_bins_ihh12,
     n_bins_delihh=n_bins_delihh,
-    n_bins_xpehh=n_bins_xpehh,
 
     norm_bins_ihs=compute_normalization_stats_wf.norm_bins_ihs,
     norm_bins_nsl=compute_normalization_stats_wf.norm_bins_nsl,
