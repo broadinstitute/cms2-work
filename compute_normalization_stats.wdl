@@ -13,9 +13,7 @@ workflow compute_normalization_stats_wf {
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
-
-    Int n_bins_ihh12 = 1
-    Int n_bins_xpehh = 1
+    Int n_bins_delihh = 20
 
     Int threads = 1
     Int mem_base_gb = 0
@@ -25,6 +23,9 @@ workflow compute_normalization_stats_wf {
     String docker = "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
     Int preemptible
   }  # end: input
+
+  Int n_bins_ihh12 = 1
+  Int n_bins_xpehh = 1
 
   scatter(sel_pop in pops_info.pop_ids) {
     scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
