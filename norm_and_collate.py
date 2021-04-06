@@ -431,7 +431,7 @@ def normalize_and_collate_scores(args):
             pd.read_table(fst_and_delDAF_out, index_col='physPos',
                           low_memory=False).rename_axis('pos').add_suffix(f'_{other_pop_idx}')\
               .add_prefix('fst_and_delDAF_')
-        chk(not fst_and_delDAF.index.has_duplicates, 'fst_and_delDAF index has duplicates')
+        chk(not fst_and_delDAF_tsv.index.has_duplicates, 'fst_and_delDAF index has duplicates')
 
         descr_df(fst_and_delDAF_tsv, f'fst_and_delDAF_tsv_{other_pop_idx}')
         collated = collated.join(fst_and_delDAF_tsv, how='outer')
