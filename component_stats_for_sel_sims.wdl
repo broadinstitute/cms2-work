@@ -98,6 +98,7 @@ workflow component_stats_for_sel_sims_wf {
 	    norm_bins_ihs: norm_bins_ihs[sel_pop_idx],
 	    norm_bins_nsl: norm_bins_nsl[sel_pop_idx],
 	    norm_bins_ihh12: norm_bins_ihh12[sel_pop_idx],
+	    norm_bins_delihh: norm_bins_delihh[sel_pop_idx],
 
 	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx]
 	  },
