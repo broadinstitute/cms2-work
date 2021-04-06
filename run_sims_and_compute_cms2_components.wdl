@@ -126,6 +126,7 @@ workflow run_sims_and_compute_cms2_components_wf {
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
+    Int n_bins_delihh = 20
 
     Int threads = 1
     Int mem_base_gb = 0
@@ -204,6 +205,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     n_bins_ihs=n_bins_ihs,
     n_bins_nsl=n_bins_nsl,
     n_bins_ihh12=n_bins_ihh12,
+    n_bins_delihh=n_bins_delihh,
     n_bins_xpehh=n_bins_xpehh,
 
     threads=threads,
@@ -224,11 +226,13 @@ workflow run_sims_and_compute_cms2_components_wf {
     n_bins_ihs=n_bins_ihs,
     n_bins_nsl=n_bins_nsl,
     n_bins_ihh12=n_bins_ihh12,
+    n_bins_delihh=n_bins_delihh,
     n_bins_xpehh=n_bins_xpehh,
 
     norm_bins_ihs=compute_normalization_stats_wf.norm_bins_ihs,
     norm_bins_nsl=compute_normalization_stats_wf.norm_bins_nsl,
     norm_bins_ihh12=compute_normalization_stats_wf.norm_bins_ihh12,
+    norm_bins_delihh=compute_normalization_stats_wf.norm_bins_delihh,
     norm_bins_xpehh=compute_normalization_stats_wf.norm_bins_xpehh,
 
     threads=threads,
