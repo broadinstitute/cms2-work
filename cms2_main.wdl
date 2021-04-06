@@ -1,7 +1,7 @@
 version 1.0
 
 
-import "./run_sims_and_compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-add-fst-deldaf-delihh--6c52add6e21f014b876bda4975ecd84c9b0eb322/run_sims_and_compute_cms2_components.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow cms2_main {
