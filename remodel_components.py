@@ -169,7 +169,8 @@ def calc_delihh(readfilename, writefilename):
                     locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r  = entries
             unstand_delIHH = math.fabs(float(ihh_1) - float(ihh_0)) 
             
-            writefile.writeline('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, str(unstand_delIHH])) + '\n') # 6 columns for selscan norm
+            # write 6 columns for selscan norm
+            writefile.write('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, str(unstand_delIHH)]) + '\n')
 # end: def calc_delihh(readfilename, writefilename):
 
 # * Parsing args
@@ -306,7 +307,7 @@ def orig_main(args):
 
 def compute_component_scores(args):
     args.threads = min(args.threads, available_cpu_count())
-    shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
+    #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
     replicaInfo = _json_loadf(args.replica_info)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     sel_pop_idx = pop_id_to_idx[args.sel_pop]
