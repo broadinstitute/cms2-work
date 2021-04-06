@@ -81,6 +81,7 @@ workflow component_stats_for_sel_sims_wf {
 	    sel_pop: sel_pop,
 
 	    ihs_out: compute_one_pop_cms2_components_for_selection.ihs,
+	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh,
 	    nsl_out: compute_one_pop_cms2_components_for_selection.nsl,
 	    ihh12_out: compute_one_pop_cms2_components_for_selection.ihh12,
 	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh,
