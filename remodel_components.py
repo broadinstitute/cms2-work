@@ -13,6 +13,7 @@ import gzip
 import io
 import json
 import logging
+import math
 import multiprocessing
 import os
 import os.path
@@ -166,7 +167,7 @@ def calc_delihh(readfilename, writefilename):
                     locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed = entries
             elif len(entries) == 10:
                     locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r  = entries
-            unstand_delIHH = fabs(float(ihh_1) - float(ihh_0)) 
+            unstand_delIHH = math.fabs(float(ihh_1) - float(ihh_0)) 
             
             writeline = writefile.writeline('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, unstand_delIHH]) + '\n') # 6 columns for selscan norm
 # end: def calc_delihh(readfilename, writefilename):
