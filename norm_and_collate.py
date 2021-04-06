@@ -389,7 +389,7 @@ def normalize_and_collate_scores(args):
     collated = collated.join(delihh_normed, how='outer')
 
     execute(f'norm --nsl --bins {inps["n_bins_nsl"]} --load-bins {inps["norm_bins_nsl"]} '
-            '--files {inps["nsl_out"]} '
+            f'--files {inps["nsl_out"]} '
             f'--log {inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm.log ')
 
     nsl_normed = pd.read_table(f'{inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm',
@@ -403,7 +403,7 @@ def normalize_and_collate_scores(args):
     descr_df(collated, 'collated after nsl_normed')
 
     execute(f'norm --ihh12 --bins {inps["n_bins_ihh12"]} --load-bins {inps["norm_bins_ihh12"]} '
-            '--files {inps["ihh12_out"]} '
+            f'--files {inps["ihh12_out"]} '
             f'--log {inps["ihh12_out"]}.norm.log ')
 
     ihh12_normed = pd.read_table(f'{inps["ihh12_out"]}.norm', index_col='pos',
