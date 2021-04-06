@@ -127,21 +127,18 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
     Int n_bins_delihh = 20
-
+    
     Int threads = 1
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
     File get_pops_info_script = "./get_pops_info.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
-    #String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    String docker = "quay.io/ilya_broad/cms@sha256:1834a9e5eb9db5253b4cf051c39d23e51ca6c3f812b6d17f5d2c87d9506f5e8a"  # selscan=1.3.0a06
-    #String docker = "quay.io/broadinstitute/cms2@sha256:0684c85ee72e6614cb3643292e79081c0b1eb6001a8264c446c3696a3a1dda97"
+    String docker = "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
   }
+
   Int n_bins_ihh12 = 1
   Int n_bins_xpehh = 1
-
-  #Array[String] paramFileCommonLines = read_lines(paramFileCommonLines)
 
 # ** Bookkeeping calls
 # *** call create_tar_gz as save_input_files
@@ -153,18 +150,9 @@ workflow run_sims_and_compute_cms2_components_wf {
        out_basename = modelId
   }
 
-
-  #PopsInfo pops_info = get_pops_info.pops_info
-  # Array[Int] pop_ids = pops_info.pop_ids
-  # Array[Int] pop_idxes = range(length(pop_ids))
-  # Int n_pops = length(pop_ids)
-  # Array[Pair[Int, Int]] pop_pairs = pops_info.pop_pairs
-  # Int n_pop_pairs = length(pop_pairs)
-
   ####################################################
   # Run neutral sims
   ####################################################
-
 
 # ** Call the simulations
   call run_sims.run_sims_wf as sims_wf {

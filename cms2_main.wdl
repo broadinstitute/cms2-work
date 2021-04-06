@@ -23,6 +23,9 @@ workflow cms2_main {
     String modelId = "model_"+basename(paramFile_demographic_model, ".par")
     Array[File] paramFiles_selection
     File recombFile
+
+    Int n_bins = 20
+
     Int nreps_neutral
     Int nreps
     Int maxAttempts = 10000000
@@ -40,6 +43,11 @@ workflow cms2_main {
     recombFile=recombFile,
     nreps_neutral=nreps_neutral,
     nreps=nreps,
+
+    n_bins_ihs=n_bins,
+    n_bins_nsl=n_bins,
+    n_bins_delihh=n_bins,
+
     numRepsPerBlock=numRepsPerBlock,
     numCpusPerBlock=numCpusPerBlock,
     memoryPerBlock=memoryPerBlock
