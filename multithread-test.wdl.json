@@ -3,8 +3,8 @@
     "cms2_main.nreps": 4,
     "cms2_main.numRepsPerBlock": 2,
     "cms2_main.paramFile_demographic_model": "default_112115_825am__demography.par",
-    "cms2_main.paramFile_neutral": "./test.neutral.cosiParams",
-    "cms2_main.paramFiles_selection": ["./sel1_origin1.par", "./sel3_origin2.par"],
-    "cms2_main.recombFile": "./test_recom.recom"
+    "cms2_main.paramFile_neutral": "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-fst-deldaf-delihh/49953b09c3b2488b2f5c6338996d3be81f3e9249/test.neutral.cosiParams",
+    "cms2_main.paramFiles_selection": ["gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-fst-deldaf-delihh/49953b09c3b2488b2f5c6338996d3be81f3e9249/sel1_origin1.par", "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-fst-deldaf-delihh/49953b09c3b2488b2f5c6338996d3be81f3e9249/sel3_origin2.par"],
+    "cms2_main.recombFile": "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-add-fst-deldaf-delihh/49953b09c3b2488b2f5c6338996d3be81f3e9249/test_recom.recom"
 }
 
