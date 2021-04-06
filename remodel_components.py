@@ -187,7 +187,7 @@ def parse_args():
     parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'xpehh', 'fst', 'delDAF'),
+    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
 
