@@ -169,7 +169,7 @@ def calc_delihh(readfilename, writefilename):
                     locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r  = entries
             unstand_delIHH = math.fabs(float(ihh_1) - float(ihh_0)) 
             
-            writeline = writefile.writeline('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, unstand_delIHH]) + '\n') # 6 columns for selscan norm
+            writefile.writeline('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, str(unstand_delIHH])) + '\n') # 6 columns for selscan norm
 # end: def calc_delihh(readfilename, writefilename):
 
 # * Parsing args
