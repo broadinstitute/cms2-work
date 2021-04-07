@@ -1,14 +1,14 @@
 version 1.0
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-v2.02--b666a81da0af6b57a82b449cb0cdeafeb22be4ea/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-v2.02--b666a81da0af6b57a82b449cb0cdeafeb22be4ea/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
     Array[Pair[ReplicaInfo, File]] selection_sims
-    File compute_components_script = "./remodel_components.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/v2.02/b666a81da0af6b57a82b449cb0cdeafeb22be4ea/remodel_components.py"
+    File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/v2.02/b666a81da0af6b57a82b449cb0cdeafeb22be4ea/norm_and_collate.py"
     PopsInfo pops_info
 
     Int n_bins_ihs = 20
