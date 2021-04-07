@@ -161,22 +161,9 @@ def chk(cond, msg='condition failed'):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--input-json', help='inputs passed as json')
-    parser.add_argument('--out-normed-collated', help='output file for normed and collated results')
+    parser.add_argument('--input-json', required=True, help='inputs passed as json')
+    parser.add_argument('--out-normed-collated', required=True, help='output file for normed and collated results')
 
-    # parser.add_argument('--pops-info-json', help='info about populations')
-    # parser.add_argument('--sel-pop', type=int, help='putatively selected pop')
-
-    # parser.add_argument('--ihs-raw', help='raw ihs scores')
-    # parser.add_argument('--nsl-raw', help='raw nsl scores')
-    # parser.add_argument('--ihh12-raw', help='raw ihh12 scores')
-    # parser.add_argument('--xpehh-raw', nargs='+', help='raw xpehh scores')
-
-    # parser.add_argument('--norm-bins-ihs', help='IHS bins data from neutral sims, for normalization')
-    # parser.add_argument('--norm-bins-nsl', help='IHS bins data from neutral sims, for normalization')
-    # parser.add_argument('--norm-bins-ihh12', help='IHS bins data from neutral sims, for normalization')
-    
-    
     return parser.parse_args()
 
 # * orig_main
@@ -349,6 +336,11 @@ def normalize_and_collate_scores(args):
     inps = _json_loadf(args.input_json)
 
     def make_local(inp):
+        """Creates a symlink to the input file *inp* in the current directory,
+        and returns the symlink.   Necessary because the program 'norm' (part of selscan)
+        writes the normalized output file to the same directory as its input file,
+        and the directory containing the original imput file may not be writable,
+        while the current directory (execution directory) is guaranteed to be writable."""
         if isinstance(inps[inp], list):
             new_inps = []
             for f in inps[inp]:
@@ -363,38 +355,60 @@ def normalize_and_collate_scores(args):
         return inps[inp]
 
     make_local('ihs_out')
+    make_local('delihh_out')
     make_local('nsl_out')
     make_local('ihh12_out')
     make_local('xpehh_out')
 
-    execute(f'norm --ihs --bins {inps["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} --files {inps["ihs_out"]} '
+    execute(f'norm --ihs --bins {inps["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} '
+            f'--files {inps["ihs_out"]} '
             f'--log {inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm.log ')
 
     ihs_normed = pd.read_table(f'{inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm',
-                               names='id pos p1 ihh1 ihh2 ihs ihsnormed ihs_outside_cutoff'.split(), index_col=('id', 'pos', 'p1'),
-                               low_memory=False)
+                               names='id pos p1 ihh1 ihh2 ihs ihsnormed ihs_outside_cutoff'.split(),
+                               index_col='pos',
+                               low_memory=False).add_prefix('ihs_')
+    chk(not ihs_normed.index.has_duplicates, 'ihs index has duplicates')
 
     descr_df(ihs_normed, 'ihs_normed')
 
     collated = ihs_normed
 
-    execute(f'norm --nsl --bins {inps["n_bins_nsl"]} --load-bins {inps["norm_bins_nsl"]} --files {inps["nsl_out"]} '
+    execute(f'norm --ihs --bins {inps["n_bins_delihh"]} --load-bins {inps["norm_bins_delihh"]} '
+            f'--files {inps["delihh_out"]} '
+            f'--log {inps["delihh_out"]}.{inps["n_bins_delihh"]}bins.norm.log ')
+
+    delihh_normed = pd.read_table(f'{inps["delihh_out"]}.{inps["n_bins_delihh"]}bins.norm',
+                                  names='id pos p1 ihh1 ihh2 delihh delihhnormed delihh_outside_cutoff'.split(),
+                                  index_col='pos',
+                                  low_memory=False).add_prefix('delihh_')
+    chk(not delihh_normed.index.has_duplicates, 'delihh index has duplicates')
+    
+    descr_df(delihh_normed, 'delihh_normed')
+
+    collated = collated.join(delihh_normed, how='outer')
+
+    execute(f'norm --nsl --bins {inps["n_bins_nsl"]} --load-bins {inps["norm_bins_nsl"]} '
+            f'--files {inps["nsl_out"]} '
             f'--log {inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm.log ')
 
     nsl_normed = pd.read_table(f'{inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm',
-                               names='id pos p1 ihh1_nsl ihh2_nsl nsl nslnormed nsl_outside_cutoff'.split(), index_col=('id', 'pos', 'p1'),
-                               low_memory=False)
+                               names='id pos p1 ihh1_nsl ihh2_nsl nsl nslnormed nsl_outside_cutoff'.split(),
+                               index_col='pos',
+                               low_memory=False).add_prefix('nsl_')
+    chk(not nsl_normed.index.has_duplicates, 'nsl index has duplicates')
 
     descr_df(nsl_normed, 'nsl_normed')
     collated = collated.join(nsl_normed, how='outer')
     descr_df(collated, 'collated after nsl_normed')
 
-    execute(f'norm --ihh12 --bins {inps["n_bins_ihh12"]} --load-bins {inps["norm_bins_ihh12"]} --files {inps["ihh12_out"]} '
+    execute(f'norm --ihh12 --bins {inps["n_bins_ihh12"]} --load-bins {inps["norm_bins_ihh12"]} '
+            f'--files {inps["ihh12_out"]} '
             f'--log {inps["ihh12_out"]}.norm.log ')
 
-    ihh12_normed = pd.read_table(f'{inps["ihh12_out"]}.norm', index_col=('id', 'pos', 'p1'),
-                                 low_memory=False).rename(columns={'crit': 'ihh12_crit'})
-
+    ihh12_normed = pd.read_table(f'{inps["ihh12_out"]}.norm', index_col='pos',
+                                 low_memory=False).add_prefix('ihh12_')
+    chk(not ihh12_normed.index.has_duplicates, 'ihh12 index has duplicates')
     descr_df(ihh12_normed, 'ihh12_normed')
     collated = collated.join(ihh12_normed, how='outer')
     descr_df(collated, 'collated after ihh12_normed')
@@ -402,22 +416,35 @@ def normalize_and_collate_scores(args):
     for other_pop_idx, (xpehh_out, norm_bins_xpehh) in enumerate(zip(inps["xpehh_out"], inps["norm_bins_xpehh"])):
         execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
                 f'--log {xpehh_out}.norm.log ')
-        xpehh_normed = pd.read_table(xpehh_out+".norm", index_col=('id', 'pos', 'p1'), low_memory=False).add_suffix(f'_{other_pop_idx}')
+        xpehh_normed = pd.read_table(xpehh_out+".norm", index_col='pos',
+                                     low_memory=False).add_suffix(f'_{other_pop_idx}').add_prefix('xpop_')
+        chk(not xpehh_normed.index.has_duplicates, 'xpehh index has duplicates')
+
         descr_df(xpehh_normed, f'xpehh_normed_{other_pop_idx}')
         collated = collated.join(xpehh_normed, how='outer')
         descr_df(collated, f'collated after xpehh_normed_{other_pop_idx}')
 
-    collated['max_xpehh'] = collated.filter(like='normxpehh').max(axis='columns')
-    descr_df(collated, 'collated final')
-    collated.reset_index().\
-        rename(columns={'ihsnormed':'ihs_normed', 'nslnormed': 'nsl_normed', 'normihh12': 'ihh12_normed',
-                        'max_xpehh': 'max_xpehh_normed'})\
-                    .to_csv(args.out_normed_collated, sep='\t', na_rep='nan', index=False)
+    for other_pop_idx, fst_and_delDAF_out in enumerate(inps["fst_and_delDAF_out"]):
+        execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
+                f'--log {xpehh_out}.norm.log ')
+        fst_and_delDAF_tsv = \
+            pd.read_table(fst_and_delDAF_out, index_col='physPos',
+                          low_memory=False).rename_axis('pos').add_suffix(f'_{other_pop_idx}')\
+              .add_prefix('fst_and_delDAF_')
+        chk(not fst_and_delDAF_tsv.index.has_duplicates, 'fst_and_delDAF index has duplicates')
 
-    #
-    # compute fst and deltadaf
-    #
- 
+        descr_df(fst_and_delDAF_tsv, f'fst_and_delDAF_tsv_{other_pop_idx}')
+        collated = collated.join(fst_and_delDAF_tsv, how='outer')
+        descr_df(collated, f'collated after fst_and_delDAF_tsv_{other_pop_idx}')
+
+    collated['max_xpehh'] = collated.filter(like='normxpehh').max(axis='columns')
+    collated['mean_fst'] = collated.filter(like='Fst').mean(axis='columns')
+    collated['mean_delDAF'] = collated.filter(like='delDAF').mean(axis='columns')
+    descr_df(collated, 'collated final')
+    collated.reset_index().to_csv(args.out_normed_collated, sep='\t', na_rep='nan', index=False)
+
+# end: def normalize_and_collate_scores(args)
+
 if __name__=='__main__':
   #compute_component_scores(parse_args())
   normalize_and_collate_scores(parse_args())

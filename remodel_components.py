@@ -13,6 +13,7 @@ import gzip
 import io
 import json
 import logging
+import math
 import multiprocessing
 import os
 import os.path
@@ -148,6 +149,30 @@ def execute(action, **kw):
     finally:
         _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
 
+def chk(cond, msg):
+    if not cond:
+        raise RuntimeError(f'chk failed: {msg}')
+
+def calc_delihh(readfilename, writefilename):
+    """given a selscan iHS file, parses it and writes delihh file"""
+    with open_or_gzopen(readfilename) as readfile, open(writefilename, 'w') as writefile:
+        for line in readfile:
+            entries = line.strip().split()
+            chk(len(entries) == 10, 'malformed ihh line')
+            # entries are: locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r
+            
+            # handle input with/without ihh details
+            # ihh_1 is derived, ihh_0 is ancestral
+            if len(entries) == 6:
+                    locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed = entries
+            elif len(entries) == 10:
+                    locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r  = entries
+            unstand_delIHH = math.fabs(float(ihh_1) - float(ihh_0)) 
+            
+            # write 6 columns for selscan norm
+            writefile.write('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, str(unstand_delIHH)]) + '\n')
+# end: def calc_delihh(readfilename, writefilename):
+
 # * Parsing args
 
 def parse_args():
@@ -164,7 +189,7 @@ def parse_args():
     parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'xpehh'),
+    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
 
@@ -282,7 +307,7 @@ def orig_main(args):
 
 def compute_component_scores(args):
     args.threads = min(args.threads, available_cpu_count())
-    shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
+    #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
     replicaInfo = _json_loadf(args.replica_info)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     sel_pop_idx = pop_id_to_idx[args.sel_pop]
@@ -292,8 +317,24 @@ def compute_component_scores(args):
         f'selscan --threads {args.threads} --tped {sel_pop_tped} ' \
         f'--out {args.out_basename}'
     for component in args.components:
-        alt_pop_tped = '' if component not in ('xpehh',) else f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
-        cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component}'
+        if component in ('ihs', 'ihh12', 'nsl', 'xpehh'):
+            alt_pop_tped = '' if component not in ('xpehh',) else \
+                f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
+            ihs_detail = '' if component != 'ihs' else ' --ihs-detail '
+            cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component} {ihs_detail}'
+            execute(cmd)
+
+    if 'delihh' in args.components:
+        if 'ihs' not in args.components:
+            raise RuntimeError('To compute delihh must first compute ihs')
+        calc_delihh(readfilename=f'{args.out_basename}.ihs.out',
+                    writefilename=f'{args.out_basename}.delihh.out')
+
+    if 'fst' in args.components or 'delDAF' in args.components:
+        fst_and_delDAF_out_fname = args.out_basename + '.fst_and_delDAF.tsv'
+        cmd = \
+            f'freqs_stats {sel_pop_tped} {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} ' \
+            f' {fst_and_delDAF_out_fname}'
         execute(cmd)
 
     if False:

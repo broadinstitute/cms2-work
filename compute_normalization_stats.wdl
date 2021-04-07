@@ -13,19 +13,19 @@ workflow compute_normalization_stats_wf {
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
-
-    Int n_bins_ihh12 = 1
-    Int n_bins_xpehh = 1
+    Int n_bins_delihh = 20
 
     Int threads = 1
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
     File get_pops_info_script = "./get_pops_info.py"
-    #String docker = "quay.io/ilya_broad/cms@sha256:61329639d8a8479b059d430fcd816b51b825d4a22716660cc3d1688d97c99cc7"
-    String docker = "quay.io/ilya_broad/cms@sha256:a63e96a65ab6245e355b2dac9281908bed287a8d2cabb4668116198c819318c8"  # v1.3.0a04pd
+    String docker = "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
     Int preemptible
   }  # end: input
+
+  Int n_bins_ihh12 = 1
+  Int n_bins_xpehh = 1
 
   scatter(sel_pop in pops_info.pop_ids) {
     scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
@@ -53,10 +53,12 @@ workflow compute_normalization_stats_wf {
       ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
       nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
       ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
+      delihh_out=compute_one_pop_cms2_components_for_neutral.delihh,
 
       n_bins_ihs=n_bins_ihs,
       n_bins_nsl=n_bins_nsl,
       n_bins_ihh12=n_bins_ihh12,
+      n_bins_delihh=n_bins_delihh,
 
       threads=1,
       mem_base_gb=64,
@@ -127,6 +129,7 @@ workflow compute_normalization_stats_wf {
     Array[File] norm_bins_ihs=compute_one_pop_bin_stats_for_normalization.norm_bins_ihs
     Array[File] norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl
     Array[File] norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12
+    Array[File] norm_bins_delihh=compute_one_pop_bin_stats_for_normalization.norm_bins_delihh
     Array[Array[File]] norm_bins_xpehh = norm_bins_xpehh_vals
   }
 }

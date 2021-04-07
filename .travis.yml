@@ -4,7 +4,7 @@ dist: focal
 os: linux
 
 git:
-  depth: 5
+#  depth: 5
   submodules: false
 
 services:
@@ -21,6 +21,7 @@ env:
 branches:
   except:
     - /.*-staging$/
+    - /^staging-.*/
 
 # notifications:
 #   slack: 
