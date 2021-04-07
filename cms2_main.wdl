@@ -1,7 +1,7 @@
 version 1.0
 
 
-import "./run_sims_and_compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210407-1304-add-sim-info-to-collate.org--6cc9b4d31db209722b2ac99394b8f0a917d3fd7c/run_sims_and_compute_cms2_components.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow cms2_main {

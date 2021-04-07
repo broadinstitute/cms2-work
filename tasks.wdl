@@ -1,6 +1,6 @@
 version 1.0
 
-import "./structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210407-1304-add-sim-info-to-collate.org--6cc9b4d31db209722b2ac99394b8f0a917d3fd7c/structs.wdl"
 
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
