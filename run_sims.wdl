@@ -1,7 +1,7 @@
 version 1.0
 
 # * Structs
-import "./structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210407-1304-add-sim-info-to-collate.org--638399aabeec90a684e4de242a5df0b68f33040d/structs.wdl"
 
 # * task cosi2_run_one_sim_block 
 task cosi2_run_one_sim_block {
@@ -138,14 +138,14 @@ workflow run_sims_wf {
     String       memoryPerBlock = "3 GB"
     String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     Int preemptible = 3
-    File taskScript_simulation = "./runcosi.py"
+    File taskScript_simulation = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210407-1304-add-sim-info-to-collate.org/638399aabeec90a684e4de242a5df0b68f33040d/runcosi.py"
 
 
     Int threads = 1
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File get_pops_info_script = "./get_pops_info.py"
+    File get_pops_info_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210407-1304-add-sim-info-to-collate.org/638399aabeec90a684e4de242a5df0b68f33040d/get_pops_info.py"
     String docker = "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
   }
 
