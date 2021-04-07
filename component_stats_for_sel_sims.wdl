@@ -1,6 +1,5 @@
 version 1.0
 
-import "./run_sims.wdl"
 import "./tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
@@ -75,6 +74,7 @@ workflow component_stats_for_sel_sims_wf {
       call tasks.normalize_and_collate {
 	input:
 	  inp = object {
+	    replica_info: sel_sim_replicaInfo,
 	    replica_id_str: sel_sim_replica_id_str,
 	    pop_ids: pops_info.pop_ids,
 	    pop_pairs: pops_info.pop_pairs,

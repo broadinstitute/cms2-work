@@ -1,5 +1,7 @@
 version 1.0
 
+import "./structs.wdl"
+
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
   meta {
@@ -220,31 +222,6 @@ task compute_two_pop_bin_stats_for_normalization {
 }
 
 # * task normalize_and_collate
-
-struct NormalizeAndCollateInput {
-    Array[Int] pop_ids
-    Array[Pair[Int,Int]] pop_pairs
-    String replica_id_str
-    Int sel_pop
-    File ihs_out
-    File nsl_out
-    File ihh12_out
-    File delihh_out
-    Array[File] xpehh_out
-    Array[File] fst_and_delDAF_out
-
-    File norm_bins_ihs
-    File norm_bins_nsl
-    File norm_bins_ihh12
-    File norm_bins_delihh
-    Array[File] norm_bins_xpehh
-
-    Int n_bins_ihs
-    Int n_bins_nsl
-    Int n_bins_ihh12
-    Int n_bins_delihh
-    Int n_bins_xpehh
-}
 
 task normalize_and_collate {
   meta {

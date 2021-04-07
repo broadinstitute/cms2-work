@@ -1,41 +1,7 @@
 version 1.0
 
 # * Structs
-
-struct SweepInfo {
-  Int  selPop
-  Float selGen
-  Int selBegPop
-  Float selBegGen
-  Float selCoeff
-  Float selFreq
-}
-
-struct ModelInfo {
-  String modelId
-  Array[String] modelIdParts
-  Array[Int] popIds
-  Array[String] popNames
-  SweepInfo sweepInfo
-}
-
-struct ReplicaId {
-  Int replicaNumGlobal
-  Int replicaNumGlobalOutOf
-  Int blockNum
-  Int replicaNumInBlock
-  Int randomSeed
-}
-
-struct ReplicaInfo {
-  ReplicaId replicaId
-  ModelInfo modelInfo
-
-  File        region_haps_tar_gz
-
-  Boolean succeeded
-  Float durationSeconds
-}
+import "./structs.wdl"
 
 # * task cosi2_run_one_sim_block 
 task cosi2_run_one_sim_block {
@@ -102,25 +68,6 @@ task cosi2_run_one_sim_block {
 }
 
 # * task get_pops_info
-
-#
-# ** struct PopsInfo
-#
-# Information about population ids and names.
-#
-# Each pop has: a pop id (a small integer); a pop name (a string); a pop index
-# (0-based index of the pop in the list of pop ids).
-#
-struct PopsInfo {
-    Array[Int] pop_ids  # population IDs, used throughout to identify populations
-    Array[String] pop_names
-    Map[Int,Int] pop_id_to_idx  # map from pop id to its index in pop_ids
-    Map[Int,Array[Int]] pop_alts  # map from pop id to list of all other pop ids
-    Array[Pair[Int,Int]] pop_pairs # all two-pop sets, for cross-pop comparisons
-
-    Array[Int] sel_pop_ids  # for each sweep definition in paramFiles_selection input to
-    # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
-}
 
 # ** task get_pops_info implemenation
 task get_pops_info {
