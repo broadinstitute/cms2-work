@@ -1,0 +1,4 @@
+#+TITLE: is-210407-1304-add-sim-info-to-collate.org
+
+To the collated output, add info on each SNP's derived allele freq in each pop, and info on sweep parameters.
+
