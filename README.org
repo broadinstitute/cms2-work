@@ -2,3 +2,8 @@
 
 Workflows to run population genetics simulations and compute component scores for CMS2.
 
+* WDL workflow organization
+
+  The top-level workflow is [[./cms2_main.wdl][cms2_main.wdl]] .  It is really a wrapper workflow, meant to hide many internal details/parameters.
+  
+

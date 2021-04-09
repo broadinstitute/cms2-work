@@ -10,29 +10,54 @@ workflow cms2_main {
     email: "ilya_shl@alum.mit.edu"
   }
 
+  parameter_meta {
+# ** inputs
+# *** Simulation params
+# **** Specifying the demographic model and sweep scenarios
+    paramFile_demographic_model: "(File) cosi2 parameter file specifying the demographic model; this file describes the parts common to neutral and selection simulations."
+    paramFile_neutral: "(File) cosi2 parameter file portion used for neutral simulations only.  *paramFile_demographic_model* is prepended to it to create the full parameter file for neutral simulations."
+    paramFiles_selection: "(Array[File]) cosi2 parameter file portions for selection simulations.   For each file in this array, a set of selection simulations will be done.  *paramFile_demographic_model* is prepended to this file to construct the full cosi2 parameter file."
+# **** Identification information about the computational experiment
+    experimentId: "(String) An arbitrary string identifying this (computational) experiment.  Change it to ensure that random seeds used for simulations are not reused."
+    experiment_description: "(String) Experiment description, for recording purposes"
+    modelId: "(String) A string identifying the demographic model; if not given, defaults to the base name of *paramFile_demographic_model*."
+# **** Specifying how many simulations to create
+    nreps_neutral: "(Int) Run this many neutral simulations, for establishing normalization stats."
+    nreps: "(Int) Run this many selection simulations for each selection scenario in *paramFiles_selection*."
+# **** Computational limits and resources for doing simulations
+    maxAttempts: "(Int) Max number of times to attempt to generate an allele frequency trajectory for a given random seed"
+    numRepsPerBlock: "(Int) Run this many simulations per block.  A block of simulations is run in a single task."
+    numCpusPerBlock: "(Int) Allocate this many CPUs to each task running the simulations."
+    memoryPerBlock: "(String) Memory spec for each task running a block of simulation replicas."
+    repTimeoutSeconds: "(Int) Time out (and fail) a simulation replica for a given random seed after this many seconds."
+
+# *** Component stats computation params
+    n_bins: "Number of frequency bins for normalizing iHS, nSL and delIHH component statistics."
+  }
+
 # ** inputs
   input {
     #
     # Simulation params
     #
-
-    String experimentId = "default"
-    String experiment_description = "an experiment"
     File paramFile_demographic_model
     File paramFile_neutral
-    String modelId = "model_"+basename(paramFile_demographic_model, ".par")
     Array[File] paramFiles_selection
     File recombFile
-
-    Int n_bins = 20
+    String experimentId = "default"
+    String experiment_description = "an experiment"
+    String modelId = "model_"+basename(paramFile_demographic_model, ".par")
 
     Int nreps_neutral
     Int nreps
+
     Int maxAttempts = 10000000
     Int numRepsPerBlock = 1
     Int numCpusPerBlock = numRepsPerBlock
     Int repTimeoutSeconds = 600
     String       memoryPerBlock = "3 GB"
+
+    Int n_bins = 20
   }
 
   call run_sims_and_compute_cms2_components.run_sims_and_compute_cms2_components_wf as main_call {
