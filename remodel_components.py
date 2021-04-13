@@ -173,6 +173,15 @@ def calc_delihh(readfilename, writefilename):
             writefile.write('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, str(unstand_delIHH)]) + '\n')
 # end: def calc_delihh(readfilename, writefilename):
 
+def calc_derFreq(in_tped, out_derFreq_tsv):
+    """Calculate the derived allele frequency for each SNP in one population"""
+    with open_or_gzopen(in_tped) as tped, open(out_derFreq_tsv, 'w') as out:
+        out_tsv.write('\t'.join(['chrom', 'snpId', 'pos', 'derFreq']) + '\n')
+        for line in in_tped:
+            chrom, snpId, genPos_cm, physPos_bp, alleles = line.strip().split(maxsplit=4)
+            n = [alleles.count(i) for i in ('0', '1')]
+            out_tsv.write('\t'.join([chrom, snpId, physPos_bp, n[0] / (n[0] + n[1])]) + '\n')
+
 # * Parsing args
 
 def parse_args():
@@ -189,7 +198,7 @@ def parse_args():
     parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF'),
+    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
 
@@ -336,6 +345,9 @@ def compute_component_scores(args):
             f'freqs_stats {sel_pop_tped} {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} ' \
             f' {fst_and_delDAF_out_fname}'
         execute(cmd)
+
+    if 'derFreq' in args.components:
+        calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=args.out_basename+'.derFreq.tsv')
 
     if False:
         execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '

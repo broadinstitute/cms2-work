@@ -27,13 +27,14 @@ task compute_one_pop_cms2_components {
   String nsl_out_fname = out_basename + ".nsl.out"
   String ihh12_out_fname = out_basename + ".ihh12.out"
   String delihh_out_fname = out_basename + ".delihh.out"
+  String derFreq_out_fname = out_basename + ".derFreq.tsv"
 
   command <<<
     tar xvfz "~{region_haps_tar_gz}"
 
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string "~{out_basename}" \
-      --out-basename "~{out_basename}" --sel-pop ~{sel_pop} --threads ~{threads} --components ihs nsl ihh12 delihh
+      --out-basename "~{out_basename}" --sel-pop ~{sel_pop} --threads ~{threads} --components ihs nsl ihh12 delihh derFreq
   >>>
 
   output {
@@ -41,6 +42,7 @@ task compute_one_pop_cms2_components {
     File nsl = nsl_out_fname
     File ihh12 = ihh12_out_fname
     File delihh = delihh_out_fname
+    File derFreq = derFreq_out_fname
 
     Int threads_used = threads
     File script_used = script_used_name

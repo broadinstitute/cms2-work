@@ -64,6 +64,7 @@ struct NormalizeAndCollateInput {
     File nsl_out
     File ihh12_out
     File delihh_out
+    File derFreq_out
     Array[File] xpehh_out
     Array[File] fst_and_delDAF_out
 
