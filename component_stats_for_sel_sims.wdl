@@ -119,7 +119,7 @@ workflow component_stats_for_sel_sims_wf {
   }  
 
   output {
-    File all_hapsets_compstats = collate_stats_and_metadata_for_all_sel_sims.all_hapsets_compstats
-    File all_hapsets_metadata = collate_stats_and_metadata_for_all_sel_sims.all_hapsets_metadata
+    File all_hapsets_compstats_tsv_gz = collate_stats_and_metadata_for_all_sel_sims.all_hapsets_compstats_tsv_gz
+    File all_hapsets_metadata_tsv_gz = collate_stats_and_metadata_for_all_sel_sims.all_hapsets_metadata_tsv_gz
   }
 }
