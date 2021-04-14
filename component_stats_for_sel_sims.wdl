@@ -112,9 +112,9 @@ workflow component_stats_for_sel_sims_wf {
   call tasks.collate_stats_and_metadata_for_all_sel_sims {
     input:
        inp = object {
-	 experimentId = experimentId,
-	 sel_normed_and_collated = select_all(normalize_and_collate.normed_collated_stats),
-	 replica_infos = select_all(sel_sim_replicaInfo)
+	 experimentId: experimentId,
+	 sel_normed_and_collated: select_all(normalize_and_collate.normed_collated_stats),
+	 replica_infos: select_all(sel_sim_replicaInfo)
        }
   }  
 

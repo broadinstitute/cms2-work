@@ -237,8 +237,10 @@ workflow run_sims_and_compute_cms2_components_wf {
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
 # *** Component scores
-    Array[File?] sel_normed_and_collated = component_stats_for_sel_sims_wf.sel_normed_and_collated
-    Array[File?] sel_sim_region_haps_tar_gzs = component_stats_for_sel_sims_wf.sel_sim_region_haps_tar_gzs
+    #Array[File?] sel_normed_and_collated = component_stats_for_sel_sims_wf.sel_normed_and_collated
+    #Array[File?] sel_sim_region_haps_tar_gzs = component_stats_for_sel_sims_wf.sel_sim_region_haps_tar_gzs
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
+    File all_hapsets_compstats = component_stats_for_sel_sims_wf.all_hapsets_compstats
+    File all_hapsets_metadata = component_stats_for_sel_sims_wf.all_hapsets_metadata
   }
 }

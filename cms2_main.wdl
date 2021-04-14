@@ -90,7 +90,10 @@ workflow cms2_main {
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
 # *** Component scores
-    Array[File?] sel_normed_and_collated = main_call.sel_normed_and_collated
+    #Array[File?] sel_normed_and_collated = main_call.sel_normed_and_collated
+    File all_hapsets_compstats = main_call.all_hapsets_compstats
+    File all_hapsets_metadata = main_call.all_hapsets_metadata
+    
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }
 }
