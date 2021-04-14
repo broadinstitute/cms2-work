@@ -175,12 +175,13 @@ def calc_delihh(readfilename, writefilename):
 
 def calc_derFreq(in_tped, out_derFreq_tsv):
     """Calculate the derived allele frequency for each SNP in one population"""
-    with open_or_gzopen(in_tped) as tped, open(out_derFreq_tsv, 'w') as out:
+    with open(in_tped) as tped, open(out_derFreq_tsv, 'w') as out:
         out.write('\t'.join(['chrom', 'snpId', 'pos', 'derFreq']) + '\n')
-        for line in in_tped:
+        for line in tped:
             chrom, snpId, genPos_cm, physPos_bp, alleles = line.strip().split(maxsplit=4)
             n = [alleles.count(i) for i in ('0', '1')]
-            out.write('\t'.join([chrom, snpId, physPos_bp, n[0] / (n[0] + n[1])]) + '\n')
+            derFreq = n[0] / (n[0] + n[1])
+            out.write('\t'.join([chrom, snpId, physPos_bp, f'{derFreq:.2f}']) + '\n')
 
 # * Parsing args
 
