@@ -2,6 +2,7 @@
 
 import argparse
 import copy
+import datetime
 #from firecloud import fiss
 import json
 import operator
@@ -44,7 +45,7 @@ def _pretty_print_json(json_dict, sort_keys=True):
 def _write_json(fname, **json_dict):
     dump_file(fname=fname, value=_pretty_print_json(json_dict))
     print('converting', fname, 'to org')
-    subprocess.check_call(f'./to_org.sh {fname}', shell=True)
+    subprocess.check_call(f'./util/to_org.sh {fname}', shell=True)
     print('converted', fname, 'to org')
 
 def get_workflow_metadata_gz(namespace, workspace, submission_id, workflow_id):
@@ -73,7 +74,7 @@ tot_time = 0
 for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)):
     print('looking at submission from', s['submissionDate'])
     submission_date = s['submissionDate']
-    if not submission_date.startswith('2021-03-10'): 
+    if not submission_date.startswith(datetime.datetime.now().strftime('%Y-%m-%d')): 
         print('skipping submission date ', submission_date)
         continue
 

@@ -353,7 +353,7 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
                                         'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
                                         'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
                                         'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
-    pd.DataFrame.concat(hapset_dfs).set_index(('hapset_id', 'pos'), verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv', na_rep='nan', sep='\t')
+    pd.concat(hapset_dfs).set_index(('hapset_id', 'pos'), verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv', na_rep='nan', sep='\t')
     pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True).to_csv(inps['experimentId']+'.metadata.tsv',
                                                                                                             na_rep='nan', sep='\t')
 
