@@ -1,6 +1,6 @@
 version 1.0
 
-import "./structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210407-1304-add-sim-info-to-collate.org--d947195ec9f9646b92c36b7b59e8b0f9d46257cd/structs.wdl"
 
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
@@ -260,7 +260,7 @@ task collate_stats_and_metadata_for_all_sel_sims {
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
-    File collate_stats_and_metadata_for_all_sel_sims_script = "./collate_stats_and_metadata_for_all_sel_sims.py"
+    File collate_stats_and_metadata_for_all_sel_sims_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210407-1304-add-sim-info-to-collate.org/d947195ec9f9646b92c36b7b59e8b0f9d46257cd/collate_stats_and_metadata_for_all_sel_sims.py"
   }
   command <<<
     python3 "~{collate_stats_and_metadata_for_all_sel_sims_script}" --input-json "~{write_json(inp)}" 
