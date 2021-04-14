@@ -5,6 +5,7 @@ import "./tasks.wdl"
 workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
+    String experimentId = "default"
     Array[Pair[ReplicaInfo, File]] selection_sims
     File compute_components_script = "./remodel_components.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
@@ -32,8 +33,8 @@ workflow component_stats_for_sel_sims_wf {
   Int n_bins_xpehh = 1
 
   scatter(sel_sim in selection_sims) {
-    ReplicaInfo sel_sim_replicaInfo = sel_sim.left
-    if (sel_sim_replicaInfo.succeeded) {
+    if (sel_sim.left.succeeded) {
+      ReplicaInfo sel_sim_replicaInfo = sel_sim.left
       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
       Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
       File sel_sim_region_haps_tar_gz = sel_sim.right
@@ -105,12 +106,20 @@ workflow component_stats_for_sel_sims_wf {
 	  },
 	  normalize_and_collate_script=normalize_and_collate_script
       } # call tasks.normalize_and_collate
-    }  # if (sel_sim_replicaInfo.succeeded) 
+    }  # if (sel_sim.left.succeeded) 
   }  # end: scatter(sel_sim in selection_sims)
 
-  output {	     
-     Array[File?] sel_normed_and_collated = normalize_and_collate.normed_collated_stats
-     Array[File?] sel_sim_region_haps_tar_gzs = sel_sim_region_haps_tar_gz
+  call tasks.collate_stats_and_metadata_for_all_sel_sims {
+    input:
+       inp = object {
+	 experimentId = experimentId,
+	 sel_normed_and_collated = select_all(normalize_and_collate.normed_collated_stats),
+	 replica_infos = select_all(sel_sim_replicaInfo)
+       }
+  }  
+
+  output {
+    File all_hapsets_compstats = collate_stats_and_metadata_for_all_sel_sims.all_hapsets_compstats
+    File all_hapsets_metadata = collate_stats_and_metadata_for_all_sel_sims.all_hapsets_metadata
   }
 }
-

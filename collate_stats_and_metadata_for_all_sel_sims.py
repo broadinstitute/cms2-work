@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Normalize component scores, and collate the results.
+"""Collate component stats and metadata for all selection sims.
 """
 
 import argparse
@@ -162,7 +162,6 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--input-json', required=True, help='inputs passed as json')
-    parser.add_argument('--out-normed-collated', required=True, help='output file for normed and collated results')
 
     return parser.parse_args()
 
@@ -322,7 +321,7 @@ def compute_component_scores(args):
     # else:
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
 
-def normalize_and_collate_scores(args):
+def collate_stats_and_metadata_for_all_sel_sims(args):
 
     def descr_df(df, msg):
         """Describe a DataFrame"""
@@ -335,116 +334,32 @@ def normalize_and_collate_scores(args):
 
     inps = _json_loadf(args.input_json)
 
-    def make_local(inp):
-        """Creates a symlink to the input file *inp* in the current directory,
-        and returns the symlink.   Necessary because the program 'norm' (part of selscan)
-        writes the normalized output file to the same directory as its input file,
-        and the directory containing the original imput file may not be writable,
-        while the current directory (execution directory) is guaranteed to be writable."""
-        if isinstance(inps[inp], list):
-            new_inps = []
-            for f in inps[inp]:
-                local_fname = os.path.basename(f)
-                os.symlink(f, local_fname)
-                new_inps.append(local_fname)
-            inps[inp] = new_inps
-        else:
-            local_fname = os.path.basename(inps[inp])
-            os.symlink(inps[inp], local_fname)
-            inps[inp] = local_fname
-        return inps[inp]
-
-    for component in ('ihs_out', 'delihh_out', 'nsl_out', 'ihh12_out', 'xpehh_out', 'derFreq_out'):
-        make_local(component)
-
     def chk_idx(pd, name):
         chk(pd.index.is_unique, f'Bad {name} index: has non-unique values')
         chk(pd.index.is_monotonic_increasing, f'Bad {name} index: not monotonically increasing')
         descr_df(pd, name)
 
-    collated = None
+    hapset_dfs = []
+    hapset_metadata_records = []
+    for hapset_compstats_tsv, hapset_replica_info in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
+        hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
+        hapset_dfs.append(hapset_compstats)
+        hapset_metadata_records.append({'hapset_id': hapset_compstats['hapset_id'].iat[0],
+                                        'is_sim': True,
+                                        'model_id': hapset_replica_info['modelInfo']['modelId'],
+                                        'sel_pop': hapset_replica_info['modelInfo']['sweepInfo']['selPop'],
+                                        'sel_gen': hapset_replica_info['modelInfo']['sweepInfo']['selGen'],
+                                        'sel_beg_pop': hapset_replica_info['modelInfo']['sweepInfo']['selBegPop'],
+                                        'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
+                                        'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
+                                        'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
+    pd.DataFrame.concat(hapset_dfs).set_index(('hapset_id', 'pos'), verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv', na_rep='nan', sep='\t')
+    pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True).to_csv(inps['experimentId']+'.metadata.tsv',
+                                                                                                            na_rep='nan', sep='\t')
 
-    derFreq = pd.read_table(inps["derFreq_out"], low_memory=False, index_col='pos')
-    chk_idx(derFreq, 'derFreq')
-
-    collated = derFreq if collated is None else collated.join(derFreq, how='outer')
-
-    execute(f'norm --ihs --bins {inps["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} '
-            f'--files {inps["ihs_out"]} '
-            f'--log {inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm.log ')
-
-    ihs_normed = pd.read_table(f'{inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm',
-                               names='id pos p1 ihh1 ihh2 ihs ihsnormed ihs_outside_cutoff'.split(),
-                               index_col='pos',
-                               low_memory=False).add_prefix('ihs_')
-    chk_idx(ihs_normed, 'ihs_normed')
-
-    collated = collated.join(ihs_normed, how='outer')
-
-    execute(f'norm --ihs --bins {inps["n_bins_delihh"]} --load-bins {inps["norm_bins_delihh"]} '
-            f'--files {inps["delihh_out"]} '
-            f'--log {inps["delihh_out"]}.{inps["n_bins_delihh"]}bins.norm.log ')
-
-    delihh_normed = pd.read_table(f'{inps["delihh_out"]}.{inps["n_bins_delihh"]}bins.norm',
-                                  names='id pos p1 ihh1 ihh2 delihh delihhnormed delihh_outside_cutoff'.split(),
-                                  index_col='pos',
-                                  low_memory=False).add_prefix('delihh_')
-    chk_idx(delihh_normed, 'delihh_normed')
-
-    collated = collated.join(delihh_normed, how='outer')
-
-    execute(f'norm --nsl --bins {inps["n_bins_nsl"]} --load-bins {inps["norm_bins_nsl"]} '
-            f'--files {inps["nsl_out"]} '
-            f'--log {inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm.log ')
-
-    nsl_normed = pd.read_table(f'{inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm',
-                               names='id pos p1 ihh1_nsl ihh2_nsl nsl nslnormed nsl_outside_cutoff'.split(),
-                               index_col='pos',
-                               low_memory=False).add_prefix('nsl_')
-    chk_idx(nsl_normed, 'nsl_normed')
-    collated = collated.join(nsl_normed, how='outer')
-    chk_idx(collated, 'collated after nsl_normed')
-
-    execute(f'norm --ihh12 --bins {inps["n_bins_ihh12"]} --load-bins {inps["norm_bins_ihh12"]} '
-            f'--files {inps["ihh12_out"]} '
-            f'--log {inps["ihh12_out"]}.norm.log ')
-
-    ihh12_normed = pd.read_table(f'{inps["ihh12_out"]}.norm', index_col='pos',
-                                 low_memory=False).add_prefix('ihh12_')
-    chk_idx(ihh12_normed, 'ihh12_normed')
-    collated = collated.join(ihh12_normed, how='outer')
-    chk_idx(collated, 'collated after ihh12_normed')
-
-    for other_pop_idx, (xpehh_out, norm_bins_xpehh) in enumerate(zip(inps["xpehh_out"], inps["norm_bins_xpehh"])):
-        execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
-                f'--log {xpehh_out}.norm.log ')
-        xpehh_normed = pd.read_table(xpehh_out+".norm", index_col='pos',
-                                     low_memory=False).add_suffix(f'_{other_pop_idx}').add_prefix('xpop_')
-        chk_idx(xpehh_normed, f'xpehh_normed_{other_pop_idx}')
-        collated = collated.join(xpehh_normed, how='outer')
-        chk_idx(collated, f'collated after xpehh_normed_{other_pop_idx}')
-
-    for other_pop_idx, fst_and_delDAF_out in enumerate(inps["fst_and_delDAF_out"]):
-        execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
-                f'--log {xpehh_out}.norm.log ')
-        fst_and_delDAF_tsv = \
-            pd.read_table(fst_and_delDAF_out, index_col='physPos',
-                          low_memory=False).rename_axis('pos').add_suffix(f'_{other_pop_idx}')\
-              .add_prefix('fst_and_delDAF_')
-        chk_idx(fst_and_delDAF_tsv, f'fst_and_delDAF_tsv_{other_pop_idx}')
-        collated = collated.join(fst_and_delDAF_tsv, how='outer')
-        chk_idx(collated, f'collated after fst_and_delDAF_tsv_{other_pop_idx}')
-
-    collated['max_xpehh'] = collated.filter(like='normxpehh').max(axis='columns')
-    collated['mean_fst'] = collated.filter(like='Fst').mean(axis='columns')
-    collated['mean_delDAF'] = collated.filter(like='delDAF').mean(axis='columns')
-
-    collated['hapset_id'] = inps['replica_id_str']
-    descr_df(collated, 'collated final')
-    collated.reset_index().to_csv(args.out_normed_collated, sep='\t', na_rep='nan', index=False)
 
 # end: def normalize_and_collate_scores(args)
 
 if __name__=='__main__':
   #compute_component_scores(parse_args())
-  normalize_and_collate_scores(parse_args())
+  collate_stats_and_metadata_for_all_sel_sims(parse_args())

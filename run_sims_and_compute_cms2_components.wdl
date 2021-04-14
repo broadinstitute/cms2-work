@@ -202,6 +202,7 @@ workflow run_sims_and_compute_cms2_components_wf {
 # ** Component stats for selection sims
   call component_stats_for_sel_sims.component_stats_for_sel_sims_wf {
     input:
+    experimentId=experimentId,
     modelId=modelId,
     selection_sims = sims_wf.selection_sims,
     pops_info = sims_wf.pops_info,

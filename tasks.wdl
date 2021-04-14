@@ -248,6 +248,35 @@ task normalize_and_collate {
   }
 }
 
+struct collate_stats_and_metadata_for_all_sel_sims_input {
+    String experimentId
+    Array[File] sel_normed_and_collated
+    Array[ReplicaInfo] replica_infos
+}
+
+task collate_stats_and_metadata_for_all_sel_sims {
+  meta {
+    description: "Collate component stats and metadata for all selection sims"
+  }
+  input {
+    collate_stats_and_metadata_for_all_sel_sims_input inp
+    File collate_stats_and_metadata_for_all_sel_sims_script = "./collate_stats_and_metadata_for_all_sel_sims_script.py"
+  }
+  command <<<
+    python3 "~{collate_stats_and_metadata_for_all_sel_sims_script}" --input-json "~{write_json(inp)}" 
+  >>>
+  output {
+    File all_hapsets_compstats = inp.experimentId + ".compstats.tsv"
+    File all_hapsets_metadata = inp.experimentId + ".metadata.tsv"
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    memory: "16 GB"
+    cpu: 1
+    disks: "local-disk 1 LOCAL"
+  }
+}
+
 # * task create_tar_gz
 task create_tar_gz {
   meta {
