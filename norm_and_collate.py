@@ -354,7 +354,7 @@ def normalize_and_collate_scores(args):
             inps[inp] = local_fname
         return inps[inp]
 
-    for componnet in ('ihs_out', 'delihh_out', 'nsl_out', 'ihh12_out', 'xpehh_out', 'derFreq_out'):
+    for component in ('ihs_out', 'delihh_out', 'nsl_out', 'ihh12_out', 'xpehh_out', 'derFreq_out'):
         make_local(component)
 
     def chk_idx(pd, name):
