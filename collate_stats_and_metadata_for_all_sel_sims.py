@@ -321,6 +321,80 @@ def compute_component_scores(args):
     # else:
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
 
+def save_hapset_data_and_metadata_to_hdf5(hapsets_data, hapsets_metadata, out_hdf5):
+    """Save all hapset data (component stats) and metadata to one hdf5 store.
+
+Layout:
+
+.
+├── version_info
+|   ├── terra_workflow_id
+|   └── freeze_date
+├── component_info
+|   └── component_score_keys
+├── meta_data
+|   ├── hap_set_ID
+|   ├── pressured_population
+|   ├── selection_coefficient
+|   ├── time_under_selection
+|   ├── allele_age
+|   ├── demographic_model
+|   ├── physical_chr
+|   ├── physical_start
+|   ├── physical_end
+|   └── database
+└── data
+    ├── {hap_set_ID_1}
+    |   ├── YRI
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   ├── CEU
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   ├── CHB
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   └── BEB
+    |       ├── physical_position
+    |       ├── component_1
+    |       ...
+    |       └── component_n
+     ...
+    └── {hap_set_ID_N}
+        ├── YRI
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        ├── CEU
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        ├── CHB
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        └── BEB
+            ├── physical_position
+            ├── component_1
+            ...
+            └── component_n  
+
+"""
+    pd.set_option('io.hdf.default_format','table')
+    with pd.HDFStore(out_hdf5, complevel=9) as store:
+        store['data'] = hapsets_data
+        store['metadata'] = hapsets_metadata
+    
+
 def collate_stats_and_metadata_for_all_sel_sims(args):
 
     def descr_df(df, msg):
@@ -339,26 +413,36 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
         chk(pd.index.is_monotonic_increasing, f'Bad {name} index: not monotonically increasing')
         descr_df(pd, name)
 
-    hapset_dfs = []
+    #hapset_dfs = []
     hapset_metadata_records = []
-    for hapset_compstats_tsv, hapset_replica_info in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
-        hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
-        hapset_dfs.append(hapset_compstats)
-        hapset_metadata_records.append({'hapset_id': hapset_compstats['hapset_id'].iat[0],
-                                        'is_sim': True,
-                                        'model_id': hapset_replica_info['modelInfo']['modelId'],
-                                        'sel_pop': hapset_replica_info['modelInfo']['sweepInfo']['selPop'],
-                                        'sel_gen': hapset_replica_info['modelInfo']['sweepInfo']['selGen'],
-                                        'sel_beg_pop': hapset_replica_info['modelInfo']['sweepInfo']['selBegPop'],
-                                        'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
-                                        'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
-                                        'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
-    all_hapset_dfs = pd.concat(hapset_dfs)
-    print(all_hapset_dfs.columns)
-    all_hapset_dfs.set_index(['hapset_id', 'pos'], verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv.gz', na_rep='nan', sep='\t')
-    pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True).to_csv(inps['experimentId']+'.metadata.tsv.gz',
-                                                                                                            na_rep='nan', sep='\t')
-
+    
+    pd.set_option('io.hdf.default_format','table')
+    with pd.HDFStore(inps['experimentId']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
+        for hapset_compstats_tsv, hapset_replica_info in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
+            hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
+            hapset_id = hapset_compstats['hapset_id'].iat[0]
+            hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
+            #hapset_dfs.append(hapset_compstats)
+            store.append('hapset_data', hapset_compstats)
+            hapset_metadata_records.append({'hapset_id': hapset_id,
+                                            'is_sim': True,
+                                            'start_pos:': 0,
+                                            'model_id': hapset_replica_info['modelInfo']['modelId'],
+                                            'sel_pop': hapset_replica_info['modelInfo']['sweepInfo']['selPop'],
+                                            'sel_gen': hapset_replica_info['modelInfo']['sweepInfo']['selGen'],
+                                            'sel_beg_pop': hapset_replica_info['modelInfo']['sweepInfo']['selBegPop'],
+                                            'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
+                                            'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
+                                            'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
+    #all_hapset_dfs = pd.concat(hapset_dfs)
+    #print(all_hapset_dfs.columns)
+    #all_hapset_dfs.set_index(['hapset_id', 'pos'], verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv.gz', na_rep='nan', sep='\t')
+        hapset_metadata = pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True)
+        store.append('hapset_metadata', hapset_metadata)
+        #hapsets_metadata.to_csv(inps['experimentId']+'.metadata.tsv.gz', na_rep='nan', sep='\t')
+        
+    #save_hapset_data_and_metadata_to_hdf5()
+    
 
 # end: def normalize_and_collate_scores(args)
 
