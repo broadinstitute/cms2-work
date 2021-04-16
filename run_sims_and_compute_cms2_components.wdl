@@ -134,7 +134,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int local_disk_gb = 50
     File get_pops_info_script = "./get_pops_info.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
-    String docker = "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
   }
 
 # ** Bookkeeping calls
@@ -175,8 +175,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     mem_base_gb=mem_base_gb,
     mem_per_thread_gb=mem_per_thread_gb,
     local_disk_gb=local_disk_gb,
-    get_pops_info_script=get_pops_info_script,
-    docker=docker
+    get_pops_info_script=get_pops_info_script
   }
 
 # ** Compute normalization stats
