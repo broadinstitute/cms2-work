@@ -413,7 +413,7 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
         chk(pd.index.is_monotonic_increasing, f'Bad {name} index: not monotonically increasing')
         descr_df(pd, name)
 
-    hapset_dfs = []
+    #hapset_dfs = []
     hapset_metadata_records = []
     
     pd.set_option('io.hdf.default_format','table')
@@ -422,8 +422,8 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
             hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
             hapset_id = hapset_compstats['hapset_id'].iat[0]
             hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
-            hapset_dfs.append(hapset_compstats)
-            #store.append('hapset_data', hapset_compstats)
+            #hapset_dfs.append(hapset_compstats)
+            store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': 64})
             hapset_metadata_records.append({'hapset_id': hapset_id,
                                             'is_sim': True,
                                             'start_pos:': 0,
@@ -434,8 +434,8 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
                                             'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
                                             'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
                                             'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
-        all_hapset_dfs = pd.concat(hapset_dfs)
-        store.append('hapset_data', all_hapset_dfs)
+        #all_hapset_dfs = pd.concat(hapset_dfs)
+        #store.append('hapset_data', all_hapset_dfs)
     #print(all_hapset_dfs.columns)
     #all_hapset_dfs.set_index(['hapset_id', 'pos'], verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv.gz', na_rep='nan', sep='\t')
         hapset_metadata = pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True)
