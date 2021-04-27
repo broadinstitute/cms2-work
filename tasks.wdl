@@ -12,12 +12,9 @@ task compute_one_pop_cms2_components {
     Int sel_pop
 
     File script
-    Int threads
-    Int mem_base_gb
-    Int mem_per_thread_gb
-    Int local_disk_gb
     String docker
     Int preemptible
+    ComputeResources compute_resources
   }
 
   String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop
@@ -34,7 +31,7 @@ task compute_one_pop_cms2_components {
 
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string "~{out_basename}" \
-      --out-basename "~{out_basename}" --sel-pop ~{sel_pop} --threads ~{threads} --components ihs nsl ihh12 delihh derFreq
+      --out-basename "~{out_basename}" --sel-pop ~{sel_pop} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
   >>>
 
   output {
@@ -44,16 +41,15 @@ task compute_one_pop_cms2_components {
     File delihh = delihh_out_fname
     File derFreq = derFreq_out_fname
 
-    Int threads_used = threads
     File script_used = script_used_name
   }
 
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: preemptible
-    memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
-    cpu: threads
-    disks: "local-disk " + local_disk_gb + " LOCAL"
+    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
+    cpu: select_first([compute_resources.cpus, 1])
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
   }
 }
 

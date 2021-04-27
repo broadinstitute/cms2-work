@@ -33,6 +33,8 @@ workflow cms2_main {
 
 # *** Component stats computation params
     n_bins: "Number of frequency bins for normalizing iHS, nSL and delIHH component statistics."
+# **** Computational limits and resources for component stats computation
+    
   }
 
 # ** inputs

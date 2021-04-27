@@ -27,6 +27,12 @@ workflow component_stats_for_sel_sims_wf {
     Int local_disk_gb = 50
     String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     Int preemptible
+
+    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
   }
 
   Int n_bins_ihh12 = 1
@@ -45,10 +51,7 @@ workflow component_stats_for_sel_sims_wf {
 	region_haps_tar_gz=sel_sim_region_haps_tar_gz,
 
 	script=compute_components_script,
-	threads=threads,
-	mem_base_gb=mem_base_gb,
-	mem_per_thread_gb=mem_per_thread_gb,
-	local_disk_gb=local_disk_gb,
+	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
 	docker=docker,
 	preemptible=preemptible
       }

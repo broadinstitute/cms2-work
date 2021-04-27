@@ -80,3 +80,13 @@ struct NormalizeAndCollateInput {
     Int n_bins_delihh
     Int n_bins_xpehh
 }
+
+struct ComputeResources {
+   Int? mem_gb
+   Int? cpus
+   Int? local_storage_gb
+}
+
+struct AllComputeResources {
+  ComputeResources compute_resources_for_compute_one_pop_cms2_components
+}
