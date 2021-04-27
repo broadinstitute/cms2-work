@@ -1,7 +1,7 @@
 version 1.0
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210407-1304-add-sim-info-to-collate.org--5ab0c750e783cd89555cd6489bc71d716d4f9d72/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210407-1304-add-sim-info-to-collate.org--5ab0c750e783cd89555cd6489bc71d716d4f9d72/tasks.wdl"
 
 workflow compute_normalization_stats_wf {
   input {
@@ -9,7 +9,7 @@ workflow compute_normalization_stats_wf {
     PopsInfo pops_info
     Array[File] neut_sim_region_haps_tar_gzs
 
-    File compute_components_script = "./remodel_components.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210407-1304-add-sim-info-to-collate.org/5ab0c750e783cd89555cd6489bc71d716d4f9d72/remodel_components.py"
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
@@ -19,7 +19,7 @@ workflow compute_normalization_stats_wf {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File get_pops_info_script = "./get_pops_info.py"
+    File get_pops_info_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210407-1304-add-sim-info-to-collate.org/5ab0c750e783cd89555cd6489bc71d716d4f9d72/get_pops_info.py"
     String docker = "quay.io/ilya_broad/cms@1sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     Int preemptible
   }  # end: input
