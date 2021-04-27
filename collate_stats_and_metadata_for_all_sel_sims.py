@@ -450,3 +450,4 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
 if __name__=='__main__':
   #compute_component_scores(parse_args())
   collate_stats_and_metadata_for_all_sel_sims(parse_args())
+
