@@ -87,6 +87,7 @@ struct ComputeResources {
    Int? local_storage_gb
 }
 
-struct AllComputeResources {
-  ComputeResources compute_resources_for_compute_one_pop_cms2_components
-}
+# struct AllComputeResources {
+#   ComputeResources compute_one_pop_cms2_components
+#   ComputeResources compute_two_pop_cms2_components
+# }

@@ -28,6 +28,11 @@ workflow compute_normalization_stats_wf {
       cpus: 1,
       local_storage_gb: 50
     }
+    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
   }  # end: input
 
   Int n_bins_ihh12 = 1
@@ -84,10 +89,7 @@ workflow compute_normalization_stats_wf {
 	     region_haps_tar_gz=neut_sim_region_haps_tar_gz,
 	     
 	     script=compute_components_script,
-	     threads=threads,
-	     mem_base_gb=mem_base_gb,
-	     mem_per_thread_gb=mem_per_thread_gb,
-	     local_disk_gb=local_disk_gb,
+	     compute_resources=compute_resources_for_compute_two_pop_cms2_components,
 	     docker=docker,
 	     preemptible=preemptible
 	   }

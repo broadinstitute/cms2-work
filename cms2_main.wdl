@@ -1,6 +1,6 @@
 version 1.0
 
-
+import "./structs.wdl"
 import "./run_sims_and_compute_cms2_components.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
@@ -33,8 +33,7 @@ workflow cms2_main {
 
 # *** Component stats computation params
     n_bins: "Number of frequency bins for normalizing iHS, nSL and delIHH component statistics."
-# **** Computational limits and resources for component stats computation
-    
+# **** Computational limits and resources for component stats computation    
   }
 
 # ** inputs
@@ -60,6 +59,17 @@ workflow cms2_main {
     String       memoryPerBlock = "3 GB"
 
     Int n_bins = 20
+
+    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
+    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
   }
 
   call run_sims_and_compute_cms2_components.run_sims_and_compute_cms2_components_wf as main_call {
@@ -77,7 +87,10 @@ workflow cms2_main {
 
     numRepsPerBlock=numRepsPerBlock,
     numCpusPerBlock=numCpusPerBlock,
-    memoryPerBlock=memoryPerBlock
+    memoryPerBlock=memoryPerBlock,
+
+    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
+    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
   }
 
 # ** Workflow outputs

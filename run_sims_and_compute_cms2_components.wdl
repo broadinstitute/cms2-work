@@ -135,6 +135,18 @@ workflow run_sims_and_compute_cms2_components_wf {
     File get_pops_info_script = "./get_pops_info.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
     String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+
+    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
+    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
+
   }
 
 # ** Bookkeeping calls
@@ -190,10 +202,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     n_bins_nsl=n_bins_nsl,
     n_bins_delihh=n_bins_delihh,
 
-    threads=threads,
-    mem_base_gb=mem_base_gb,
-    mem_per_thread_gb=mem_per_thread_gb,
-    local_disk_gb=local_disk_gb,
+    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
+    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
     docker=docker,
     preemptible=preemptible
   }
@@ -216,10 +226,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     norm_bins_delihh=compute_normalization_stats_wf.norm_bins_delihh,
     norm_bins_xpehh=compute_normalization_stats_wf.norm_bins_xpehh,
 
-    threads=threads,
-    mem_base_gb=mem_base_gb,
-    mem_per_thread_gb=mem_per_thread_gb,
-    local_disk_gb=local_disk_gb,
+    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
+    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
     docker=docker,
     preemptible=preemptible
   }
