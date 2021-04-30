@@ -354,11 +354,20 @@ def normalize_and_collate_scores(args):
             inps[inp] = local_fname
         return inps[inp]
 
-    make_local('ihs_out')
-    make_local('delihh_out')
-    make_local('nsl_out')
-    make_local('ihh12_out')
-    make_local('xpehh_out')
+    for component in ('ihs_out', 'delihh_out', 'nsl_out', 'ihh12_out', 'xpehh_out', 'derFreq_out'):
+        make_local(component)
+
+    def chk_idx(pd, name):
+        chk(pd.index.is_unique, f'Bad {name} index: has non-unique values')
+        chk(pd.index.is_monotonic_increasing, f'Bad {name} index: not monotonically increasing')
+        descr_df(pd, name)
+
+    collated = None
+
+    derFreq = pd.read_table(inps["derFreq_out"], low_memory=False, index_col='pos')
+    chk_idx(derFreq, 'derFreq')
+
+    collated = derFreq if collated is None else collated.join(derFreq, how='outer')
 
     execute(f'norm --ihs --bins {inps["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} '
             f'--files {inps["ihs_out"]} '
@@ -368,11 +377,9 @@ def normalize_and_collate_scores(args):
                                names='id pos p1 ihh1 ihh2 ihs ihsnormed ihs_outside_cutoff'.split(),
                                index_col='pos',
                                low_memory=False).add_prefix('ihs_')
-    chk(not ihs_normed.index.has_duplicates, 'ihs index has duplicates')
+    chk_idx(ihs_normed, 'ihs_normed')
 
-    descr_df(ihs_normed, 'ihs_normed')
-
-    collated = ihs_normed
+    collated = collated.join(ihs_normed, how='outer')
 
     execute(f'norm --ihs --bins {inps["n_bins_delihh"]} --load-bins {inps["norm_bins_delihh"]} '
             f'--files {inps["delihh_out"]} '
@@ -382,9 +389,7 @@ def normalize_and_collate_scores(args):
                                   names='id pos p1 ihh1 ihh2 delihh delihhnormed delihh_outside_cutoff'.split(),
                                   index_col='pos',
                                   low_memory=False).add_prefix('delihh_')
-    chk(not delihh_normed.index.has_duplicates, 'delihh index has duplicates')
-    
-    descr_df(delihh_normed, 'delihh_normed')
+    chk_idx(delihh_normed, 'delihh_normed')
 
     collated = collated.join(delihh_normed, how='outer')
 
@@ -396,11 +401,9 @@ def normalize_and_collate_scores(args):
                                names='id pos p1 ihh1_nsl ihh2_nsl nsl nslnormed nsl_outside_cutoff'.split(),
                                index_col='pos',
                                low_memory=False).add_prefix('nsl_')
-    chk(not nsl_normed.index.has_duplicates, 'nsl index has duplicates')
-
-    descr_df(nsl_normed, 'nsl_normed')
+    chk_idx(nsl_normed, 'nsl_normed')
     collated = collated.join(nsl_normed, how='outer')
-    descr_df(collated, 'collated after nsl_normed')
+    chk_idx(collated, 'collated after nsl_normed')
 
     execute(f'norm --ihh12 --bins {inps["n_bins_ihh12"]} --load-bins {inps["norm_bins_ihh12"]} '
             f'--files {inps["ihh12_out"]} '
@@ -408,21 +411,18 @@ def normalize_and_collate_scores(args):
 
     ihh12_normed = pd.read_table(f'{inps["ihh12_out"]}.norm', index_col='pos',
                                  low_memory=False).add_prefix('ihh12_')
-    chk(not ihh12_normed.index.has_duplicates, 'ihh12 index has duplicates')
-    descr_df(ihh12_normed, 'ihh12_normed')
+    chk_idx(ihh12_normed, 'ihh12_normed')
     collated = collated.join(ihh12_normed, how='outer')
-    descr_df(collated, 'collated after ihh12_normed')
+    chk_idx(collated, 'collated after ihh12_normed')
 
     for other_pop_idx, (xpehh_out, norm_bins_xpehh) in enumerate(zip(inps["xpehh_out"], inps["norm_bins_xpehh"])):
         execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
                 f'--log {xpehh_out}.norm.log ')
         xpehh_normed = pd.read_table(xpehh_out+".norm", index_col='pos',
                                      low_memory=False).add_suffix(f'_{other_pop_idx}').add_prefix('xpop_')
-        chk(not xpehh_normed.index.has_duplicates, 'xpehh index has duplicates')
-
-        descr_df(xpehh_normed, f'xpehh_normed_{other_pop_idx}')
+        chk_idx(xpehh_normed, f'xpehh_normed_{other_pop_idx}')
         collated = collated.join(xpehh_normed, how='outer')
-        descr_df(collated, f'collated after xpehh_normed_{other_pop_idx}')
+        chk_idx(collated, f'collated after xpehh_normed_{other_pop_idx}')
 
     for other_pop_idx, fst_and_delDAF_out in enumerate(inps["fst_and_delDAF_out"]):
         execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
@@ -431,15 +431,15 @@ def normalize_and_collate_scores(args):
             pd.read_table(fst_and_delDAF_out, index_col='physPos',
                           low_memory=False).rename_axis('pos').add_suffix(f'_{other_pop_idx}')\
               .add_prefix('fst_and_delDAF_')
-        chk(not fst_and_delDAF_tsv.index.has_duplicates, 'fst_and_delDAF index has duplicates')
-
-        descr_df(fst_and_delDAF_tsv, f'fst_and_delDAF_tsv_{other_pop_idx}')
+        chk_idx(fst_and_delDAF_tsv, f'fst_and_delDAF_tsv_{other_pop_idx}')
         collated = collated.join(fst_and_delDAF_tsv, how='outer')
-        descr_df(collated, f'collated after fst_and_delDAF_tsv_{other_pop_idx}')
+        chk_idx(collated, f'collated after fst_and_delDAF_tsv_{other_pop_idx}')
 
     collated['max_xpehh'] = collated.filter(like='normxpehh').max(axis='columns')
     collated['mean_fst'] = collated.filter(like='Fst').mean(axis='columns')
     collated['mean_delDAF'] = collated.filter(like='delDAF').mean(axis='columns')
+
+    collated['hapset_id'] = inps['replica_id_str']
     descr_df(collated, 'collated final')
     collated.reset_index().to_csv(args.out_normed_collated, sep='\t', na_rep='nan', index=False)
 

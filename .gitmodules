@@ -1,5 +1,5 @@
 [submodule "fiss"]
-	path = fiss
+	path = terra/fiss
 	url = ../fiss.git
 	branch = is-fix-proj-list-output
 [submodule "cromwell-client"]
