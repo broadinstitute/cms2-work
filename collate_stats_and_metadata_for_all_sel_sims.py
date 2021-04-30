@@ -1,5 +1,7 @@
-##    run new, heterogenous demography model set; generate component scores
-##    02.21.2019
+#!/usr/bin/env python3
+
+"""Collate component stats and metadata for all selection sims.
+"""
 
 import argparse
 import csv
@@ -13,7 +15,6 @@ import gzip
 import io
 import json
 import logging
-import math
 import multiprocessing
 import os
 import os.path
@@ -25,6 +26,8 @@ import subprocess
 import sys
 import tempfile
 import time
+
+import pandas as pd
 
 # * Utils
 
@@ -149,66 +152,17 @@ def execute(action, **kw):
     finally:
         _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
 
-def chk(cond, msg):
+def chk(cond, msg='condition failed'):
     if not cond:
-        raise RuntimeError(f'chk failed: {msg}')
-
-def calc_delihh(readfilename, writefilename):
-    """given a selscan iHS file, parses it and writes delihh file"""
-    with open_or_gzopen(readfilename) as readfile, open(writefilename, 'w') as writefile:
-        for line in readfile:
-            entries = line.strip().split()
-            chk(len(entries) == 10, 'malformed ihh line')
-            # entries are: locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r
-            
-            # handle input with/without ihh details
-            # ihh_1 is derived, ihh_0 is ancestral
-            if len(entries) == 6:
-                    locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed = entries
-            elif len(entries) == 10:
-                    locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r  = entries
-            unstand_delIHH = math.fabs(float(ihh_1) - float(ihh_0)) 
-            
-            # write 6 columns for selscan norm
-            writefile.write('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, str(unstand_delIHH)]) + '\n')
-# end: def calc_delihh(readfilename, writefilename):
-
-def calc_derFreq(in_tped, out_derFreq_tsv):
-    """Calculate the derived allele frequency for each SNP in one population"""
-    with open(in_tped) as tped, open(out_derFreq_tsv, 'w') as out:
-        out.write('\t'.join(['chrom', 'snpId', 'pos', 'derFreq']) + '\n')
-        for line in tped:
-            chrom, snpId, genPos_cm, physPos_bp, alleles = line.strip().split(maxsplit=4)
-            n = [alleles.count(i) for i in ('0', '1')]
-            derFreq = n[0] / (n[0] + n[1])
-            out.write('\t'.join([chrom, snpId, physPos_bp, f'{derFreq:.2f}']) + '\n')
+        raise RuntimeError(f'Error: {msg}') 
 
 # * Parsing args
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    # parser.add_argument('model')
-    # parser.add_argument('selpop', type=int)
-    # parser.add_argument('irep', type=int)
-    # parser.add_argument('--cmsdir', required=True)
-    # parser.add_argument('--writedir', required=True)
-    # parser.add_argument('--simRecomFile')
-    # parser.add_argument('--pops', nargs='+')
-    parser.add_argument('--replica-info')
-    parser.add_argument('--replica-id-string')
-    parser.add_argument('--out-basename', required=True, help='base name for output files')
-    parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
-    parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq'),
-                        nargs='+', help='which component tests to compute')
-    parser.add_argument('--threads', type=int, default=1, help='selscan threads')
 
-    # parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
-    # parser.add_argument('--nsl-bins', help='use nsl bins for normalization')
-    # parser.add_argument('--ihh12-bins', help='use ihh12 bins for normalization')
-    # parser.add_argument('--n-bins-ihs', type=int, default=100, help='number of ihs bins')
-    # parser.add_argument('--n-bins-nsl', type=int, default=100, help='number of nsl bins')
-    
+    parser.add_argument('--input-json', required=True, help='inputs passed as json')
+
     return parser.parse_args()
 
 # * orig_main
@@ -317,7 +271,7 @@ def orig_main(args):
 
 def compute_component_scores(args):
     args.threads = min(args.threads, available_cpu_count())
-    #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
+    shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
     replicaInfo = _json_loadf(args.replica_info)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     sel_pop_idx = pop_id_to_idx[args.sel_pop]
@@ -327,28 +281,9 @@ def compute_component_scores(args):
         f'selscan --threads {args.threads} --tped {sel_pop_tped} ' \
         f'--out {args.out_basename}'
     for component in args.components:
-        if component in ('ihs', 'ihh12', 'nsl', 'xpehh'):
-            alt_pop_tped = '' if component not in ('xpehh',) else \
-                f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
-            ihs_detail = '' if component != 'ihs' else ' --ihs-detail '
-            cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component} {ihs_detail}'
-            execute(cmd)
-
-    if 'delihh' in args.components:
-        if 'ihs' not in args.components:
-            raise RuntimeError('To compute delihh must first compute ihs')
-        calc_delihh(readfilename=f'{args.out_basename}.ihs.out',
-                    writefilename=f'{args.out_basename}.delihh.out')
-
-    if 'fst' in args.components or 'delDAF' in args.components:
-        fst_and_delDAF_out_fname = args.out_basename + '.fst_and_delDAF.tsv'
-        cmd = \
-            f'freqs_stats {sel_pop_tped} {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} ' \
-            f' {fst_and_delDAF_out_fname}'
+        alt_pop_tped = '' if component not in ('xpehh',) else f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
+        cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component}'
         execute(cmd)
-
-    if 'derFreq' in args.components:
-        calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=args.out_basename+'.derFreq.tsv')
 
     if False:
         execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
@@ -385,6 +320,134 @@ def compute_component_scores(args):
     #             f'--log {args.replica_id_string}.ihh12.out.norm.log ')
     # else:
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
- 
+
+def save_hapset_data_and_metadata_to_hdf5(hapsets_data, hapsets_metadata, out_hdf5):
+    """Save all hapset data (component stats) and metadata to one hdf5 store.
+
+Layout:
+
+.
+├── version_info
+|   ├── terra_workflow_id
+|   └── freeze_date
+├── component_info
+|   └── component_score_keys
+├── meta_data
+|   ├── hap_set_ID
+|   ├── pressured_population
+|   ├── selection_coefficient
+|   ├── time_under_selection
+|   ├── allele_age
+|   ├── demographic_model
+|   ├── physical_chr
+|   ├── physical_start
+|   ├── physical_end
+|   └── database
+└── data
+    ├── {hap_set_ID_1}
+    |   ├── YRI
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   ├── CEU
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   ├── CHB
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   └── BEB
+    |       ├── physical_position
+    |       ├── component_1
+    |       ...
+    |       └── component_n
+     ...
+    └── {hap_set_ID_N}
+        ├── YRI
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        ├── CEU
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        ├── CHB
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        └── BEB
+            ├── physical_position
+            ├── component_1
+            ...
+            └── component_n  
+
+"""
+    pd.set_option('io.hdf.default_format','table')
+    with pd.HDFStore(out_hdf5, complevel=9) as store:
+        store['data'] = hapsets_data
+        store['metadata'] = hapsets_metadata
+    
+
+def collate_stats_and_metadata_for_all_sel_sims(args):
+
+    def descr_df(df, msg):
+        """Describe a DataFrame"""
+        return
+        print('===BEG=======================\n', msg)
+        print(df.describe(), '\n')
+        df.info(verbose=True, null_counts=True)
+        print('===END=======================\n', msg)
+        
+
+    inps = _json_loadf(args.input_json)
+
+    def chk_idx(pd, name):
+        chk(pd.index.is_unique, f'Bad {name} index: has non-unique values')
+        chk(pd.index.is_monotonic_increasing, f'Bad {name} index: not monotonically increasing')
+        descr_df(pd, name)
+
+    #hapset_dfs = []
+    hapset_metadata_records = []
+    
+    pd.set_option('io.hdf.default_format','table')
+    with pd.HDFStore(inps['experimentId']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
+        for hapset_compstats_tsv, hapset_replica_info in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
+            hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
+            hapset_id = hapset_compstats['hapset_id'].iat[0]
+            hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
+            #hapset_dfs.append(hapset_compstats)
+            store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': 64})
+            hapset_metadata_records.append({'hapset_id': hapset_id,
+                                            'is_sim': True,
+                                            'start_pos:': 0,
+                                            'model_id': hapset_replica_info['modelInfo']['modelId'],
+                                            'sel_pop': hapset_replica_info['modelInfo']['sweepInfo']['selPop'],
+                                            'sel_gen': hapset_replica_info['modelInfo']['sweepInfo']['selGen'],
+                                            'sel_beg_pop': hapset_replica_info['modelInfo']['sweepInfo']['selBegPop'],
+                                            'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
+                                            'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
+                                            'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
+        #all_hapset_dfs = pd.concat(hapset_dfs)
+        #store.append('hapset_data', all_hapset_dfs)
+    #print(all_hapset_dfs.columns)
+    #all_hapset_dfs.set_index(['hapset_id', 'pos'], verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv.gz', na_rep='nan', sep='\t')
+        hapset_metadata = pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True)
+        store.append('hapset_metadata', hapset_metadata)
+        #hapsets_metadata.to_csv(inps['experimentId']+'.metadata.tsv.gz', na_rep='nan', sep='\t')
+        
+    #save_hapset_data_and_metadata_to_hdf5()
+    
+
+# end: def normalize_and_collate_scores(args)
+
 if __name__=='__main__':
-  compute_component_scores(parse_args())
+  #compute_component_scores(parse_args())
+  collate_stats_and_metadata_for_all_sel_sims(parse_args())
+

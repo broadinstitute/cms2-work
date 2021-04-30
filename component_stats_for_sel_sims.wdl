@@ -1,11 +1,11 @@
 version 1.0
 
-import "./run_sims.wdl"
 import "./tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
+    String experimentId = "default"
     Array[Pair[ReplicaInfo, File]] selection_sims
     File compute_components_script = "./remodel_components.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
@@ -25,16 +25,27 @@ workflow component_stats_for_sel_sims_wf {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    String docker = "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     Int preemptible
+
+    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
+    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
   }
 
   Int n_bins_ihh12 = 1
   Int n_bins_xpehh = 1
 
   scatter(sel_sim in selection_sims) {
-    ReplicaInfo sel_sim_replicaInfo = sel_sim.left
-    if (sel_sim_replicaInfo.succeeded) {
+    if (sel_sim.left.succeeded) {
+      ReplicaInfo sel_sim_replicaInfo = sel_sim.left
       Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
       Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
       File sel_sim_region_haps_tar_gz = sel_sim.right
@@ -45,10 +56,7 @@ workflow component_stats_for_sel_sims_wf {
 	region_haps_tar_gz=sel_sim_region_haps_tar_gz,
 
 	script=compute_components_script,
-	threads=threads,
-	mem_base_gb=mem_base_gb,
-	mem_per_thread_gb=mem_per_thread_gb,
-	local_disk_gb=local_disk_gb,
+	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
 	docker=docker,
 	preemptible=preemptible
       }
@@ -61,10 +69,7 @@ workflow component_stats_for_sel_sims_wf {
 	    region_haps_tar_gz=sel_sim.right,
 
 	    script=compute_components_script,
-	    threads=threads,
-	    mem_base_gb=mem_base_gb,
-	    mem_per_thread_gb=mem_per_thread_gb,
-	    local_disk_gb=local_disk_gb,
+	    compute_resources=compute_resources_for_compute_two_pop_cms2_components,
 	    docker=docker,
 	    preemptible=preemptible
 	  }
@@ -75,6 +80,7 @@ workflow component_stats_for_sel_sims_wf {
       call tasks.normalize_and_collate {
 	input:
 	  inp = object {
+	    replica_info: sel_sim_replicaInfo,
 	    replica_id_str: sel_sim_replica_id_str,
 	    pop_ids: pops_info.pop_ids,
 	    pop_pairs: pops_info.pop_pairs,
@@ -85,6 +91,7 @@ workflow component_stats_for_sel_sims_wf {
 	    nsl_out: compute_one_pop_cms2_components_for_selection.nsl,
 	    ihh12_out: compute_one_pop_cms2_components_for_selection.ihh12,
 	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh,
+	    derFreq_out: compute_one_pop_cms2_components_for_selection.derFreq,
 
 	    xpehh_out: select_all(compute_two_pop_cms2_components_for_selection.xpehh),
 	    fst_and_delDAF_out: select_all(compute_two_pop_cms2_components_for_selection.fst_and_delDAF),
@@ -104,12 +111,19 @@ workflow component_stats_for_sel_sims_wf {
 	  },
 	  normalize_and_collate_script=normalize_and_collate_script
       } # call tasks.normalize_and_collate
-    }  # if (sel_sim_replicaInfo.succeeded) 
+    }  # if (sel_sim.left.succeeded) 
   }  # end: scatter(sel_sim in selection_sims)
 
-  output {	     
-     Array[File?] sel_normed_and_collated = normalize_and_collate.normed_collated_stats
-     Array[File?] sel_sim_region_haps_tar_gzs = sel_sim_region_haps_tar_gz
+  call tasks.collate_stats_and_metadata_for_all_sel_sims {
+    input:
+       inp = object {
+	 experimentId: experimentId,
+	 sel_normed_and_collated: select_all(normalize_and_collate.normed_collated_stats),
+	 replica_infos: select_all(sel_sim_replicaInfo)
+       }
+  }  
+
+  output {
+    File all_hapsets_component_stats_h5 = collate_stats_and_metadata_for_all_sel_sims.all_hapsets_component_stats_h5
   }
 }
-

@@ -1,5 +1,7 @@
 version 1.0
 
+import "./structs.wdl"
+
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
   meta {
@@ -10,12 +12,9 @@ task compute_one_pop_cms2_components {
     Int sel_pop
 
     File script
-    Int threads
-    Int mem_base_gb
-    Int mem_per_thread_gb
-    Int local_disk_gb
     String docker
     Int preemptible
+    ComputeResources compute_resources
   }
 
   String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop
@@ -25,13 +24,14 @@ task compute_one_pop_cms2_components {
   String nsl_out_fname = out_basename + ".nsl.out"
   String ihh12_out_fname = out_basename + ".ihh12.out"
   String delihh_out_fname = out_basename + ".delihh.out"
+  String derFreq_out_fname = out_basename + ".derFreq.tsv"
 
   command <<<
     tar xvfz "~{region_haps_tar_gz}"
 
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string "~{out_basename}" \
-      --out-basename "~{out_basename}" --sel-pop ~{sel_pop} --threads ~{threads} --components ihs nsl ihh12 delihh
+      --out-basename "~{out_basename}" --sel-pop ~{sel_pop} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
   >>>
 
   output {
@@ -39,17 +39,17 @@ task compute_one_pop_cms2_components {
     File nsl = nsl_out_fname
     File ihh12 = ihh12_out_fname
     File delihh = delihh_out_fname
+    File derFreq = derFreq_out_fname
 
-    Int threads_used = threads
     File script_used = script_used_name
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: preemptible
-    memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
-    cpu: threads
-    disks: "local-disk " + local_disk_gb + " LOCAL"
+    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
+    cpu: select_first([compute_resources.cpus, 1])
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
   }
 }
 
@@ -68,10 +68,7 @@ task compute_two_pop_cms2_components {
     #File? xpehh_bins
 
     File script
-    Int threads
-    Int mem_base_gb
-    Int mem_per_thread_gb
-    Int local_disk_gb
+    ComputeResources compute_resources
     String docker
     Int preemptible
   }
@@ -90,7 +87,7 @@ task compute_two_pop_cms2_components {
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --out-basename "~{out_basename}" \
         --replica-id-string "~{out_basename}" --sel-pop ~{sel_pop} --alt-pop ~{alt_pop} \
-        --threads ~{threads} --components xpehh fst delDAF
+        --threads ~{compute_resources.cpus} --components xpehh fst delDAF
   >>>
 
 # ** outputs
@@ -100,17 +97,16 @@ task compute_two_pop_cms2_components {
     File fst_and_delDAF = fst_and_delDAF_out_fname
     Int sel_pop_used = sel_pop
     Int alt_pop_used = alt_pop
-    Int threads_used = threads
     File script_used = script_used_name
   }
 
 # ** runtime
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: preemptible
-    memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
-    cpu: threads
-    disks: "local-disk " + local_disk_gb + " LOCAL"
+    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
+    cpu: select_first([compute_resources.cpus, 1])
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
   }
 }
 
@@ -160,7 +156,7 @@ task compute_one_pop_bin_stats_for_normalization {
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
@@ -211,7 +207,7 @@ task compute_two_pop_bin_stats_for_normalization {
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
@@ -220,31 +216,6 @@ task compute_two_pop_bin_stats_for_normalization {
 }
 
 # * task normalize_and_collate
-
-struct NormalizeAndCollateInput {
-    Array[Int] pop_ids
-    Array[Pair[Int,Int]] pop_pairs
-    String replica_id_str
-    Int sel_pop
-    File ihs_out
-    File nsl_out
-    File ihh12_out
-    File delihh_out
-    Array[File] xpehh_out
-    Array[File] fst_and_delDAF_out
-
-    File norm_bins_ihs
-    File norm_bins_nsl
-    File norm_bins_ihh12
-    File norm_bins_delihh
-    Array[File] norm_bins_xpehh
-
-    Int n_bins_ihs
-    Int n_bins_nsl
-    Int n_bins_ihh12
-    Int n_bins_delihh
-    Int n_bins_xpehh
-}
 
 task normalize_and_collate {
   meta {
@@ -262,8 +233,36 @@ task normalize_and_collate {
     File normed_collated_stats = normed_collated_stats_fname
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "1 GB"
+    cpu: 1
+    disks: "local-disk 1 LOCAL"
+  }
+}
+
+struct collate_stats_and_metadata_for_all_sel_sims_input {
+    String experimentId
+    Array[File] sel_normed_and_collated
+    Array[ReplicaInfo] replica_infos
+}
+
+task collate_stats_and_metadata_for_all_sel_sims {
+  meta {
+    description: "Collate component stats and metadata for all selection sims"
+  }
+  input {
+    collate_stats_and_metadata_for_all_sel_sims_input inp
+    File collate_stats_and_metadata_for_all_sel_sims_script = "./collate_stats_and_metadata_for_all_sel_sims.py"
+  }
+  command <<<
+    python3 "~{collate_stats_and_metadata_for_all_sel_sims_script}" --input-json "~{write_json(inp)}" 
+  >>>
+  output {
+    File all_hapsets_component_stats_h5 = inp.experimentId+".all_component_stats.h5"
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    memory: "16 GB"
     cpu: 1
     disks: "local-disk 1 LOCAL"
   }
@@ -287,7 +286,7 @@ task create_tar_gz {
     File out_tar_gz = out_fname_tar_gz
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 LOCAL"

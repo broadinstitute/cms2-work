@@ -1,0 +1,4 @@
+#+TITLE: is-branch-info
+
+This branch collects branch-info/*.org files describing the branches, so that it should always have the most
+up-to-date list of branches and their descriptions.

@@ -134,7 +134,19 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int local_disk_gb = 50
     File get_pops_info_script = "./get_pops_info.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
-    String docker = "quay.io/ilya_broad/cms@sha256:a02b540e5d5265a917d55ed80796893b448757a7cacb8b6e30212400e349489a"  # selscan=1.3.0a09
+    String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+
+    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
+    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
+      mem_gb: 4,
+      cpus: 1,
+      local_storage_gb: 50
+    }
+
   }
 
 # ** Bookkeeping calls
@@ -175,8 +187,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     mem_base_gb=mem_base_gb,
     mem_per_thread_gb=mem_per_thread_gb,
     local_disk_gb=local_disk_gb,
-    get_pops_info_script=get_pops_info_script,
-    docker=docker
+    get_pops_info_script=get_pops_info_script
   }
 
 # ** Compute normalization stats
@@ -191,10 +202,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     n_bins_nsl=n_bins_nsl,
     n_bins_delihh=n_bins_delihh,
 
-    threads=threads,
-    mem_base_gb=mem_base_gb,
-    mem_per_thread_gb=mem_per_thread_gb,
-    local_disk_gb=local_disk_gb,
+    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
+    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
     docker=docker,
     preemptible=preemptible
   }
@@ -202,6 +211,7 @@ workflow run_sims_and_compute_cms2_components_wf {
 # ** Component stats for selection sims
   call component_stats_for_sel_sims.component_stats_for_sel_sims_wf {
     input:
+    experimentId=experimentId,
     modelId=modelId,
     selection_sims = sims_wf.selection_sims,
     pops_info = sims_wf.pops_info,
@@ -216,10 +226,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     norm_bins_delihh=compute_normalization_stats_wf.norm_bins_delihh,
     norm_bins_xpehh=compute_normalization_stats_wf.norm_bins_xpehh,
 
-    threads=threads,
-    mem_base_gb=mem_base_gb,
-    mem_per_thread_gb=mem_per_thread_gb,
-    local_disk_gb=local_disk_gb,
+    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
+    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
     docker=docker,
     preemptible=preemptible
   }
@@ -236,8 +244,9 @@ workflow run_sims_and_compute_cms2_components_wf {
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
 # *** Component scores
-    Array[File?] sel_normed_and_collated = component_stats_for_sel_sims_wf.sel_normed_and_collated
-    Array[File?] sel_sim_region_haps_tar_gzs = component_stats_for_sel_sims_wf.sel_sim_region_haps_tar_gzs
+    #Array[File?] sel_normed_and_collated = component_stats_for_sel_sims_wf.sel_normed_and_collated
+    #Array[File?] sel_sim_region_haps_tar_gzs = component_stats_for_sel_sims_wf.sel_sim_region_haps_tar_gzs
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
+    File all_hapsets_component_stats_h5 = component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5
   }
 }
