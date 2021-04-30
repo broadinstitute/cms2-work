@@ -1,14 +1,14 @@
 version 1.0
 
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-master--630b7b96156fd5f16c080d5ed2f78a7e986d49a4/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
     String experimentId = "default"
     Array[Pair[ReplicaInfo, File]] selection_sims
-    File compute_components_script = "./remodel_components.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/master/630b7b96156fd5f16c080d5ed2f78a7e986d49a4/remodel_components.py"
+    File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/master/630b7b96156fd5f16c080d5ed2f78a7e986d49a4/norm_and_collate.py"
     PopsInfo pops_info
 
     Int n_bins_ihs = 20
