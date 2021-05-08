@@ -1,14 +1,14 @@
 [submodule "dockstore-tool-cosi2"]
 	path = dockstore-tool-cosi2
-	url = git@github.com:broadinstitute/dockstore-tool-cosi2.git
+	url = ../dockstore-tool-cosi2.git
 [submodule "cosi2"]
 	path = cosi2
-	url = git@github.com:broadinstitute/cosi2.git
+	url = ../cosi2.git
 	branch = is-add-output-of-params
 [submodule "dockstore-tool-selscan"]
 	path = dockstore-tool-selscan
-	url = git@github.com:broadinstitute/dockstore-tool-selscan.git
+	url = ../dockstore-tool-selscan.git
 [submodule "cms"]
 	path = cms
-	url = git@github.com:broadinstitute/cms.git
+	url = ../cms.git
 	branch = is-cms2-new
