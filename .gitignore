@@ -5,3 +5,4 @@ gcloud-config.tar.gz
 __pycache__/
 womtool-*.jar
 *~
+tmp/**
