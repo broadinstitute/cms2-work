@@ -33,6 +33,10 @@ branches:
 stages:
   - main
 
+branches:
+  except:
+    - is-branch-info
+
 jobs:
   fast_finish: true
   include:
