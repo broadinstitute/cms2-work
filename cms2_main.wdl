@@ -60,6 +60,8 @@ workflow cms2_main {
 
     Int n_bins = 20
 
+    Map include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
+
     ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
       mem_gb: 4,
       cpus: 1,
@@ -88,6 +90,8 @@ workflow cms2_main {
     numRepsPerBlock=numRepsPerBlock,
     numCpusPerBlock=numCpusPerBlock,
     memoryPerBlock=memoryPerBlock,
+
+    include_components=include_components,
 
     compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
     compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
