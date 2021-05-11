@@ -60,7 +60,7 @@ workflow cms2_main {
 
     Int n_bins = 20
 
-    Map include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
+    Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
 
     ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
       mem_gb: 4,

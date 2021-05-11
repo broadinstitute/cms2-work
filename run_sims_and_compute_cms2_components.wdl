@@ -128,7 +128,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int n_bins_nsl = 20
     Int n_bins_delihh = 20
 
-    Map include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
+    Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
     
     Int threads = 1
     Int mem_base_gb = 0
