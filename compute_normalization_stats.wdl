@@ -24,14 +24,14 @@ workflow compute_normalization_stats_wf {
     Int preemptible
 
     ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
-      mem_gb: 4,
+      mem_gb: 1,
       cpus: 1,
-      local_storage_gb: 50
+      local_storage_gb: 10
     }
     ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
-      mem_gb: 4,
+      mem_gb: 1,
       cpus: 1,
-      local_storage_gb: 50
+      local_storage_gb: 10
     }
   }  # end: input
 
