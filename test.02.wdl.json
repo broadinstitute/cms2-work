@@ -3,8 +3,8 @@
     "cms2_main.nreps": "4",
     "cms2_main.numRepsPerBlock": "2",
     "cms2_main.paramFile_demographic_model": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/defdef15_hard_sel1_common.citest.par\"",
-    "cms2_main.paramFile_neutral": "\"./test.neutral.cosiParams\"",
-    "cms2_main.paramFiles_selection": "[\"./sel1_origin1.par\", \"./sel3_origin2.par\"]",
-    "cms2_main.recombFile": "\"./test_recom.recom\""
+    "cms2_main.paramFile_neutral": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210430-1631-pick-stats-to-compute/cc6860277da2314fa9bb3a4d24d72117b67f533d/test.neutral.cosiParams\"",
+    "cms2_main.paramFiles_selection": "[\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210430-1631-pick-stats-to-compute/cc6860277da2314fa9bb3a4d24d72117b67f533d/sel1_origin1.par\", \"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210430-1631-pick-stats-to-compute/cc6860277da2314fa9bb3a4d24d72117b67f533d/sel3_origin2.par\"]",
+    "cms2_main.recombFile": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210430-1631-pick-stats-to-compute/cc6860277da2314fa9bb3a4d24d72117b67f533d/test_recom.recom\""
 }
 
