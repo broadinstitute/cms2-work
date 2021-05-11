@@ -3,8 +3,8 @@
     "cms2_main.nreps": 4,
     "cms2_main.numRepsPerBlock": 2,
     "cms2_main.paramFile_demographic_model": "default_112115_825am__demography.par",
-    "cms2_main.paramFile_neutral": "./test.neutral.cosiParams",
-    "cms2_main.paramFiles_selection": ["./sel1_origin1.par", "./sel3_origin2.par"],
-    "cms2_main.recombFile": "./test_recom.recom"
+    "cms2_main.paramFile_neutral": "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210506-1732-collate-neutral-sims/295666c50e678ac81f0782d23a82556a2682228f/test.neutral.cosiParams",
+    "cms2_main.paramFiles_selection": ["gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210506-1732-collate-neutral-sims/295666c50e678ac81f0782d23a82556a2682228f/sel1_origin1.par", "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210506-1732-collate-neutral-sims/295666c50e678ac81f0782d23a82556a2682228f/sel3_origin2.par"],
+    "cms2_main.recombFile": "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210506-1732-collate-neutral-sims/295666c50e678ac81f0782d23a82556a2682228f/test_recom.recom"
 }
 
