@@ -1,7 +1,7 @@
 version 1.0
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210430-1631-pick-stats-to-compute--d0dcdf7f5eadec699473fd8e3c9550250692b11d/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210430-1631-pick-stats-to-compute--d0dcdf7f5eadec699473fd8e3c9550250692b11d/tasks.wdl"
 
 # * workflow compute_normalization_stats_wf
 workflow compute_normalization_stats_wf {
@@ -23,7 +23,7 @@ workflow compute_normalization_stats_wf {
     PopsInfo pops_info
     Array[File] neut_sim_region_haps_tar_gzs
 
-    File compute_components_script = "./remodel_components.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210430-1631-pick-stats-to-compute/d0dcdf7f5eadec699473fd8e3c9550250692b11d/remodel_components.py"
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
