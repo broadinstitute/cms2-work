@@ -275,7 +275,7 @@ def compute_component_scores(args):
     shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
     replicaInfo = _json_loadf(args.replica_info)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
-    sel_pop_idx = pop_id_to_idx[args.sel_pop]
+    sel_pop_idx = pop_id_to_idx[args.sel_pop.pop_id]
     sel_pop_tped = replicaInfo["tpedFiles"][sel_pop_idx]
 
     selscan_cmd_base = \
@@ -286,21 +286,21 @@ def compute_component_scores(args):
         cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component}'
         execute(cmd)
 
-    if False:
-        execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-                f'--out {args.replica_id_string} ')
-        execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-                f'--out {args.replica_id_string} ')
-        execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-                f'--out {args.replica_id_string} ')
+    # if False:
+    #     execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+    #             f'--out {args.replica_id_string} ')
+    #     execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+    #             f'--out {args.replica_id_string} ')
+    #     execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+    #             f'--out {args.replica_id_string} ')
 
-    if False:
-        for alt_pop in replicaInfo['popIds']:
-            if alt_pop == args.sel_pop: continue
-            alt_pop_idx = pop_id_to_idx[alt_pop]
-            execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
-                    f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
-                    f'--out {args.replica_id_string}__altpop_{alt_pop} ')
+    # if False:
+    #     for alt_pop in replicaInfo['popIds']:
+    #         if alt_pop == args.sel_pop.pop_id: continue
+    #         alt_pop_idx = pop_id_to_idx[alt_pop]
+    #         execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+    #                 f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
+    #                 f'--out {args.replica_id_string}__altpop_{alt_pop} ')
 
     # if args.ihs_bins:
     #     execute(f'norm --ihs --bins {args.n_bins_ihs} --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '

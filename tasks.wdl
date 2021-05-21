@@ -9,7 +9,7 @@ task compute_one_pop_cms2_components {
   }
   input {
     File region_haps_tar_gz
-    Int sel_pop
+    Pop sel_pop
 
     File script
     String docker
@@ -17,7 +17,7 @@ task compute_one_pop_cms2_components {
     ComputeResources compute_resources
   }
 
-  String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop
+  String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop.pop_id
   String script_used_name = "script-used." + basename(script)
 
   String ihs_out_fname = out_basename + ".ihs.out"
@@ -31,7 +31,7 @@ task compute_one_pop_cms2_components {
 
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string "~{out_basename}" \
-      --out-basename "~{out_basename}" --sel-pop ~{sel_pop} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
+      --out-basename "~{out_basename}" --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
   >>>
 
   output {
@@ -62,8 +62,8 @@ task compute_two_pop_cms2_components {
   input {
 #    ReplicaInfo replicaInfo
     File region_haps_tar_gz
-    Int sel_pop
-    Int alt_pop
+    Pop sel_pop
+    Pop alt_pop
 
     #File? xpehh_bins
 
@@ -72,7 +72,7 @@ task compute_two_pop_cms2_components {
     String docker
     Int preemptible
   }
-  String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop + "__altpop_" + alt_pop
+  String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop.pop_id + "__altpop_" + alt_pop.pop_id
   String script_used_name = out_basename + ".script-used." + basename(script)
 
   String xpehh_out_fname = out_basename + ".xpehh.out"
@@ -86,7 +86,7 @@ task compute_two_pop_cms2_components {
 
     cp "~{script}" "~{script_used_name}"
     python3 "~{script}" --replica-info *.replicaInfo.json --out-basename "~{out_basename}" \
-        --replica-id-string "~{out_basename}" --sel-pop ~{sel_pop} --alt-pop ~{alt_pop} \
+        --replica-id-string "~{out_basename}" --sel-pop ~{sel_pop.pop_id} --alt-pop ~{alt_pop.pop_id} \
         --threads ~{compute_resources.cpus} --components xpehh fst delDAF
   >>>
 
@@ -95,8 +95,8 @@ task compute_two_pop_cms2_components {
     File xpehh = xpehh_out_fname
     File xpehh_log = xpehh_log_fname
     File fst_and_delDAF = fst_and_delDAF_out_fname
-    Int sel_pop_used = sel_pop
-    Int alt_pop_used = alt_pop
+    Pop sel_pop_used = sel_pop
+    Pop alt_pop_used = alt_pop
     File script_used = script_used_name
   }
 
@@ -118,7 +118,7 @@ task compute_one_pop_bin_stats_for_normalization {
   }
   input {
     String out_fnames_base
-    Int sel_pop
+    Pop sel_pop
     Array[File]+ ihs_out
     Array[File]+ delihh_out
     Array[File]+ nsl_out
@@ -171,8 +171,8 @@ task compute_two_pop_bin_stats_for_normalization {
   }
   input {
     String out_fnames_base
-    Int sel_pop
-    Int alt_pop
+    Pop sel_pop
+    Pop alt_pop
     Array[File]+ xpehh_out
     Int n_bins_xpehh
 
@@ -184,11 +184,11 @@ task compute_two_pop_bin_stats_for_normalization {
     Int preemptible
   }
 
-  String norm_bins_xpehh_fname = "${out_fnames_base}__selpop_${sel_pop}__altpop_${alt_pop}.norm_bins_xpehh.dat"
-  String norm_bins_xpehh_log_fname = "${out_fnames_base}__selpop_${sel_pop}__altpop_${alt_pop}.norm_bins_xpehh.dat"
+  String norm_bins_xpehh_fname = "${out_fnames_base}__selpop_${sel_pop.pop_id}__altpop_${alt_pop.pop_id}.norm_bins_xpehh.dat"
+  String norm_bins_xpehh_log_fname = "${out_fnames_base}__selpop_${sel_pop.pop_id}__altpop_${alt_pop.pop_id}.norm_bins_xpehh.dat"
 
-  String norm_bins_flip_pops_xpehh_fname = "${out_fnames_base}__selpop_${alt_pop}__altpop_${sel_pop}.norm_bins_xpehh.dat"
-  String norm_bins_flip_pops_xpehh_log_fname = "${out_fnames_base}__selpop_${alt_pop}__altpop_${sel_pop}.norm_bins_xpehh.log"
+  String norm_bins_flip_pops_xpehh_fname = "${out_fnames_base}__selpop_${alt_pop.pop_id}__altpop_${sel_pop.pop_id}.norm_bins_xpehh.dat"
+  String norm_bins_flip_pops_xpehh_log_fname = "${out_fnames_base}__selpop_${alt_pop.pop_id}__altpop_${sel_pop.pop_id}.norm_bins_xpehh.log"
 
   command <<<
     norm --xpehh --bins ~{n_bins_xpehh} --files @~{write_lines(xpehh_out)} --save-bins "~{norm_bins_xpehh_fname}" --only-save-bins \

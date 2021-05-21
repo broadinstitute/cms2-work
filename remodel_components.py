@@ -202,6 +202,7 @@ def parse_args():
     parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
+    #parser.add_argument('--out-json', required=True, help='json file describing the manifest of each file')
 
     # parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
     # parser.add_argument('--nsl-bins', help='use nsl bins for normalization')

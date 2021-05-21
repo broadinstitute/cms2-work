@@ -46,10 +46,10 @@ workflow component_stats_for_sel_sims_wf {
   scatter(sel_sim in selection_sims) {
     if (sel_sim.left.succeeded) {
       ReplicaInfo sel_sim_replicaInfo = sel_sim.left
-      Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
-      Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
+      Pop sel_pop = object { pop_id: sel_sim_replicaInfo.modelInfo.sweepInfo.selPop }
+      Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop.pop_id]
       File sel_sim_region_haps_tar_gz = sel_sim.right
-      String sel_sim_replica_id_str = modelId + "__selpop_" + sel_pop + "__rep_" + sel_sim_replicaInfo.replicaId.replicaNumGlobal
+      String sel_sim_replica_id_str = modelId + "__selpop_" + sel_pop.pop_id + "__rep_" + sel_sim_replicaInfo.replicaId.replicaNumGlobal
       call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
@@ -65,7 +65,7 @@ workflow component_stats_for_sel_sims_wf {
 	  call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
 	    input:
 	    sel_pop=sel_pop,
-	    alt_pop=pops_info.pop_ids[alt_pop_idx],
+	    alt_pop=pops_info.pops[alt_pop_idx],
 	    region_haps_tar_gz=sel_sim.right,
 
 	    script=compute_components_script,

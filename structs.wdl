@@ -1,5 +1,12 @@
 version 1.0
 
+# * struct Pop
+#
+# Identifier for one population.
+struct Pop {
+  Int pop_id
+}
+
 #
 # ** struct PopsInfo
 #
@@ -11,6 +18,7 @@ version 1.0
 struct PopsInfo {
     Array[Int] pop_ids  # population IDs, used throughout to identify populations
     Array[String] pop_names
+    Array[Pop] pops
     Map[Int,Int] pop_id_to_idx  # map from pop id to its index in pop_ids
     Map[Int,Array[Int]] pop_alts  # map from pop id to list of all other pop ids
     Array[Pair[Int,Int]] pop_pairs # all two-pop sets, for cross-pop comparisons
@@ -59,7 +67,7 @@ struct NormalizeAndCollateInput {
     Array[Int] pop_ids
     Array[Pair[Int,Int]] pop_pairs
     String replica_id_str
-    Int sel_pop
+    Pop sel_pop
     File ihs_out
     File nsl_out
     File ihh12_out
