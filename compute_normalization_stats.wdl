@@ -13,6 +13,8 @@ workflow compute_normalization_stats_wf {
 # ** inputs
     modelId: "(String) Id of the demographic model; used in naming output files."
     
+    hapsets_per_block: "(Int) Number of hapsets to process together when computing component scores"
+    
 # ** outputs
     
   }
@@ -29,7 +31,7 @@ workflow compute_normalization_stats_wf {
     Int n_bins_nsl = 20
     Int n_bins_delihh = 20
 
-    Int hapsetBlockSize = 2
+    Int hapset_block_size = 2
 
     Int threads = 1
     Int mem_base_gb = 0
@@ -57,17 +59,27 @@ workflow compute_normalization_stats_wf {
   Array[Pop] pops = pops_info.pops
   Int n_pops = length(pops)
 
-  scatter(sel_pop in pops) {
-    scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
-      call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
-	input:
-	sel_pop=sel_pop,
-	region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+  Int n_hapset_blocks = length(neut_sim_region_haps_tar_gzs) / hapset_block_size
 
-	script=compute_components_script,
-	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
-	docker=docker,
-	preemptible=preemptible
+  scatter(hapset_block_num in range(n_hapset_blocks)) {
+      scatter(hapset_block_offset in range(hapset_block_size)) {
+	Int idx = hapset_block_num * hapset_block_size + hapset_block_offset
+	File neut_hapset_haps_tar_gzs_in_block = neut_sim_region_haps_tar_gzs[idx]
+      }
+  }
+  scatter(sel_pop in pops) {
+    scatter(hapsets_block in neut_hapset_haps_tar_gzs_in_block) {
+      scatter(neut_sim_region_haps_tar_gz in hapsets_block) {
+	call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
+	  input:
+	  sel_pop=sel_pop,
+	  region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+
+	  script=compute_components_script,
+	  compute_resources=compute_resources_for_compute_one_pop_cms2_components,
+	  docker=docker,
+	  preemptible=preemptible
+	}
       }
     }
 
@@ -77,10 +89,10 @@ workflow compute_normalization_stats_wf {
       out_fnames_base = modelId + "__selpop_" + sel_pop.pop_id,
       sel_pop=sel_pop,
 
-      ihs_out=compute_one_pop_cms2_components_for_neutral.ihs,
-      nsl_out=compute_one_pop_cms2_components_for_neutral.nsl,
-      ihh12_out=compute_one_pop_cms2_components_for_neutral.ihh12,
-      delihh_out=compute_one_pop_cms2_components_for_neutral.delihh,
+      ihs_out=flatten(compute_one_pop_cms2_components_for_neutral.ihs),
+      nsl_out=flatten(compute_one_pop_cms2_components_for_neutral.nsl),
+      ihh12_out=flatten(compute_one_pop_cms2_components_for_neutral.ihh12),
+      delihh_out=flatten(compute_one_pop_cms2_components_for_neutral.delihh),
 
       n_bins_ihs=n_bins_ihs,
       n_bins_nsl=n_bins_nsl,
@@ -100,19 +112,21 @@ workflow compute_normalization_stats_wf {
    scatter(sel_pop_idx in range(n_pops)) {
      scatter(alt_pop_idx in range(n_pops)) {
        if (alt_pop_idx > sel_pop_idx) {
-	 scatter(neut_sim_region_haps_tar_gz in neut_sim_region_haps_tar_gzs) {
-	   call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
-	     input:
-	     sel_pop=pops[sel_pop_idx],
-	     alt_pop=pops[alt_pop_idx],
-	     region_haps_tar_gz=neut_sim_region_haps_tar_gz,
-	     
-	     script=compute_components_script,
-	     compute_resources=compute_resources_for_compute_two_pop_cms2_components,
-	     docker=docker,
-	     preemptible=preemptible
+	 scatter(hapsets_block in neut_hapset_haps_tar_gzs_in_block) {
+	   scatter(neut_sim_region_haps_tar_gz in hapsets_block) {
+	     call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
+	       input:
+	       sel_pop=pops[sel_pop_idx],
+	       alt_pop=pops[alt_pop_idx],
+	       region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+	       
+	       script=compute_components_script,
+	       compute_resources=compute_resources_for_compute_two_pop_cms2_components,
+	       docker=docker,
+	       preemptible=preemptible
+	     }
 	   }
-	 }
+         }
 
 	 call tasks.compute_two_pop_bin_stats_for_normalization {
 	   input:
@@ -120,7 +134,7 @@ workflow compute_normalization_stats_wf {
 	   sel_pop=pops[sel_pop_idx],
 	   alt_pop=pops[alt_pop_idx],
 
-	   xpehh_out=compute_two_pop_cms2_components_for_neutral.xpehh,
+	   xpehh_out=flatten(compute_two_pop_cms2_components_for_neutral.xpehh),
 
 	   n_bins_xpehh=n_bins_xpehh,
 
