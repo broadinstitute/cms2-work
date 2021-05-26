@@ -5,5 +5,11 @@ Workflows to run population genetics simulations and compute component scores fo
 * WDL workflow organization
 
   The top-level workflow is [[./cms2_main.wdl][cms2_main.wdl]] .  It is really a wrapper workflow, meant to hide many internal details/parameters.
+
+  
+* Docker images
+
+  Currently, the docker image of component score computation is selscan.
+  
   
 
