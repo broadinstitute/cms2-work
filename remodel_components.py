@@ -326,7 +326,7 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
 
     out_basename = os.path.basename(hapset_haps_tar_gz) + '__selpop_' + str(args.sel_pop)
     if args.alt_pop:
-        out_basename += '__altpop_' + args.alt_pop
+        out_basename += '__altpop_' + str(args.alt_pop)
 
     args.threads = min(args.threads, available_cpu_count())
     #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
