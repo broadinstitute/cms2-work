@@ -402,6 +402,7 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
 
 def parse_file_list(z):
+    z_orig = copy.deepcopy(z)
     z = list(z or [])
     result = []
     while z:
@@ -410,6 +411,8 @@ def parse_file_list(z):
             result.append(f)
         else:
             z.extend(slurp_file(f[1:]).strip().split('\n'))
+    _log.info(f'parse_file_list: parsed {z_orig} as {result}')
+    return result
 
 def compute_component_scores(args):
     for hapset_num, f in enumerate(parse_file_list(args.region_haps_tar_gzs)):
