@@ -322,7 +322,7 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
 
     hapset_dir = os.path.realpath(f'hapset{hapset_num}')
     execute(f'mkdir -p {hapset_dir}')
-    execute(f'tar -zvxf {f} -C {hapset_dir}/')
+    execute(f'tar -zvxf {hapset_haps_tar_gz} -C {hapset_dir}/')
 
     out_basename = os.path.basename(hapset_haps_tar_gz) + '__selpop_' + str(args.sel_pop)
     if args.alt_pop:
