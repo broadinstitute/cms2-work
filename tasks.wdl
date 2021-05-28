@@ -136,7 +136,7 @@ task compute_one_pop_cms2_components {
 
   command <<<
     python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
-      --out-basename "~{out_basename}" --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
+      --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
   >>>
 
   output {
@@ -164,7 +164,7 @@ task compute_two_pop_cms2_components {
 # ** inputs
   input {
 #    ReplicaInfo replicaInfo
-    Array[File] region_haps_tar_gz
+    Array[File] region_haps_tar_gzs
     Pop sel_pop
     Pop alt_pop
 
@@ -184,7 +184,7 @@ task compute_two_pop_cms2_components {
 
 # ** command
   command <<<
-    python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} --out-basename "~{out_basename}" \
+    python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
         --sel-pop ~{sel_pop.pop_id} --alt-pop ~{alt_pop.pop_id} \
         --threads ~{compute_resources.cpus} --components xpehh fst delDAF
   >>>

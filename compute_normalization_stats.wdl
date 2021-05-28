@@ -72,7 +72,7 @@ workflow compute_normalization_stats_wf {
       call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
 	input:
 	sel_pop=sel_pop,
-	region_haps_tar_gz=hapsets_block,
+	region_haps_tar_gzs=hapsets_block,
 
 	script=compute_components_script,
 	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
@@ -115,7 +115,7 @@ workflow compute_normalization_stats_wf {
 	     input:
 	     sel_pop=pops[sel_pop_idx],
 	     alt_pop=pops[alt_pop_idx],
-	     region_haps_tar_gz=hapsets_block,
+	     region_haps_tar_gzs=hapsets_block,
 	     
 	     script=compute_components_script,
 	     compute_resources=compute_resources_for_compute_two_pop_cms2_components,
