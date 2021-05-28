@@ -129,6 +129,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int n_bins_delihh = 20
 
     Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
+
+    Int hapset_block_size = 2
     
     Int threads = 1
     Int mem_base_gb = 0
@@ -203,6 +205,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     n_bins_ihs=n_bins_ihs,
     n_bins_nsl=n_bins_nsl,
     n_bins_delihh=n_bins_delihh,
+
+    hapset_block_size=hapset_block_size,
 
     compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
     compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,

@@ -58,6 +58,8 @@ workflow cms2_main {
     Int repTimeoutSeconds = 600
     String       memoryPerBlock = "3 GB"
 
+    Int hapset_block_size = 2
+
     Int n_bins = 20
 
     Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
@@ -92,6 +94,8 @@ workflow cms2_main {
     memoryPerBlock=memoryPerBlock,
 
     include_components=include_components,
+
+    hapset_block_size=hapset_block_size,
 
     compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
     compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
