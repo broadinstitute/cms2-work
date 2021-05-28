@@ -3,7 +3,7 @@ version 1.0
 import "./structs.wdl"
 
 # * task compute_one_pop_cms2_components
-task old_compute_one_pop_cms2_components {
+task compute_one_pop_cms2_components {
   meta {
     description: "Compute one-pop CMS2 component scores assuming selection in a given pop"
   }
@@ -11,7 +11,7 @@ task old_compute_one_pop_cms2_components {
     File region_haps_tar_gz
     Pop sel_pop
 
-    File script = "./old_remodel_components.py"
+    File script
     String docker
     Int preemptible
     ComputeResources compute_resources
@@ -54,7 +54,7 @@ task old_compute_one_pop_cms2_components {
 }
 
 # * task compute_two_pop_cms2_components_
-task old_compute_two_pop_cms2_components {
+task compute_two_pop_cms2_components {
   meta {
     description: "Compute cross-pop comparison CMS2 component scores"
   }
@@ -67,7 +67,7 @@ task old_compute_two_pop_cms2_components {
 
     #File? xpehh_bins
 
-    File script = "./old_remodel_components.py"
+    File script
     ComputeResources compute_resources
     String docker
     Int preemptible
@@ -98,104 +98,6 @@ task old_compute_two_pop_cms2_components {
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
     File script_used = script_used_name
-  }
-
-# ** runtime
-  runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
-    cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
-  }
-}
-
-
-# * task compute_one_pop_cms2_components
-task compute_one_pop_cms2_components {
-  meta {
-    description: "Compute one-pop CMS2 component scores assuming selection in a given pop"
-  }
-  input {
-    Array[File] region_haps_tar_gzs
-    Pop sel_pop
-
-    File script = "./remodel_components.py"
-    String docker
-    Int preemptible
-    ComputeResources compute_resources
-  }
-
-  #String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop.pop_id
-
-  # String ihs_out_fname = out_basename + ".ihs.out"
-  # String nsl_out_fname = out_basename + ".nsl.out"
-  # String ihh12_out_fname = out_basename + ".ihh12.out"
-  # String delihh_out_fname = out_basename + ".delihh.out"
-  # String derFreq_out_fname = out_basename + ".derFreq.tsv"
-
-  command <<<
-    python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
-      --out-basename "~{out_basename}" --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
-  >>>
-
-  output {
-    Array[File] ihs = glob("hapset[0-9]*/*.ihs.out")
-    Array[File] nsl = glob("hapset[0-9]*/*.nsl.out")
-    Array[File] ihh12 = glob("hapset[0-9]*/*.ihh12.out")
-    Array[File] delihh = glob("hapset[0-9]*/*.delihh.out")
-    Array[File] derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
-  }
-
-  runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
-    cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
-  }
-}
-
-# * task compute_two_pop_cms2_components_
-task compute_two_pop_cms2_components {
-  meta {
-    description: "Compute cross-pop comparison CMS2 component scores"
-  }
-# ** inputs
-  input {
-#    ReplicaInfo replicaInfo
-    Array[File] region_haps_tar_gz
-    Pop sel_pop
-    Pop alt_pop
-
-    #File? xpehh_bins
-
-    File script
-    ComputeResources compute_resources
-    String docker
-    Int preemptible
-  }
-  #String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop.pop_id + "__altpop_" + alt_pop.pop_id
-
-  #String xpehh_out_fname = out_basename + ".xpehh.out"
-  #String xpehh_log_fname = out_basename + ".xpehh.log"
-
-  #String fst_and_delDAF_out_fname = out_basename + ".fst_and_delDAF.tsv"
-
-# ** command
-  command <<<
-    python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} --out-basename "~{out_basename}" \
-        --sel-pop ~{sel_pop.pop_id} --alt-pop ~{alt_pop.pop_id} \
-        --threads ~{compute_resources.cpus} --components xpehh fst delDAF
-  >>>
-
-# ** outputs
-  output {
-    Array[File] xpehh = glob("hapset[0-9]*/*.xpehh.out")
-    Array[File] xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
-    Array[File] fst_and_delDAF = glob("hapset[0-9*/*.fst_and_delDAF.tsv")
-    Pop sel_pop_used = sel_pop
-    Pop alt_pop_used = alt_pop
   }
 
 # ** runtime

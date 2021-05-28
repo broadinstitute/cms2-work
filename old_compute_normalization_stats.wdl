@@ -69,15 +69,17 @@ workflow compute_normalization_stats_wf {
   }
   scatter(sel_pop in pops) {
     scatter(hapsets_block in neut_hapset_haps_tar_gzs_in_block) {
-      call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
-	input:
-	sel_pop=sel_pop,
-	region_haps_tar_gz=hapsets_block,
+      scatter(neut_sim_region_haps_tar_gz in hapsets_block) {
+	call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
+	  input:
+	  sel_pop=sel_pop,
+	  region_haps_tar_gz=neut_sim_region_haps_tar_gz,
 
-	script=compute_components_script,
-	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
-	docker=docker,
-	preemptible=preemptible
+	  script=compute_components_script,
+	  compute_resources=compute_resources_for_compute_one_pop_cms2_components,
+	  docker=docker,
+	  preemptible=preemptible
+	}
       }
     }
 
@@ -111,16 +113,18 @@ workflow compute_normalization_stats_wf {
      scatter(alt_pop_idx in range(n_pops)) {
        if (alt_pop_idx > sel_pop_idx) {
 	 scatter(hapsets_block in neut_hapset_haps_tar_gzs_in_block) {
-	   call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
-	     input:
-	     sel_pop=pops[sel_pop_idx],
-	     alt_pop=pops[alt_pop_idx],
-	     region_haps_tar_gz=hapsets_block,
-	     
-	     script=compute_components_script,
-	     compute_resources=compute_resources_for_compute_two_pop_cms2_components,
-	     docker=docker,
-	     preemptible=preemptible
+	   scatter(neut_sim_region_haps_tar_gz in hapsets_block) {
+	     call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
+	       input:
+	       sel_pop=pops[sel_pop_idx],
+	       alt_pop=pops[alt_pop_idx],
+	       region_haps_tar_gz=neut_sim_region_haps_tar_gz,
+	       
+	       script=compute_components_script,
+	       compute_resources=compute_resources_for_compute_two_pop_cms2_components,
+	       docker=docker,
+	       preemptible=preemptible
+	     }
 	   }
          }
 

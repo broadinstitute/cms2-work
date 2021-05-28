@@ -8,6 +8,7 @@ workflow component_stats_for_sel_sims_wf {
     String experimentId = "default"
     Array[Pair[ReplicaInfo, File]] selection_sims
     File compute_components_script = "./remodel_components.py"
+    File old_compute_components_script = "./old_remodel_components.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
     PopsInfo pops_info
 
@@ -50,25 +51,25 @@ workflow component_stats_for_sel_sims_wf {
       Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop.pop_id]
       File sel_sim_region_haps_tar_gz = sel_sim.right
       String sel_sim_replica_id_str = modelId + "__selpop_" + sel_pop.pop_id + "__rep_" + sel_sim_replicaInfo.replicaId.replicaNumGlobal
-      call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
+      call tasks.old_compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
 	region_haps_tar_gz=sel_sim_region_haps_tar_gz,
 
-	script=compute_components_script,
+	script=old_compute_components_script,
 	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
 	docker=docker,
 	preemptible=preemptible
       }
       scatter(alt_pop_idx in range(length(pops_info.pop_ids))) {
 	if (alt_pop_idx != sel_pop_idx) {
-	  call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
+	  call tasks.old_compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
 	    input:
 	    sel_pop=sel_pop,
 	    alt_pop=pops_info.pops[alt_pop_idx],
 	    region_haps_tar_gz=sel_sim.right,
 
-	    script=compute_components_script,
+	    script=old_compute_components_script,
 	    compute_resources=compute_resources_for_compute_two_pop_cms2_components,
 	    docker=docker,
 	    preemptible=preemptible
