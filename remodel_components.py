@@ -320,7 +320,7 @@ def orig_main(args):
 
 def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_num):
 
-    hapset_dir = os.path.realpath(f'hapset{i}')
+    hapset_dir = os.path.realpath(f'hapset{hapset_num}')
     execute(f'mkdir -p {hapset_dir}')
     execute(f'tar -zvxf {f} -C {hapset_dir}/')
 
