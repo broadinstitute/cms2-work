@@ -140,6 +140,7 @@ task compute_one_pop_cms2_components {
   >>>
 
   output {
+    Array[File] replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
     Array[File] ihs = glob("hapset[0-9]*/*.ihs.out")
     Array[File] nsl = glob("hapset[0-9]*/*.nsl.out")
     Array[File] ihh12 = glob("hapset[0-9]*/*.ihh12.out")
@@ -191,6 +192,7 @@ task compute_two_pop_cms2_components {
 
 # ** outputs
   output {
+    Array[File] replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
     Array[File] xpehh = glob("hapset[0-9]*/*.xpehh.out")
     Array[File] xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
     Array[File] fst_and_delDAF = glob("hapset[0-9*/*.fst_and_delDAF.tsv")
@@ -323,11 +325,13 @@ task normalize_and_collate {
     NormalizeAndCollateInput inp
     File normalize_and_collate_script
   }
-  String normed_collated_stats_fname = inp.replica_id_str + ".normed_and_collated.tsv"
+  String replica_id_str = basename(inp.ihs_out, ".ihs.out")
+  String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
   command <<<
-    python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}" --out-normed-collated "~{normed_collated_stats_fname}"
+    python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}" --replica-id-str "~{replica_id_str}" --out-normed-collated "~{normed_collated_stats_fname}"
   >>>  
   output {
+    File replica_info = read_json(inp.replica_info_file)
     File normed_collated_stats = normed_collated_stats_fname
   }
   runtime {

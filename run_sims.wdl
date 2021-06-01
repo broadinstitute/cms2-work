@@ -208,26 +208,29 @@ workflow run_sims_wf {
 
 # ** Run selection sims
   Int numBlocks = nreps / numRepsPerBlock
-  scatter(paramFile_blockNum in cross(paramFiles_selection, range(numBlocks))) {
-    call cosi2_run_one_sim_block as run_selection_sims {
-      input:
-      paramFileCommon = paramFile_demographic_model,
-      paramFile = paramFile_blockNum.left,
-      recombFile=recombFile,
-      modelId=modelId+"_"+basename(paramFile_blockNum.left, ".par"),
-      blockNum=paramFile_blockNum.right,
-      simBlockId=modelId+"_"+basename(paramFile_blockNum.left, ".par")+"__block_"+paramFile_blockNum.right+"__of_"+numBlocks,
-      numBlocks=numBlocks,
-      maxAttempts=maxAttempts,
-      repTimeoutSeconds=repTimeoutSeconds,
-      numRepsPerBlock=numRepsPerBlock,
-      numCpusPerBlock=numCpusPerBlock,
-      memoryPerBlock=memoryPerBlock,
-      cosi2_docker=cosi2_docker,
-      preemptible=preemptible,
-      taskScript=taskScript_simulation
-    }
-  }
+
+  scatter(paramFile in paramFiles_selection) {
+    scatter(blockNum in range(numBlocks)) {
+      call cosi2_run_one_sim_block as run_selection_sims {
+	input:
+	paramFileCommon = paramFile_demographic_model,
+	paramFile = paramFile,
+	recombFile=recombFile,
+	modelId=modelId+"_"+basename(paramFile, ".par"),
+	blockNum=blockNum,
+	simBlockId=modelId+"_"+basename(paramFile, ".par")+"__block_"+blockNum+"__of_"+numBlocks,
+	numBlocks=numBlocks,
+	maxAttempts=maxAttempts,
+	repTimeoutSeconds=repTimeoutSeconds,
+	numRepsPerBlock=numRepsPerBlock,
+	numCpusPerBlock=numCpusPerBlock,
+	memoryPerBlock=memoryPerBlock,
+	cosi2_docker=cosi2_docker,
+	preemptible=preemptible,
+	taskScript=taskScript_simulation
+      }
+    }  # scatter(blockNum in range(numBlocks)) 
+  } # scatter(paramFile in paramFiles_selection)
 
 # ** Workflow outputs
   output {
@@ -235,12 +238,12 @@ workflow run_sims_wf {
     PopsInfo pops_info = get_pops_info.pops_info
 # *** Simulation outputs
     Array[File] neut_sim_region_haps_tar_gzs = select_all(neut_sim_region_haps_tar_gz_maybe)
-    Array[Pair[ReplicaInfo,File]] selection_sims = 
-        zip(flatten(run_selection_sims.replicaInfos),
-            flatten(run_selection_sims.region_haps_tar_gzs))
+    # Array[Pair[ReplicaInfo,File]] selection_sims = 
+    #     zip(flatten(run_selection_sims.replicaInfos),
+    #         flatten(run_selection_sims.region_haps_tar_gzs))
 
-    Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.region_haps_tar_gzs)
-    Array[File] selection_sims_tar_gzs = flatten(run_selection_sims.region_haps_tar_gzs)
+    #Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.region_haps_tar_gzs)
+    Array[Array[Array[File]]] selection_sims_tar_gzs = run_selection_sims.region_haps_tar_gzs
     #Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))

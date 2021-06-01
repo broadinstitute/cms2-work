@@ -219,7 +219,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     input:
     experimentId=experimentId,
     modelId=modelId,
-    selection_sims = sims_wf.selection_sims,
+    selection_sims = sims_wf.selection_sims_tar_gzs,
     pops_info = sims_wf.pops_info,
 
     n_bins_ihs=n_bins_ihs,
@@ -244,8 +244,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     File saved_input_files = save_input_files.out_tar_gz
     PopsInfo pops_info = sims_wf.pops_info
 # *** Simulation outputs
-    Array[File] neutral_sims_tar_gzs = sims_wf.neutral_sims_tar_gzs
-    Array[File] selection_sims_tar_gzs = sims_wf.selection_sims_tar_gzs
+    #Array[File] neutral_sims_tar_gzs = sims_wf.neutral_sims_tar_gzs
+    #Array[File] selection_sims_tar_gzs = sims_wf.selection_sims_tar_gzs
     #Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))

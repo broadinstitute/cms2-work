@@ -162,6 +162,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--input-json', required=True, help='inputs passed as json')
+    parser.add_argument('--replica-id-str', required=True, help='replica id string')
     parser.add_argument('--out-normed-collated', required=True, help='output file for normed and collated results')
 
     return parser.parse_args()
@@ -439,7 +440,7 @@ def normalize_and_collate_scores(args):
     collated['mean_fst'] = collated.filter(like='Fst').mean(axis='columns')
     collated['mean_delDAF'] = collated.filter(like='delDAF').mean(axis='columns')
 
-    collated['hapset_id'] = inps['replica_id_str']
+    collated['hapset_id'] = args.replica_id_str  # inps['replica_id_str']
     descr_df(collated, 'collated final')
     collated.reset_index().to_csv(args.out_normed_collated, sep='\t', na_rep='nan', index=False)
 

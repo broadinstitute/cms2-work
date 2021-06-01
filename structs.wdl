@@ -63,10 +63,11 @@ struct ReplicaInfo {
 }
 
 struct NormalizeAndCollateInput {
-    ReplicaInfo replica_info
+    #ReplicaInfo replica_info
+    File replica_info_file
     Array[Int] pop_ids
     Array[Pair[Int,Int]] pop_pairs
-    String replica_id_str
+    #String replica_id_str
     Pop sel_pop
     File ihs_out
     File nsl_out
