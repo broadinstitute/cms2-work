@@ -68,10 +68,10 @@ version 1.0
 # Computation of CMS2 component scores
 #
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
-import "./compute_normalization_stats.wdl"
-import "./component_stats_for_sel_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210602-1447-compstats-in-blocks--47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210602-1447-compstats-in-blocks--47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210602-1447-compstats-in-blocks--47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/compute_normalization_stats.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210602-1447-compstats-in-blocks--47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/component_stats_for_sel_sims.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow run_sims_and_compute_cms2_components_wf {
@@ -113,7 +113,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     String       memoryPerBlock = "3 GB"
     String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     Int preemptible = 3
-    File taskScript_simulation = "./runcosi.py"
+    File taskScript_simulation = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210602-1447-compstats-in-blocks/47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/runcosi.py"
 
     #
     # Component score computation params
@@ -122,7 +122,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     #Array[File] region_haps_tar_gzs
     #Array[File] neutral_region_haps_tar_gzs
 
-    File compute_components_script = "./remodel_components.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210602-1447-compstats-in-blocks/47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/remodel_components.py"
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
@@ -136,8 +136,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
-    File get_pops_info_script = "./get_pops_info.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
+    File get_pops_info_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210602-1447-compstats-in-blocks/47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/get_pops_info.py"
+    File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210602-1447-compstats-in-blocks/47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/norm_and_collate.py"
     String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
 
     ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {

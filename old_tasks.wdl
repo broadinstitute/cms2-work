@@ -1,6 +1,6 @@
 version 1.0
 
-import "./structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210602-1447-compstats-in-blocks--47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/structs.wdl"
 
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
@@ -252,7 +252,7 @@ task collate_stats_and_metadata_for_all_sel_sims {
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
-    File collate_stats_and_metadata_for_all_sel_sims_script = "./collate_stats_and_metadata_for_all_sel_sims.py"
+    File collate_stats_and_metadata_for_all_sel_sims_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210602-1447-compstats-in-blocks/47c9ff9d2ad2d18911da16add01ecb1d4e8ed7f5/collate_stats_and_metadata_for_all_sel_sims.py"
   }
   command <<<
     python3 "~{collate_stats_and_metadata_for_all_sel_sims_script}" --input-json "~{write_json(inp)}" 
