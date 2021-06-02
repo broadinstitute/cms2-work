@@ -398,7 +398,7 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
 
 def normalize_and_collate_scores(args):
     inps_orig = _json_loadf(args.input_json)
-    for i in range(len(inps['replica_info'])):
+    for i in range(len(inps_orig['replica_info'])):
         inps = copy.deepcopy(inps_orig)
         inps_i = dict(replica_info=inps['replica_info'][i],
                       sel_pop=inps['sel_pop'],
