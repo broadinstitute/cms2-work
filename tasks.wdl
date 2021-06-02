@@ -195,7 +195,7 @@ task compute_two_pop_cms2_components {
     Array[File] replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
     Array[File] xpehh = glob("hapset[0-9]*/*.xpehh.out")
     Array[File] xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
-    Array[File] fst_and_delDAF = glob("hapset[0-9*/*.fst_and_delDAF.tsv")
+    Array[File] fst_and_delDAF = glob("hapset[0-9]*/*.fst_and_delDAF.tsv")
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
   }
