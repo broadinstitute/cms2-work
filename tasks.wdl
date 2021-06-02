@@ -49,7 +49,7 @@ task old_compute_one_pop_cms2_components {
     preemptible: preemptible
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
   }
 }
 
@@ -106,7 +106,7 @@ task old_compute_two_pop_cms2_components {
     preemptible: preemptible
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
   }
 }
 
@@ -153,7 +153,7 @@ task compute_one_pop_cms2_components {
     preemptible: preemptible
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
   }
 }
 
@@ -206,7 +206,7 @@ task compute_two_pop_cms2_components {
     preemptible: preemptible
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
   }
 }
 
@@ -260,7 +260,7 @@ task compute_one_pop_bin_stats_for_normalization {
     preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
-    disks: "local-disk " + local_disk_gb + " LOCAL"
+    disks: "local-disk " + local_disk_gb + " HDD"
   }
 }
 
@@ -311,7 +311,7 @@ task compute_two_pop_bin_stats_for_normalization {
     preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
-    disks: "local-disk " + local_disk_gb + " LOCAL"
+    disks: "local-disk " + local_disk_gb + " HDD"
   }
 }
 
@@ -338,7 +338,7 @@ task normalize_and_collate {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "1 GB"
     cpu: 1
-    disks: "local-disk 1 LOCAL"
+    disks: "local-disk 10 HDD"
   }
 }
 
@@ -363,7 +363,7 @@ task normalize_and_collate_block {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "1 GB"
     cpu: 1
-    disks: "local-disk 1 LOCAL"
+    disks: "local-disk 10 HDD"
   }
 }
 
@@ -391,7 +391,7 @@ task collate_stats_and_metadata_for_all_sel_sims {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "16 GB"
     cpu: 1
-    disks: "local-disk 1 LOCAL"
+    disks: "local-disk 50 HDD"
   }
 }
 
@@ -416,6 +416,6 @@ task create_tar_gz {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "500 MB"
     cpu: 1
-    disks: "local-disk 1 LOCAL"
+    disks: "local-disk 1 HDD"
   }
 }

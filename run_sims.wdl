@@ -58,6 +58,7 @@ task cosi2_run_one_sim_block {
   }
   runtime {
 #    docker: "quay.io/ilya_broad/cms-dev:2.0.1-15-gd48e1db-is-cms2-new"
+    disks: "local-disk 10 HDD"
     docker: cosi2_docker
     memory: memoryPerBlock
     cpu: numCpusPerBlock
@@ -95,7 +96,7 @@ task get_pops_info {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "500 MB"
     cpu: 1
-    disks: "local-disk 1 LOCAL"
+    disks: "local-disk 1 HDD"
   }
 }
 
