@@ -418,7 +418,8 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
     
     pd.set_option('io.hdf.default_format','table')
     with pd.HDFStore(inps['experimentId']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
-        for hapset_compstats_tsv, hapset_replica_info in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
+        for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
+            hapset_replica_info = _json_loadf(hapset_replica_info_json)
             hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
             hapset_id = hapset_compstats['hapset_id'].iat[0]
             hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)

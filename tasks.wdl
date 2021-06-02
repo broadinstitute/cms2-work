@@ -370,7 +370,7 @@ task normalize_and_collate_block {
 struct collate_stats_and_metadata_for_all_sel_sims_input {
     String experimentId
     Array[File] sel_normed_and_collated
-    Array[ReplicaInfo] replica_infos
+    Array[File] replica_infos
 }
 
 task collate_stats_and_metadata_for_all_sel_sims {
