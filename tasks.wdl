@@ -342,6 +342,31 @@ task normalize_and_collate {
   }
 }
 
+task normalize_and_collate_block {
+  meta {
+    description: "Normalize raw scores to neutral sims, and collate component scores into one table."
+  }
+  input {
+    NormalizeAndCollateBlockInput inp
+  }
+  File normalize_and_collate_script = "./norm_and_collate_block.py"
+  #String replica_id_str = basename(inp.ihs_out, ".ihs.out")
+  #String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
+  command <<<
+    python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
+  >>>  
+  output {
+    Array[File] replica_info = inp.replica_info
+    Array[File] normed_collated_stats = glob("*.normed_and_collated.tsv")
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    memory: "1 GB"
+    cpu: 1
+    disks: "local-disk 1 LOCAL"
+  }
+}
+
 struct collate_stats_and_metadata_for_all_sel_sims_input {
     String experimentId
     Array[File] sel_normed_and_collated

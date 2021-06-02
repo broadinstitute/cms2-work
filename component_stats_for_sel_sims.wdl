@@ -77,11 +77,10 @@ workflow component_stats_for_sel_sims_wf {
 	    preemptible=preemptible
 	  }
 	}
-      }
+      }  # for each comparison pop
 
-      scatter(idx_in_block in range(length(compute_one_pop_cms2_components_for_selection.replicaInfos))) {
       # should normalize_and_collate be done by blocks?
-      call tasks.normalize_and_collate {
+      call tasks.normalize_and_collate_block {
 	input:
 	  inp = object {
 	    #replica_info: sel_sim_replicaInfo,
@@ -90,16 +89,16 @@ workflow component_stats_for_sel_sims_wf {
 	    pop_pairs: pops_info.pop_pairs,
 	    sel_pop: sel_pop,
 
-	    replica_info_file: compute_one_pop_cms2_components_for_selection.replicaInfos[idx_in_block],
-	    ihs_out: compute_one_pop_cms2_components_for_selection.ihs[idx_in_block],
-	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh[idx_in_block],
-	    nsl_out: compute_one_pop_cms2_components_for_selection.nsl[idx_in_block],
-	    ihh12_out: compute_one_pop_cms2_components_for_selection.ihh12[idx_in_block],
-	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh[idx_in_block],
-	    derFreq_out: compute_one_pop_cms2_components_for_selection.derFreq[idx_in_block],
+	    replica_info: compute_one_pop_cms2_components_for_selection.replicaInfos,
+	    ihs_out: compute_one_pop_cms2_components_for_selection.ihs,
+	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh,
+	    nsl_out: compute_one_pop_cms2_components_for_selection.nsl,
+	    ihh12_out: compute_one_pop_cms2_components_for_selection.ihh12,
+	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh,
+	    derFreq_out: compute_one_pop_cms2_components_for_selection.derFreq,
 
-	    xpehh_out: select_all(transpose(compute_two_pop_cms2_components_for_selection.xpehh)[idx_in_block]),
-	    fst_and_delDAF_out: select_all(transpose(compute_two_pop_cms2_components_for_selection.fst_and_delDAF)[idx_in_block]),
+	    xpehh_out: select_all(compute_two_pop_cms2_components_for_selection.xpehh),
+	    fst_and_delDAF_out: select_all(compute_two_pop_cms2_components_for_selection.fst_and_delDAF),
 
 	    n_bins_ihs: n_bins_ihs,
 	    n_bins_nsl: n_bins_nsl,
@@ -113,13 +112,9 @@ workflow component_stats_for_sel_sims_wf {
 	    norm_bins_delihh: norm_bins_delihh[sel_pop_idx],
 
 	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx]
-	  },
-	  normalize_and_collate_script=normalize_and_collate_script
-      } # call tasks.normalize_and_collate
-
-      }  # for each sim in block
+	  }
+       } # call tasks.normalize_and_collate_block
     }   # for each block of sel sims
-
     #}  # if (sel_sim.left.succeeded) 
   }  # end: scatter(sel_scen_idx in range(length(selection_sims)))
 
@@ -127,8 +122,8 @@ workflow component_stats_for_sel_sims_wf {
     input:
        inp = object {
 	 experimentId: experimentId,
-	 sel_normed_and_collated: select_all(flatten(flatten(normalize_and_collate.normed_collated_stats))),
-	 replica_infos: select_all(flatten(flatten(normalize_and_collate.replica_info)))
+	 sel_normed_and_collated: flatten(flatten(normalize_and_collate_block.normed_collated_stats)),
+	 replica_infos: flatten(flatten(normalize_and_collate_block.replica_info))
        }
   }  
 

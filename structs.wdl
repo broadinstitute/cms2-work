@@ -90,6 +90,36 @@ struct NormalizeAndCollateInput {
     Int n_bins_xpehh
 }
 
+struct NormalizeAndCollateBlockInput {
+    #ReplicaInfo replica_info
+    Array[File] replica_info
+    #Array[Int] pop_ids
+    #Array[Pair[Int,Int]] pop_pairs
+    #String replica_id_str
+    Pop sel_pop
+    Array[File] ihs_out
+    Array[File] nsl_out
+    Array[File] ihh12_out
+    Array[File] delihh_out
+    Array[File] derFreq_out
+    Array[Array[File]] xpehh_out
+    Array[Array[File]] fst_and_delDAF_out
+
+    File norm_bins_ihs
+    File norm_bins_nsl
+    File norm_bins_ihh12
+    File norm_bins_delihh
+    Array[File] norm_bins_xpehh
+
+    Int n_bins_ihs
+    Int n_bins_nsl
+    Int n_bins_ihh12
+    Int n_bins_delihh
+    Int n_bins_xpehh
+}
+
+
+
 struct ComputeResources {
    Int? mem_gb
    Int? cpus
