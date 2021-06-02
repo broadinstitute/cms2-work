@@ -1,15 +1,15 @@
 version 1.0
 
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210430-1631-pick-stats-to-compute--a48e0de1a25e22c0863b1c5a4cf1169e8b97e23b/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
     String experimentId = "default"
     Array[Array[Array[File]]] selection_sims
-    File compute_components_script = "./remodel_components.py"
-    File old_compute_components_script = "./old_remodel_components.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210430-1631-pick-stats-to-compute/a48e0de1a25e22c0863b1c5a4cf1169e8b97e23b/remodel_components.py"
+    File old_compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210430-1631-pick-stats-to-compute/a48e0de1a25e22c0863b1c5a4cf1169e8b97e23b/old_remodel_components.py"
+    File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210430-1631-pick-stats-to-compute/a48e0de1a25e22c0863b1c5a4cf1169e8b97e23b/norm_and_collate.py"
     PopsInfo pops_info
 
     Int n_bins_ihs = 20
