@@ -194,14 +194,17 @@ def parse_args():
     # parser.add_argument('--writedir', required=True)
     # parser.add_argument('--simRecomFile')
     # parser.add_argument('--pops', nargs='+')
-    parser.add_argument('--replica-info')
-    parser.add_argument('--replica-id-string')
-    parser.add_argument('--out-basename', required=True, help='base name for output files')
+    #parser.add_argument('--replica-info')
+    #parser.add_argument('--replica-id-string')
+    parser.add_argument('--region-haps-tar-gzs', nargs='+',
+                        required=True, help='list of .tar.gz files where each contains the haps for one hapset')
+    #parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
     parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
     parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
+    #parser.add_argument('--out-json', required=True, help='json file describing the manifest of each file')
 
     # parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
     # parser.add_argument('--nsl-bins', help='use nsl bins for normalization')
@@ -315,56 +318,71 @@ def orig_main(args):
 
 # * compute_component_scores
 
-def compute_component_scores(args):
+def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_num):
+
+    if os.path.getsize(hapset_haps_tar_gz) == 0:
+        _log.info(f'Skipping failed sim {hapset_haps_tar_gz} hapset_num={hapset_num}')
+        return
+    hapset_dir = os.path.realpath(f'hapset{hapset_num:06}')
+    execute(f'mkdir -p {hapset_dir}')
+    execute(f'tar -zvxf {hapset_haps_tar_gz} -C {hapset_dir}/')
+
+    out_basename = os.path.basename(hapset_haps_tar_gz) + '__selpop_' + str(args.sel_pop)
+    if args.alt_pop:
+        out_basename += '__altpop_' + str(args.alt_pop)
+
     args.threads = min(args.threads, available_cpu_count())
     #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
-    replicaInfo = _json_loadf(args.replica_info)
+    replicaInfo = _json_loadf(list(glob.glob(f'{hapset_dir}/*.replicaInfo.json'))[0])
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     sel_pop_idx = pop_id_to_idx[args.sel_pop]
-    sel_pop_tped = replicaInfo["tpedFiles"][sel_pop_idx]
-
+    sel_pop_tped = os.path.realpath(os.path.join(hapset_dir, replicaInfo["tpedFiles"][sel_pop_idx]))
+    if args.alt_pop:
+        alt_pop_idx = pop_id_to_idx[args.alt_pop]
+        alt_pop_tped = os.path.realpath(os.path.join(hapset_dir, replicaInfo["tpedFiles"][alt_pop_idx]))
+        
     selscan_cmd_base = \
         f'selscan --threads {args.threads} --tped {sel_pop_tped} ' \
-        f'--out {args.out_basename}'
+        f'--out {out_basename}'
     for component in args.components:
         if component in ('ihs', 'ihh12', 'nsl', 'xpehh'):
-            alt_pop_tped = '' if component not in ('xpehh',) else \
-                f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
+            alt_pop_tped_opt = '' if component not in ('xpehh',) else \
+                f' --tped-ref {alt_pop_tped} '
             ihs_detail = '' if component != 'ihs' else ' --ihs-detail '
-            cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component} {ihs_detail}'
-            execute(cmd)
+            cmd = f'{selscan_cmd_base} {alt_pop_tped_opt} --{component} {ihs_detail}'
+            execute(cmd, cwd=hapset_dir)
 
     if 'delihh' in args.components:
         if 'ihs' not in args.components:
             raise RuntimeError('To compute delihh must first compute ihs')
-        calc_delihh(readfilename=f'{args.out_basename}.ihs.out',
-                    writefilename=f'{args.out_basename}.delihh.out')
+        calc_delihh(readfilename=f'{hapset_dir}/{out_basename}.ihs.out',
+                    writefilename=f'{hapset_dir}/{out_basename}.delihh.out')
 
     if 'fst' in args.components or 'delDAF' in args.components:
-        fst_and_delDAF_out_fname = args.out_basename + '.fst_and_delDAF.tsv'
+        fst_and_delDAF_out_fname = os.path.join(hapset_dir, out_basename + '.fst_and_delDAF.tsv')
         cmd = \
-            f'freqs_stats {sel_pop_tped} {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} ' \
+            f'freqs_stats {sel_pop_tped} {alt_pop_tped} ' \
             f' {fst_and_delDAF_out_fname}'
-        execute(cmd)
+        execute(cmd, cwd=hapset_dir)
 
     if 'derFreq' in args.components:
-        calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=args.out_basename+'.derFreq.tsv')
+        calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=f'{hapset_dir}/{out_basename}.derFreq.tsv')
 
-    if False:
-        execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-                f'--out {args.replica_id_string} ')
-        execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-                f'--out {args.replica_id_string} ')
-        execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-                f'--out {args.replica_id_string} ')
+    # if False:
+    #     execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+    #             f'--out {args.replica_id_string} ')
+    #     execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+    #             f'--out {args.replica_id_string} ')
+    #     execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+    #             f'--out {args.replica_id_string} ')
 
-    if False:
-        for alt_pop in replicaInfo['popIds']:
-            if alt_pop == args.sel_pop: continue
-            alt_pop_idx = pop_id_to_idx[alt_pop]
-            execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
-                    f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
-                    f'--out {args.replica_id_string}__altpop_{alt_pop} ')
+    # if False:
+    #     for alt_pop in replicaInfo['popIds']:
+    #         if alt_pop == args.sel_pop: continue
+    #         alt_pop_idx = pop_id_to_idx[alt_pop]
+    #         execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+    #                 f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
+    #                 f'--out {args.replica_id_string}__altpop_{alt_pop} ')
 
     # if args.ihs_bins:
     #     execute(f'norm --ihs --bins {args.n_bins_ihs} --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '
@@ -385,6 +403,24 @@ def compute_component_scores(args):
     #             f'--log {args.replica_id_string}.ihh12.out.norm.log ')
     # else:
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
+
+def parse_file_list(z):
+    z_orig = copy.deepcopy(z)
+    z = list(z or [])
+    result = []
+    while z:
+        f = z.pop()
+        if not f.startswith('@'):
+            result.append(f)
+        else:
+            z.extend(slurp_file(f[1:]).strip().split('\n'))
+    _log.info(f'parse_file_list: parsed {z_orig} as {result}')
+    return result
+
+def compute_component_scores(args):
+    for hapset_num, f in enumerate(parse_file_list(args.region_haps_tar_gzs)):
+        compute_component_scores_for_one_hapset(args=copy.deepcopy(args), hapset_haps_tar_gz=f, hapset_num=hapset_num)
+        
  
 if __name__=='__main__':
   compute_component_scores(parse_args())

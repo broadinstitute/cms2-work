@@ -127,6 +127,10 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
     Int n_bins_delihh = 20
+
+    Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
+
+    Int hapset_block_size = 2
     
     Int threads = 1
     Int mem_base_gb = 0
@@ -202,6 +206,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     n_bins_nsl=n_bins_nsl,
     n_bins_delihh=n_bins_delihh,
 
+    hapset_block_size=hapset_block_size,
+
     compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
     compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
     docker=docker,
@@ -213,7 +219,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     input:
     experimentId=experimentId,
     modelId=modelId,
-    selection_sims = sims_wf.selection_sims,
+    selection_sims = sims_wf.selection_sims_tar_gzs,
     pops_info = sims_wf.pops_info,
 
     n_bins_ihs=n_bins_ihs,
@@ -238,8 +244,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     File saved_input_files = save_input_files.out_tar_gz
     PopsInfo pops_info = sims_wf.pops_info
 # *** Simulation outputs
-    Array[File] neutral_sims_tar_gzs = sims_wf.neutral_sims_tar_gzs
-    Array[File] selection_sims_tar_gzs = sims_wf.selection_sims_tar_gzs
+    #Array[File] neutral_sims_tar_gzs = sims_wf.neutral_sims_tar_gzs
+    #Array[File] selection_sims_tar_gzs = sims_wf.selection_sims_tar_gzs
     #Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
