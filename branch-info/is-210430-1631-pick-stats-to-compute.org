@@ -3,6 +3,6 @@
 Add ability to select which component stats to compute.   Especially relevant is ability to omit time-consuming
 computations such as XP-EHH.
 
-
+Also, glue together tasks to reduce the total number of tasks.
 
 

@@ -38,6 +38,7 @@ def do_get_pop_ids(args):
 
     pop_ids = []
     pop_names = []
+    pops = []
     with open(args.dem_model) as dem_model:
       for line in dem_model:
         m = re.search(r'^\s*pop_define\s+(?P<pop_id>\d+)\s+(?P<pop_name>\w+)', line)
@@ -46,6 +47,7 @@ def do_get_pop_ids(args):
           pop_name = m.group('pop_name')
           pop_ids.append(pop_id)
           pop_names.append(pop_name)
+          pops.append({'pop_id': pop_id})
 
     chk(len(pop_ids) > 0, 'No pops!')
     chk(len(set(pop_ids)) == len(pop_ids), f'duplicate pops: {pop_ids}')
@@ -53,6 +55,7 @@ def do_get_pop_ids(args):
 
     pops_info['pop_ids'] = pop_ids
     pops_info['pop_names'] = pop_names
+    pops_info['pops'] = pops
     #pops_info['pop_id2name'] = dict(zip(pop_ids, pop_names))
     #pops_info['pop_name2id'] = dict(zip(pop_names, pop_ids))
     pops_info['pop_id_to_idx'] = {pop_id: i for i, pop_id in enumerate(pop_ids)}

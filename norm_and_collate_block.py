@@ -162,8 +162,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--input-json', required=True, help='inputs passed as json')
-    parser.add_argument('--replica-id-str', required=True, help='replica id string')
-    parser.add_argument('--out-normed-collated', required=True, help='output file for normed and collated results')
+    #parser.add_argument('--replica-id-str', required=True, help='replica id string')
+    #parser.add_argument('--out-normed-collated', required=True, help='output file for normed and collated results')
 
     return parser.parse_args()
 
@@ -269,61 +269,7 @@ def orig_main(args):
         #if not os.path.isfile(fstdeldaf_outfilename):
         #    execute(fstdeldaf_fullcmd)
 
-# * compute_component_scores
-
-def compute_component_scores(args):
-    args.threads = min(args.threads, available_cpu_count())
-    shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
-    replicaInfo = _json_loadf(args.replica_info)
-    pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
-    sel_pop_idx = pop_id_to_idx[args.sel_pop.pop_id]
-    sel_pop_tped = replicaInfo["tpedFiles"][sel_pop_idx]
-
-    selscan_cmd_base = \
-        f'selscan --threads {args.threads} --tped {sel_pop_tped} ' \
-        f'--out {args.out_basename}'
-    for component in args.components:
-        alt_pop_tped = '' if component not in ('xpehh',) else f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
-        cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component}'
-        execute(cmd)
-
-    # if False:
-    #     execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-    #             f'--out {args.replica_id_string} ')
-    #     execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-    #             f'--out {args.replica_id_string} ')
-    #     execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-    #             f'--out {args.replica_id_string} ')
-
-    # if False:
-    #     for alt_pop in replicaInfo['popIds']:
-    #         if alt_pop == args.sel_pop.pop_id: continue
-    #         alt_pop_idx = pop_id_to_idx[alt_pop]
-    #         execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
-    #                 f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
-    #                 f'--out {args.replica_id_string}__altpop_{alt_pop} ')
-
-    # if args.ihs_bins:
-    #     execute(f'norm --ihs --bins {args.n_bins_ihs} --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '
-    #             f'--log {args.replica_id_string}.ihs.out.{args.n_bins_ihs}bins.norm.log ')
-    # else:
-    #     execute(f'touch {args.replica_id_string}.ihs.out.{args.n_bins_ihs}bins.norm '
-    #             f'{args.replica_id_string}.ihs.out.{args.n_bins_ihs}bins.norm.log')
-
-    # if args.nsl_bins:
-    #     execute(f'norm --nsl --bins {args.n_bins_nsl} --load-bins {args.nsl_bins} --files {args.replica_id_string}.nsl.out '
-    #             f'--log {args.replica_id_string}.nsl.out.{args.n_bins_nsl}bins.norm.log ')
-    # else:
-    #     execute(f'touch {args.replica_id_string}.nsl.out.{args.n_bins_nsl}bins.norm '
-    #             f'{args.replica_id_string}.nsl.out.{args.n_bins_nsl}bins.norm.log')
-
-    # if args.ihh12_bins:
-    #     execute(f'norm --ihh12 --load-bins {args.ihh12_bins} --files {args.replica_id_string}.ihh12.out '
-    #             f'--log {args.replica_id_string}.ihh12.out.norm.log ')
-    # else:
-    #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
-
-def normalize_and_collate_scores(args):
+def normalize_and_collate_scores_orig(inps, inps_idx):
 
     def descr_df(df, msg):
         """Describe a DataFrame"""
@@ -332,9 +278,6 @@ def normalize_and_collate_scores(args):
         print(df.describe(), '\n')
         df.info(verbose=True, null_counts=True)
         print('===END=======================\n', msg)
-        
-
-    inps = _json_loadf(args.input_json)
 
     def make_local(inp):
         """Creates a symlink to the input file *inp* in the current directory,
@@ -346,11 +289,15 @@ def normalize_and_collate_scores(args):
             new_inps = []
             for f in inps[inp]:
                 local_fname = os.path.basename(f)
+                if os.path.exists(local_fname):
+                    raise RuntimeError(f'make_local: error localizing {f} to {local_fname} -- already exists')
                 os.symlink(f, local_fname)
                 new_inps.append(local_fname)
             inps[inp] = new_inps
         else:
             local_fname = os.path.basename(inps[inp])
+            if os.path.exists(local_fname):
+                raise RuntimeError(f'make_local: error localizing {f} to {local_fname} -- already exists')
             os.symlink(inps[inp], local_fname)
             inps[inp] = local_fname
         return inps[inp]
@@ -440,12 +387,40 @@ def normalize_and_collate_scores(args):
     collated['mean_fst'] = collated.filter(like='Fst').mean(axis='columns')
     collated['mean_delDAF'] = collated.filter(like='delDAF').mean(axis='columns')
 
-    collated['hapset_id'] = args.replica_id_str  # inps['replica_id_str']
+    replica_id_str = os.path.basename(inps['ihs_out'])
+    if replica_id_str.endswith('.ihs.out'):
+        replica_id_str = replica_id_str[:-len('.ihs.out')]
+    collated['hapset_id'] = replica_id_str
     descr_df(collated, 'collated final')
-    collated.reset_index().to_csv(args.out_normed_collated, sep='\t', na_rep='nan', index=False)
+    collated.reset_index().to_csv(f'{inps_idx:06}.{replica_id_str}.normed_and_collated.tsv', sep='\t', na_rep='nan', index=False)
 
-# end: def normalize_and_collate_scores(args)
+# end: def normalize_and_collate_scores_orig(inps)
+
+def normalize_and_collate_scores(args):
+    inps_orig = _json_loadf(args.input_json)
+    for i in range(len(inps_orig['replica_info'])):
+        inps = copy.deepcopy(inps_orig)
+        inps_i = dict(replica_info=inps['replica_info'][i],
+                      sel_pop=inps['sel_pop'],
+                      ihs_out=inps['ihs_out'][i],
+                      nsl_out=inps['nsl_out'][i],
+                      ihh12_out=inps['ihh12_out'][i],
+                      delihh_out=inps['delihh_out'][i],
+                      derFreq_out=inps['derFreq_out'][i],
+                      xpehh_out=[v[i] for v in inps['xpehh_out']],
+                      fst_and_delDAF_out=[v[i] for v in inps['fst_and_delDAF_out']],
+                      norm_bins_ihs=inps['norm_bins_ihs'],
+                      norm_bins_nsl=inps['norm_bins_nsl'],
+                      norm_bins_ihh12=inps['norm_bins_ihh12'],
+                      norm_bins_delihh=inps['norm_bins_delihh'],
+                      norm_bins_xpehh=inps['norm_bins_xpehh'],
+                      n_bins_ihs=inps['n_bins_ihs'],
+                      n_bins_nsl=inps['n_bins_nsl'],
+                      n_bins_ihh12=inps['n_bins_ihh12'],
+                      n_bins_delihh=inps['n_bins_delihh'],
+                      n_bins_xpehh=inps['n_bins_xpehh'])
+        _log.info(f'calling normalize_and_collate_scores_orig {i}: {inps_i}')
+        normalize_and_collate_scores_orig(inps_i, i)
 
 if __name__=='__main__':
-  #compute_component_scores(parse_args())
   normalize_and_collate_scores(parse_args())

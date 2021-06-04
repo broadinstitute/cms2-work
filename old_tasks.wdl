@@ -3,7 +3,7 @@ version 1.0
 import "./structs.wdl"
 
 # * task compute_one_pop_cms2_components
-task old_compute_one_pop_cms2_components {
+task compute_one_pop_cms2_components {
   meta {
     description: "Compute one-pop CMS2 component scores assuming selection in a given pop"
   }
@@ -11,7 +11,7 @@ task old_compute_one_pop_cms2_components {
     File region_haps_tar_gz
     Pop sel_pop
 
-    File script = "./old_remodel_components.py"
+    File script
     String docker
     Int preemptible
     ComputeResources compute_resources
@@ -49,12 +49,12 @@ task old_compute_one_pop_cms2_components {
     preemptible: preemptible
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
   }
 }
 
 # * task compute_two_pop_cms2_components_
-task old_compute_two_pop_cms2_components {
+task compute_two_pop_cms2_components {
   meta {
     description: "Compute cross-pop comparison CMS2 component scores"
   }
@@ -67,7 +67,7 @@ task old_compute_two_pop_cms2_components {
 
     #File? xpehh_bins
 
-    File script = "./old_remodel_components.py"
+    File script
     ComputeResources compute_resources
     String docker
     Int preemptible
@@ -106,107 +106,7 @@ task old_compute_two_pop_cms2_components {
     preemptible: preemptible
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
-  }
-}
-
-
-# * task compute_one_pop_cms2_components
-task compute_one_pop_cms2_components {
-  meta {
-    description: "Compute one-pop CMS2 component scores assuming selection in a given pop"
-  }
-  input {
-    Array[File] region_haps_tar_gzs
-    Pop sel_pop
-
-    File script = "./remodel_components.py"
-    String docker
-    Int preemptible
-    ComputeResources compute_resources
-  }
-
-  #String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop.pop_id
-
-  # String ihs_out_fname = out_basename + ".ihs.out"
-  # String nsl_out_fname = out_basename + ".nsl.out"
-  # String ihh12_out_fname = out_basename + ".ihh12.out"
-  # String delihh_out_fname = out_basename + ".delihh.out"
-  # String derFreq_out_fname = out_basename + ".derFreq.tsv"
-
-  command <<<
-    python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
-      --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
-  >>>
-
-  output {
-    Array[File] replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
-    Array[File] ihs = glob("hapset[0-9]*/*.ihs.out")
-    Array[File] nsl = glob("hapset[0-9]*/*.nsl.out")
-    Array[File] ihh12 = glob("hapset[0-9]*/*.ihh12.out")
-    Array[File] delihh = glob("hapset[0-9]*/*.delihh.out")
-    Array[File] derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
-  }
-
-  runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
-    cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
-  }
-}
-
-# * task compute_two_pop_cms2_components_
-task compute_two_pop_cms2_components {
-  meta {
-    description: "Compute cross-pop comparison CMS2 component scores"
-  }
-# ** inputs
-  input {
-#    ReplicaInfo replicaInfo
-    Array[File] region_haps_tar_gzs
-    Pop sel_pop
-    Pop alt_pop
-
-    #File? xpehh_bins
-
-    File script
-    ComputeResources compute_resources
-    String docker
-    Int preemptible
-  }
-  #String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop.pop_id + "__altpop_" + alt_pop.pop_id
-
-  #String xpehh_out_fname = out_basename + ".xpehh.out"
-  #String xpehh_log_fname = out_basename + ".xpehh.log"
-
-  #String fst_and_delDAF_out_fname = out_basename + ".fst_and_delDAF.tsv"
-
-# ** command
-  command <<<
-    python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
-        --sel-pop ~{sel_pop.pop_id} --alt-pop ~{alt_pop.pop_id} \
-        --threads ~{compute_resources.cpus} --components xpehh fst delDAF
-  >>>
-
-# ** outputs
-  output {
-    Array[File] replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
-    Array[File] xpehh = glob("hapset[0-9]*/*.xpehh.out")
-    Array[File] xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
-    Array[File] fst_and_delDAF = glob("hapset[0-9]*/*.fst_and_delDAF.tsv")
-    Pop sel_pop_used = sel_pop
-    Pop alt_pop_used = alt_pop
-  }
-
-# ** runtime
-  runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
-    cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
+    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " LOCAL"
   }
 }
 
@@ -260,7 +160,7 @@ task compute_one_pop_bin_stats_for_normalization {
     preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
-    disks: "local-disk " + local_disk_gb + " HDD"
+    disks: "local-disk " + local_disk_gb + " LOCAL"
   }
 }
 
@@ -311,7 +211,7 @@ task compute_two_pop_bin_stats_for_normalization {
     preemptible: preemptible
     memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
     cpu: threads
-    disks: "local-disk " + local_disk_gb + " HDD"
+    disks: "local-disk " + local_disk_gb + " LOCAL"
   }
 }
 
@@ -325,52 +225,25 @@ task normalize_and_collate {
     NormalizeAndCollateInput inp
     File normalize_and_collate_script
   }
-  String replica_id_str = basename(inp.ihs_out, ".ihs.out")
-  String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
+  String normed_collated_stats_fname = inp.replica_id_str + ".normed_and_collated.tsv"
   command <<<
-    python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}" --replica-id-str "~{replica_id_str}" --out-normed-collated "~{normed_collated_stats_fname}"
+    python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}" --out-normed-collated "~{normed_collated_stats_fname}"
   >>>  
   output {
-    File replica_info = read_json(inp.replica_info_file)
     File normed_collated_stats = normed_collated_stats_fname
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "1 GB"
     cpu: 1
-    disks: "local-disk 10 HDD"
-  }
-}
-
-task normalize_and_collate_block {
-  meta {
-    description: "Normalize raw scores to neutral sims, and collate component scores into one table."
-  }
-  input {
-    NormalizeAndCollateBlockInput inp
-  }
-  File normalize_and_collate_script = "./norm_and_collate_block.py"
-  #String replica_id_str = basename(inp.ihs_out, ".ihs.out")
-  #String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
-  command <<<
-    python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
-  >>>  
-  output {
-    Array[File] replica_info = inp.replica_info
-    Array[File] normed_collated_stats = glob("*.normed_and_collated.tsv")
-  }
-  runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    memory: "1 GB"
-    cpu: 1
-    disks: "local-disk 10 HDD"
+    disks: "local-disk 1 LOCAL"
   }
 }
 
 struct collate_stats_and_metadata_for_all_sel_sims_input {
     String experimentId
     Array[File] sel_normed_and_collated
-    Array[File] replica_infos
+    Array[ReplicaInfo] replica_infos
 }
 
 task collate_stats_and_metadata_for_all_sel_sims {
@@ -391,7 +264,7 @@ task collate_stats_and_metadata_for_all_sel_sims {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "16 GB"
     cpu: 1
-    disks: "local-disk 50 HDD"
+    disks: "local-disk 1 LOCAL"
   }
 }
 
@@ -416,6 +289,6 @@ task create_tar_gz {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "500 MB"
     cpu: 1
-    disks: "local-disk 1 HDD"
+    disks: "local-disk 1 LOCAL"
   }
 }

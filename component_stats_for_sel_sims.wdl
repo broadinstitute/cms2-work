@@ -6,8 +6,9 @@ workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
     String experimentId = "default"
-    Array[Pair[ReplicaInfo, File]] selection_sims
+    Array[Array[Array[File]]] selection_sims
     File compute_components_script = "./remodel_components.py"
+    File old_compute_components_script = "./old_remodel_components.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
     PopsInfo pops_info
 
@@ -43,17 +44,19 @@ workflow component_stats_for_sel_sims_wf {
   Int n_bins_ihh12 = 1
   Int n_bins_xpehh = 1
 
-  scatter(sel_sim in selection_sims) {
-    if (sel_sim.left.succeeded) {
-      ReplicaInfo sel_sim_replicaInfo = sel_sim.left
-      Int sel_pop = sel_sim_replicaInfo.modelInfo.sweepInfo.selPop
-      Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop]
-      File sel_sim_region_haps_tar_gz = sel_sim.right
-      String sel_sim_replica_id_str = modelId + "__selpop_" + sel_pop + "__rep_" + sel_sim_replicaInfo.replicaId.replicaNumGlobal
+  scatter(sel_scen_idx in range(length(selection_sims))) {
+    Pop sel_pop = object { pop_id: pops_info.sel_pop_ids[sel_scen_idx] }
+    Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop.pop_id]
+    scatter(sel_blk_idx in range(length(selection_sims[sel_scen_idx]))) {
+    # if (sel_sim.left.succeeded  &&  (sel_sim.left.modelInfo.sweepInfo.selPop == sel_pop)) {
+    #   ReplicaInfo sel_sim_replicaInfo = sel_sim.left
+    #   Pop sel_pop = object { pop_id: sel_sim_replicaInfo.modelInfo.sweepInfo.selPop }
+    #   File sel_sim_region_haps_tar_gz = sel_sim.right
+    #   String sel_sim_replica_id_str = modelId + "__selpop_" + sel_pop.pop_id + "__rep_" + sel_sim_replicaInfo.replicaId.replicaNumGlobal
       call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
-	region_haps_tar_gz=sel_sim_region_haps_tar_gz,
+	region_haps_tar_gzs=selection_sims[sel_scen_idx][sel_blk_idx],
 
 	script=compute_components_script,
 	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
@@ -65,8 +68,8 @@ workflow component_stats_for_sel_sims_wf {
 	  call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
 	    input:
 	    sel_pop=sel_pop,
-	    alt_pop=pops_info.pop_ids[alt_pop_idx],
-	    region_haps_tar_gz=sel_sim.right,
+	    alt_pop=pops_info.pops[alt_pop_idx],
+	    region_haps_tar_gzs=selection_sims[sel_scen_idx][sel_blk_idx],
 
 	    script=compute_components_script,
 	    compute_resources=compute_resources_for_compute_two_pop_cms2_components,
@@ -74,18 +77,19 @@ workflow component_stats_for_sel_sims_wf {
 	    preemptible=preemptible
 	  }
 	}
-      }
+      }  # for each comparison pop
 
       # should normalize_and_collate be done by blocks?
-      call tasks.normalize_and_collate {
+      call tasks.normalize_and_collate_block {
 	input:
 	  inp = object {
-	    replica_info: sel_sim_replicaInfo,
-	    replica_id_str: sel_sim_replica_id_str,
+	    #replica_info: sel_sim_replicaInfo,
+	    #replica_id_str: sel_sim_replica_id_str,
 	    pop_ids: pops_info.pop_ids,
 	    pop_pairs: pops_info.pop_pairs,
 	    sel_pop: sel_pop,
 
+	    replica_info: compute_one_pop_cms2_components_for_selection.replicaInfos,
 	    ihs_out: compute_one_pop_cms2_components_for_selection.ihs,
 	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh,
 	    nsl_out: compute_one_pop_cms2_components_for_selection.nsl,
@@ -108,18 +112,18 @@ workflow component_stats_for_sel_sims_wf {
 	    norm_bins_delihh: norm_bins_delihh[sel_pop_idx],
 
 	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx]
-	  },
-	  normalize_and_collate_script=normalize_and_collate_script
-      } # call tasks.normalize_and_collate
-    }  # if (sel_sim.left.succeeded) 
-  }  # end: scatter(sel_sim in selection_sims)
+	  }
+       } # call tasks.normalize_and_collate_block
+    }   # for each block of sel sims
+    #}  # if (sel_sim.left.succeeded) 
+  }  # end: scatter(sel_scen_idx in range(length(selection_sims)))
 
   call tasks.collate_stats_and_metadata_for_all_sel_sims {
     input:
        inp = object {
 	 experimentId: experimentId,
-	 sel_normed_and_collated: select_all(normalize_and_collate.normed_collated_stats),
-	 replica_infos: select_all(sel_sim_replicaInfo)
+	 sel_normed_and_collated: flatten(flatten(normalize_and_collate_block.normed_collated_stats)),
+	 replica_infos: flatten(flatten(normalize_and_collate_block.replica_info))
        }
   }  
 
