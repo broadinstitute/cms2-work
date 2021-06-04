@@ -1,0 +1,4 @@
+#+TITLE: is-210604-1534-add-checkpointing.org
+
+Adding ability to checkpoint/restore component score computations.
+
