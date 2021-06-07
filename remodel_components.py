@@ -102,6 +102,13 @@ def open_or_gzopen(fname, *opts, **kwargs):
     else:
         return open(fname, *open_opts, **kwargs)
 
+def find_one_file(glob_pattern):
+    """If exactly one file matches `glob_pattern`, returns the path to that file, else fails."""
+    matching_files = list(glob.glob(glob_pattern))
+    if len(matching_files) == 1:
+        return matching_files[0]
+    raise RuntimeError(f'find_one_file({glob_pattern}): {len(matching_files)} matches - {matching_files}')
+
 def available_cpu_count():
     """
     Return the number of available virtual or physical CPUs on this system.
@@ -204,6 +211,7 @@ def parse_args():
     parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
+    parser.add_argument('--checkpoint-file', help='file used for checkpointing')
     #parser.add_argument('--out-json', required=True, help='json file describing the manifest of each file')
 
     # parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
@@ -318,7 +326,41 @@ def orig_main(args):
 
 # * compute_component_scores
 
-def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_num):
+def add_file_to_checkpoint(checkpoint_file, fname):
+    #if not os.path.isfile(checkpoint_file):
+    if not checkpoint_file:
+        return
+    checkpoint_file_tmp = checkpoint_file + '.tmp.tar'
+    if not os.path.isfile(checkpoint_file_tmp):
+        execute(f'cp {checkpoint_file} {checkpoint_file_tmp}')
+
+    fname_rel = os.path.relpath(fname)
+    execute(f'tar -rvf {checkpoint_file_tmp} {fname_rel}')
+    os.rename(checkpoint_file_tmp, checkpoint_file)
+    execute(f'ls -l {checkpoint_file}')
+
+def execute_with_checkpoint(out_fname, cmd, cwd, checkpoint_file):
+    """Run the given command to create a given file, and compress it.
+    Use the checkpoint file to avoid redoing work.
+    """
+    #fname_gz = fname + '.gz'
+    if os.path.isfile(out_fname):
+        _log.info(f'Reusing {out_fname} from checkpoint file {checkpoint_file}; not running {cmd}')
+    else:
+        execute(cmd, cwd=cwd)
+        #execute(f'gzip {fname}', cwd=cwd)
+        add_file_to_checkpoint(checkpoint_file=checkpoint_file, fname=os.path.join(cwd, out_fname))
+    
+def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_num, checkpoint_file):
+
+    # TODO: check the presence of sentinel file (or a checksum file?) before each operation.
+    # TODO: before saving the checkpoint file at the end, move current one away, then move new one in in an atomic operation.
+    # (note that this would also take care of compressing the results).
+
+    # TODO: uniformize things, so that for each component there is its own method?
+
+    # TODO: add an (optional?) thread that monitors the memory and load at regular intervals,
+    # maybe using psutils, and add to the output.  [is this monitoring feature of cromwell supported by terra?]
 
     if os.path.getsize(hapset_haps_tar_gz) == 0:
         _log.info(f'Skipping failed sim {hapset_haps_tar_gz} hapset_num={hapset_num}')
@@ -333,7 +375,7 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
 
     args.threads = min(args.threads, available_cpu_count())
     #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
-    replicaInfo = _json_loadf(list(glob.glob(f'{hapset_dir}/*.replicaInfo.json'))[0])
+    replicaInfo = _json_loadf(find_one_file(f'{hapset_dir}/*.replicaInfo.json'))
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     sel_pop_idx = pop_id_to_idx[args.sel_pop]
     sel_pop_tped = os.path.realpath(os.path.join(hapset_dir, replicaInfo["tpedFiles"][sel_pop_idx]))
@@ -350,7 +392,8 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
                 f' --tped-ref {alt_pop_tped} '
             ihs_detail = '' if component != 'ihs' else ' --ihs-detail '
             cmd = f'{selscan_cmd_base} {alt_pop_tped_opt} --{component} {ihs_detail}'
-            execute(cmd, cwd=hapset_dir)
+            #execute(cmd, cwd=hapset_dir)
+            execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.{component}.out', cwd=cwd, checkpoint_file=checkpoint_file)
 
     if 'delihh' in args.components:
         if 'ihs' not in args.components:
@@ -363,7 +406,7 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
         cmd = \
             f'freqs_stats {sel_pop_tped} {alt_pop_tped} ' \
             f' {fst_and_delDAF_out_fname}'
-        execute(cmd, cwd=hapset_dir)
+        execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.fst_and_delDAF.tsv', cwd=hapset_dir, checkpoint_file=checkpoint_file)
 
     if 'derFreq' in args.components:
         calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=f'{hapset_dir}/{out_basename}.derFreq.tsv')
@@ -418,8 +461,17 @@ def parse_file_list(z):
     return result
 
 def compute_component_scores(args):
+    if args.checkpoint_file:
+        if os.path.isfile(args.checkpoint_file):
+            execute(f'tar -xvf {args.checkpoint_file}')
+        else:
+            execute(f'touch dummy.dat')
+            execute(f'tar cvf {checkpoint_file} dummy.dat')
+
     for hapset_num, f in enumerate(parse_file_list(args.region_haps_tar_gzs)):
-        compute_component_scores_for_one_hapset(args=copy.deepcopy(args), hapset_haps_tar_gz=f, hapset_num=hapset_num)
+        compute_component_scores_for_one_hapset(args=copy.deepcopy(args), hapset_haps_tar_gz=f, hapset_num=hapset_num,
+                                                checkpoint_file=args.checkpoint_file)
+        
         
  
 if __name__=='__main__':

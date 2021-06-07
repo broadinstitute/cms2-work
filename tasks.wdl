@@ -136,7 +136,8 @@ task compute_one_pop_cms2_components {
 
   command <<<
     python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
-      --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
+      --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq \
+      --checkpoint-file "checkpoint.tar"
   >>>
 
   output {
@@ -154,6 +155,7 @@ task compute_one_pop_cms2_components {
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
     disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
+    checkpointFile: "checkpoint.tar"
   }
 }
 
@@ -187,7 +189,7 @@ task compute_two_pop_cms2_components {
   command <<<
     python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
         --sel-pop ~{sel_pop.pop_id} --alt-pop ~{alt_pop.pop_id} \
-        --threads ~{compute_resources.cpus} --components xpehh fst delDAF
+        --threads ~{compute_resources.cpus} --components xpehh fst delDAF --checkpoint-file checkpoint.tar
   >>>
 
 # ** outputs
@@ -207,6 +209,7 @@ task compute_two_pop_cms2_components {
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
     disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
+    checkpointFile: "checkpoint.tar"
   }
 }
 
