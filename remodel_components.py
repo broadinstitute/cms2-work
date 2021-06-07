@@ -461,12 +461,14 @@ def parse_file_list(z):
     return result
 
 def compute_component_scores(args):
+    _log.info(f'Starting compute_component_scores: args={args}')
     if args.checkpoint_file:
-        if os.path.isfile(args.checkpoint_file):
+        if os.path.isfile(args.checkpoint_file) and os.path.getsize(args.checkpoint_file) > 0:
             execute(f'tar -xvf {args.checkpoint_file}')
         else:
+            execute(f'rm -f {args.checkpoint_file}')
             execute(f'touch dummy.dat')
-            execute(f'tar cvf {checkpoint_file} dummy.dat')
+            execute(f'tar cvf {args.checkpoint_file} dummy.dat')
 
     for hapset_num, f in enumerate(parse_file_list(args.region_haps_tar_gzs)):
         compute_component_scores_for_one_hapset(args=copy.deepcopy(args), hapset_haps_tar_gz=f, hapset_num=hapset_num,
