@@ -8,7 +8,6 @@ workflow component_stats_for_sel_sims_wf {
     String experimentId = "default"
     Array[Array[Array[File]]] selection_sims
     File compute_components_script = "./remodel_components.py"
-    File old_compute_components_script = "./old_remodel_components.py"
     File normalize_and_collate_script = "./norm_and_collate.py"
     PopsInfo pops_info
 
