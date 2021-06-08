@@ -393,7 +393,7 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
             ihs_detail = '' if component != 'ihs' else ' --ihs-detail '
             cmd = f'{selscan_cmd_base} {alt_pop_tped_opt} --{component} {ihs_detail}'
             #execute(cmd, cwd=hapset_dir)
-            execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.{component}.out', cwd=cwd, checkpoint_file=checkpoint_file)
+            execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.{component}.out', cwd=hapset_dir, checkpoint_file=checkpoint_file)
 
     if 'delihh' in args.components:
         if 'ihs' not in args.components:
