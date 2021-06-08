@@ -328,7 +328,9 @@ def orig_main(args):
 
 def add_file_to_checkpoint(checkpoint_file, fname):
     #if not os.path.isfile(checkpoint_file):
+    _log.info(f'add_file_to_checkpoint: checkpoint_file={checkpoint_file} fname={fname}')
     if not checkpoint_file:
+        _log.info(f'No checkpoint file -- not adding {fname} to checkpoint')
         return
     checkpoint_file_tmp = checkpoint_file + '.tmp.tar'
     if not os.path.isfile(checkpoint_file_tmp):
@@ -338,18 +340,24 @@ def add_file_to_checkpoint(checkpoint_file, fname):
     execute(f'tar -rvf {checkpoint_file_tmp} {fname_rel}')
     os.rename(checkpoint_file_tmp, checkpoint_file)
     execute(f'ls -l {checkpoint_file}')
+    _log.info(f'checkpoint file {checkpoint_file} after adding {fname}:')
+    execute(f'tar -tvf {checkpoint_file} 1>&2')
 
 def execute_with_checkpoint(out_fname, cmd, cwd, checkpoint_file):
     """Run the given command to create a given file, and compress it.
     Use the checkpoint file to avoid redoing work.
     """
     #fname_gz = fname + '.gz'
+    _log.info(f'execute_with_checkpoint: out_fname={out_fname} cmd={cmd} '
+              f'cwd={cwd} checkpoint_file={checkpoint_file}')
+    out_fname = os.path.join(cwd, out_fname)
     if os.path.isfile(out_fname):
         _log.info(f'Reusing {out_fname} from checkpoint file {checkpoint_file}; not running {cmd}')
     else:
+        _log.info(f'Not Reusing {out_fname} from checkpoint file {checkpoint_file}; running {cmd}')
         execute(cmd, cwd=cwd)
         #execute(f'gzip {fname}', cwd=cwd)
-        add_file_to_checkpoint(checkpoint_file=checkpoint_file, fname=os.path.join(cwd, out_fname))
+        add_file_to_checkpoint(checkpoint_file=checkpoint_file, fname=out_fname)
     
 def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_num, checkpoint_file):
 
@@ -458,23 +466,26 @@ def parse_file_list(z):
         else:
             z.extend(slurp_file(f[1:]).strip().split('\n'))
     _log.info(f'parse_file_list: parsed {z_orig} as {result}')
-    return result
+    return result[::-1]
 
 def compute_component_scores(args):
     _log.info(f'Starting compute_component_scores: args={args}')
     if args.checkpoint_file:
         if os.path.isfile(args.checkpoint_file) and os.path.getsize(args.checkpoint_file) > 0:
-            execute(f'tar -xvf {args.checkpoint_file}')
+            checkpoint_file_size = os.path.getsize(args.checkpoint_file)
+            _log.info(f'Checkpoint file found! Restoring from {args.checkpoint_file} '
+                      f'of size {checkpoint_file_size}')
+            execute(f'tar -xvf {args.checkpoint_file} 1>&2')
         else:
+            _log.info(f'Checkpoint file NOT found; creating checkpoint file {args.checkpoint_file}')
             execute(f'rm -f {args.checkpoint_file}')
             execute(f'touch dummy.dat')
             execute(f'tar cvf {args.checkpoint_file} dummy.dat')
 
     for hapset_num, f in enumerate(parse_file_list(args.region_haps_tar_gzs)):
-        compute_component_scores_for_one_hapset(args=copy.deepcopy(args), hapset_haps_tar_gz=f, hapset_num=hapset_num,
+        compute_component_scores_for_one_hapset(args=copy.deepcopy(args),
+                                                hapset_haps_tar_gz=f, hapset_num=hapset_num,
                                                 checkpoint_file=args.checkpoint_file)
         
-        
- 
 if __name__=='__main__':
   compute_component_scores(parse_args())
