@@ -73,7 +73,7 @@ tot_time = 0
 for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)):
     print('looking at submission from', s['submissionDate'])
     submission_date = s['submissionDate']
-    if not submission_date.startswith('2021-06-09'): 
+    if not submission_date.startswith('2021-06-10'): 
         print('skipping submission date ', submission_date)
         continue
 
@@ -111,7 +111,8 @@ for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgette
             zz = {}
         tot_time += (time.time() - beg)
         print('saving workflow metadata')
-        _write_json(f'tmp/{submission_date}.{submission_idx}.{submission_id}.{workflow_id}.mdata.json', **zz)
+        workflow_name = zz.get('workflowName', 'no_wf_name')
+        _write_json(f'tmp/{submission_date}.{submission_idx}.{submission_id}.{workflow_id}.{workflow_name}.mdata.json', **zz)
         if 'submittedFiles' in zz:
             dump_file(fname=f'tmp/{submission_date}.{submission_idx}.{submission_id}.{workflow_id}.workflow.wdl',
                       value=zz['submittedFiles']['workflow'])
