@@ -442,7 +442,7 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
     #print(all_hapset_dfs.columns)
     #all_hapset_dfs.set_index(['hapset_id', 'pos'], verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv.gz', na_rep='nan', sep='\t')
         hapset_metadata = pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True)
-        store.append('hapset_metadata', hapset_metadata, min_itemsize={'hapset_id': min_hapset_id_size})
+        store.append('hapset_metadata', hapset_metadata)
         #hapsets_metadata.to_csv(inps['experimentId']+'.metadata.tsv.gz', na_rep='nan', sep='\t')
         
     #save_hapset_data_and_metadata_to_hdf5()
