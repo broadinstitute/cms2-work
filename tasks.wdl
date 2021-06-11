@@ -1,6 +1,6 @@
 version 1.0
 
-import "./structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210604-1534-add-checkpointing--b0b83cf499a3eb0ac97efa9e9ba9b40915493ff8/structs.wdl"
 
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
@@ -11,7 +11,7 @@ task compute_one_pop_cms2_components {
     Array[File] region_haps_tar_gzs
     Pop sel_pop
 
-    File script = "./remodel_components.py"
+    File script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210604-1534-add-checkpointing/b0b83cf499a3eb0ac97efa9e9ba9b40915493ff8/remodel_components.py"
     String docker
     Int preemptible
     ComputeResources compute_resources
@@ -243,7 +243,7 @@ task normalize_and_collate_block {
   input {
     NormalizeAndCollateBlockInput inp
   }
-  File normalize_and_collate_script = "./norm_and_collate_block.py"
+  File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210604-1534-add-checkpointing/b0b83cf499a3eb0ac97efa9e9ba9b40915493ff8/norm_and_collate_block.py"
   #String replica_id_str = basename(inp.ihs_out, ".ihs.out")
   #String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
   command <<<
@@ -273,7 +273,7 @@ task collate_stats_and_metadata_for_sel_sims_block {
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
-    File collate_stats_and_metadata_for_sel_sims_block_script = "./collate_stats_and_metadata_for_sel_sims_block.py"
+    File collate_stats_and_metadata_for_sel_sims_block_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/is-210604-1534-add-checkpointing/b0b83cf499a3eb0ac97efa9e9ba9b40915493ff8/collate_stats_and_metadata_for_sel_sims_block.py"
   }
   #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
   #Int disk_size_max_gb = 4096

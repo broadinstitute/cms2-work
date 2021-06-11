@@ -1,7 +1,7 @@
 version 1.0
 
-import "./structs.wdl"
-import "./run_sims_and_compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210604-1534-add-checkpointing--b0b83cf499a3eb0ac97efa9e9ba9b40915493ff8/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210604-1534-add-checkpointing--b0b83cf499a3eb0ac97efa9e9ba9b40915493ff8/run_sims_and_compute_cms2_components.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow cms2_main {
