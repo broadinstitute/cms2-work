@@ -113,20 +113,22 @@ workflow component_stats_for_sel_sims_wf {
 	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx]
 	  }
        } # call tasks.normalize_and_collate_block
+
+       call tasks.collate_stats_and_metadata_for_sel_sims_block {
+	    input:
+	    inp = object {
+	      experimentId: experimentId + "__selscen_" + sel_scen_idx + "__selblk_" + sel_blk_idx,
+	      sel_normed_and_collated: normalize_and_collate_block.normed_collated_stats,
+	      replica_infos: normalize_and_collate_block.replica_info
+	    }
+	}  
     }   # for each block of sel sims
     #}  # if (sel_sim.left.succeeded) 
   }  # end: scatter(sel_scen_idx in range(length(selection_sims)))
 
-  call tasks.collate_stats_and_metadata_for_all_sel_sims {
-    input:
-       inp = object {
-	 experimentId: experimentId,
-	 sel_normed_and_collated: flatten(flatten(normalize_and_collate_block.normed_collated_stats)),
-	 replica_infos: flatten(flatten(normalize_and_collate_block.replica_info))
-       }
-  }  
 
   output {
-    File all_hapsets_component_stats_h5 = collate_stats_and_metadata_for_all_sel_sims.all_hapsets_component_stats_h5
+    Array[File] all_hapsets_component_stats_h5_blocks =
+    flatten(collate_stats_and_metadata_for_sel_sims_block.hapsets_component_stats_h5)
   }
 }

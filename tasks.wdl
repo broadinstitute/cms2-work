@@ -267,14 +267,14 @@ struct collate_stats_and_metadata_for_all_sel_sims_input {
     Array[File] replica_infos
 }
 
-task collate_stats_and_metadata_for_all_sel_sims {
+task collate_stats_and_metadata_for_sel_sims_block {
   meta {
-    description: "Collate component stats and metadata for all selection sims"
+    description: "Collate component stats and metadata for a block of selection sims"
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
-    File collate_stats_and_metadata_for_all_sel_sims_script = "./collate_stats_and_metadata_for_all_sel_sims.py"
   }
+  File collate_stats_and_metadata_for_all_sel_sims_script = "./collate_stats_and_metadata_sel_sims_block.py"
   #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
   #Int disk_size_max_gb = 4096
   #Int disk_size_capped_gb = if disk_size_gb < disk_size_max_gb then disk_size_gb else disk_size_max_gb
@@ -282,13 +282,13 @@ task collate_stats_and_metadata_for_all_sel_sims {
     python3 "~{collate_stats_and_metadata_for_all_sel_sims_script}" --input-json "~{write_json(inp)}" 
   >>>
   output {
-    File all_hapsets_component_stats_h5 = inp.experimentId+".all_component_stats.h5"
+    File hapsets_component_stats_h5 = inp.experimentId+".all_component_stats.h5"
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    memory: "16 GB"
+    memory: "8 GB"
     cpu: 1
-    disks: "local-disk 512 HDD"
+    disks: "local-disk 50 HDD"
   }
 }
 

@@ -253,6 +253,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     #Array[File?] sel_normed_and_collated = component_stats_for_sel_sims_wf.sel_normed_and_collated
     #Array[File?] sel_sim_region_haps_tar_gzs = component_stats_for_sel_sims_wf.sel_sim_region_haps_tar_gzs
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
-    File all_hapsets_component_stats_h5 = component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5
+    Array[File] all_hapsets_component_stats_h5_blocks = 
+    component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5_blocks
   }
 }
