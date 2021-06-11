@@ -73,7 +73,7 @@ tot_time = 0
 for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)):
     print('looking at submission from', s['submissionDate'])
     submission_date = s['submissionDate']
-    if not submission_date.startswith('2021-06-10'): 
+    if not submission_date.startswith('2021-06-11'): 
         print('skipping submission date ', submission_date)
         continue
 
