@@ -258,6 +258,7 @@ task normalize_and_collate_block {
     memory: "1 GB"
     cpu: 1
     disks: "local-disk 10 HDD"
+    preemptible: 1
   }
 }
 
@@ -286,9 +287,10 @@ task collate_stats_and_metadata_for_sel_sims_block {
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    memory: "8 GB"
+    memory: "4 GB"
     cpu: 1
-    disks: "local-disk 50 HDD"
+    disks: "local-disk 25 HDD"
+    preemptible: 1
   }
 }
 
