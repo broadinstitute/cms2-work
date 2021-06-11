@@ -273,13 +273,13 @@ task collate_stats_and_metadata_for_sel_sims_block {
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
+    File collate_stats_and_metadata_for_sel_sims_block_script = "./collate_stats_and_metadata_for_sel_sims_block.py"
   }
-  File collate_stats_and_metadata_for_all_sel_sims_script = "./collate_stats_and_metadata_sel_sims_block.py"
   #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
   #Int disk_size_max_gb = 4096
   #Int disk_size_capped_gb = if disk_size_gb < disk_size_max_gb then disk_size_gb else disk_size_max_gb
   command <<<
-    python3 "~{collate_stats_and_metadata_for_all_sel_sims_script}" --input-json "~{write_json(inp)}" 
+    python3 "~{collate_stats_and_metadata_for_sel_sims_block_script}" --input-json "~{write_json(inp)}" 
   >>>
   output {
     File hapsets_component_stats_h5 = inp.experimentId+".all_component_stats.h5"
