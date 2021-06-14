@@ -1,5 +1,7 @@
-##    run new, heterogenous demography model set; generate component scores
-##    02.21.2019
+#!/usr/bin/env python3
+
+"""Collate component stats and metadata for all selection sims.
+"""
 
 import argparse
 import csv
@@ -13,7 +15,6 @@ import gzip
 import io
 import json
 import logging
-import math
 import multiprocessing
 import os
 import os.path
@@ -25,6 +26,8 @@ import subprocess
 import sys
 import tempfile
 import time
+
+import pandas as pd
 
 # * Utils
 
@@ -102,13 +105,6 @@ def open_or_gzopen(fname, *opts, **kwargs):
     else:
         return open(fname, *open_opts, **kwargs)
 
-def find_one_file(glob_pattern):
-    """If exactly one file matches `glob_pattern`, returns the path to that file, else fails."""
-    matching_files = list(glob.glob(glob_pattern))
-    if len(matching_files) == 1:
-        return matching_files[0]
-    raise RuntimeError(f'find_one_file({glob_pattern}): {len(matching_files)} matches - {matching_files}')
-
 def available_cpu_count():
     """
     Return the number of available virtual or physical CPUs on this system.
@@ -156,70 +152,17 @@ def execute(action, **kw):
     finally:
         _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
 
-def chk(cond, msg):
+def chk(cond, msg='condition failed'):
     if not cond:
-        raise RuntimeError(f'chk failed: {msg}')
-
-def calc_delihh(readfilename, writefilename):
-    """given a selscan iHS file, parses it and writes delihh file"""
-    with open_or_gzopen(readfilename) as readfile, open(writefilename, 'w') as writefile:
-        for line in readfile:
-            entries = line.strip().split()
-            chk(len(entries) == 10, 'malformed ihh line')
-            # entries are: locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r
-            
-            # handle input with/without ihh details
-            # ihh_1 is derived, ihh_0 is ancestral
-            if len(entries) == 6:
-                    locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed = entries
-            elif len(entries) == 10:
-                    locus, phys, freq_1, ihh_1, ihh_0, ihs_unnormed, der_ihh_l, der_ihh_r, anc_ihh_l, anc_ihh_r  = entries
-            unstand_delIHH = math.fabs(float(ihh_1) - float(ihh_0)) 
-            
-            # write 6 columns for selscan norm
-            writefile.write('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, str(unstand_delIHH)]) + '\n')
-# end: def calc_delihh(readfilename, writefilename):
-
-def calc_derFreq(in_tped, out_derFreq_tsv):
-    """Calculate the derived allele frequency for each SNP in one population"""
-    with open(in_tped) as tped, open(out_derFreq_tsv, 'w') as out:
-        out.write('\t'.join(['chrom', 'snpId', 'pos', 'derFreq']) + '\n')
-        for line in tped:
-            chrom, snpId, genPos_cm, physPos_bp, alleles = line.strip().split(maxsplit=4)
-            n = [alleles.count(i) for i in ('0', '1')]
-            derFreq = n[0] / (n[0] + n[1])
-            out.write('\t'.join([chrom, snpId, physPos_bp, f'{derFreq:.2f}']) + '\n')
+        raise RuntimeError(f'Error: {msg}') 
 
 # * Parsing args
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    # parser.add_argument('model')
-    # parser.add_argument('selpop', type=int)
-    # parser.add_argument('irep', type=int)
-    # parser.add_argument('--cmsdir', required=True)
-    # parser.add_argument('--writedir', required=True)
-    # parser.add_argument('--simRecomFile')
-    # parser.add_argument('--pops', nargs='+')
-    #parser.add_argument('--replica-info')
-    #parser.add_argument('--replica-id-string')
-    parser.add_argument('--region-haps-tar-gzs', nargs='+',
-                        required=True, help='list of .tar.gz files where each contains the haps for one hapset')
-    #parser.add_argument('--out-basename', required=True, help='base name for output files')
-    parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
-    parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq'),
-                        nargs='+', help='which component tests to compute')
-    parser.add_argument('--threads', type=int, default=1, help='selscan threads')
-    parser.add_argument('--checkpoint-file', help='file used for checkpointing')
-    #parser.add_argument('--out-json', required=True, help='json file describing the manifest of each file')
 
-    # parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
-    # parser.add_argument('--nsl-bins', help='use nsl bins for normalization')
-    # parser.add_argument('--ihh12-bins', help='use ihh12 bins for normalization')
-    # parser.add_argument('--n-bins-ihs', type=int, default=100, help='number of ihs bins')
-    # parser.add_argument('--n-bins-nsl', type=int, default=100, help='number of nsl bins')
-    
+    parser.add_argument('--input-json', required=True, help='inputs passed as json')
+
     return parser.parse_args()
 
 # * orig_main
@@ -326,114 +269,37 @@ def orig_main(args):
 
 # * compute_component_scores
 
-def add_file_to_checkpoint(checkpoint_file, fname):
-    #if not os.path.isfile(checkpoint_file):
-    _log.info(f'add_file_to_checkpoint: checkpoint_file={checkpoint_file} fname={fname}')
-    if not checkpoint_file:
-        _log.info(f'No checkpoint file -- not adding {fname} to checkpoint')
-        return
-    checkpoint_file_tmp = checkpoint_file + '.tmp.tar'
-    if not os.path.isfile(checkpoint_file_tmp):
-        execute(f'cp {checkpoint_file} {checkpoint_file_tmp}')
-
-    fname_rel = os.path.relpath(fname)
-    execute(f'tar -rvf {checkpoint_file_tmp} {fname_rel}')
-    os.rename(checkpoint_file_tmp, checkpoint_file)
-    execute(f'ls -l {checkpoint_file}')
-    _log.info(f'checkpoint file {checkpoint_file} after adding {fname}:')
-    execute(f'tar -tvf {checkpoint_file} 1>&2')
-
-def execute_with_checkpoint(out_fname, cmd, cwd, checkpoint_file):
-    """Run the given command to create a given file, and compress it.
-    Use the checkpoint file to avoid redoing work.
-    """
-    #fname_gz = fname + '.gz'
-    _log.info(f'execute_with_checkpoint: out_fname={out_fname} cmd={cmd} '
-              f'cwd={cwd} checkpoint_file={checkpoint_file}')
-    out_fname = os.path.join(cwd, out_fname)
-    if os.path.isfile(out_fname):
-        _log.info(f'Reusing {out_fname} from checkpoint file {checkpoint_file}; not running {cmd}')
-    else:
-        _log.info(f'Not Reusing {out_fname} from checkpoint file {checkpoint_file}; running {cmd}')
-        execute(cmd, cwd=cwd)
-        #execute(f'gzip {fname}', cwd=cwd)
-        add_file_to_checkpoint(checkpoint_file=checkpoint_file, fname=out_fname)
-    
-def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_num, checkpoint_file):
-
-    # TODO: check the presence of sentinel file (or a checksum file?) before each operation.
-    # TODO: before saving the checkpoint file at the end, move current one away, then move new one in in an atomic operation.
-    # (note that this would also take care of compressing the results).
-
-    # TODO: uniformize things, so that for each component there is its own method?
-
-    # TODO: add an (optional?) thread that monitors the memory and load at regular intervals,
-    # maybe using psutils, and add to the output.  [is this monitoring feature of cromwell supported by terra?]
-
-    if os.path.getsize(hapset_haps_tar_gz) == 0:
-        _log.info(f'Skipping failed sim {hapset_haps_tar_gz} hapset_num={hapset_num}')
-        return
-    hapset_dir = os.path.realpath(f'hapset{hapset_num:06}')
-    execute(f'mkdir -p {hapset_dir}')
-    execute(f'tar -zvxf {hapset_haps_tar_gz} -C {hapset_dir}/')
-
-    out_basename = os.path.basename(hapset_haps_tar_gz) + '__selpop_' + str(args.sel_pop)
-    if args.alt_pop:
-        out_basename += '__altpop_' + str(args.alt_pop)
-
+def compute_component_scores(args):
     args.threads = min(args.threads, available_cpu_count())
-    #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
-    replicaInfo = _json_loadf(find_one_file(f'{hapset_dir}/*.replicaInfo.json'))
+    shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
+    replicaInfo = _json_loadf(args.replica_info)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     sel_pop_idx = pop_id_to_idx[args.sel_pop]
-    sel_pop_tped = os.path.realpath(os.path.join(hapset_dir, replicaInfo["tpedFiles"][sel_pop_idx]))
-    if args.alt_pop:
-        alt_pop_idx = pop_id_to_idx[args.alt_pop]
-        alt_pop_tped = os.path.realpath(os.path.join(hapset_dir, replicaInfo["tpedFiles"][alt_pop_idx]))
-        
+    sel_pop_tped = replicaInfo["tpedFiles"][sel_pop_idx]
+
     selscan_cmd_base = \
         f'selscan --threads {args.threads} --tped {sel_pop_tped} ' \
-        f'--out {out_basename}'
+        f'--out {args.out_basename}'
     for component in args.components:
-        if component in ('ihs', 'ihh12', 'nsl', 'xpehh'):
-            alt_pop_tped_opt = '' if component not in ('xpehh',) else \
-                f' --tped-ref {alt_pop_tped} '
-            ihs_detail = '' if component != 'ihs' else ' --ihs-detail '
-            cmd = f'{selscan_cmd_base} {alt_pop_tped_opt} --{component} {ihs_detail}'
-            #execute(cmd, cwd=hapset_dir)
-            execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.{component}.out', cwd=hapset_dir, checkpoint_file=checkpoint_file)
+        alt_pop_tped = '' if component not in ('xpehh',) else f' --tped-ref {replicaInfo["tpedFiles"][pop_id_to_idx[args.alt_pop]]} '
+        cmd = f'{selscan_cmd_base} {alt_pop_tped} --{component}'
+        execute(cmd)
 
-    if 'delihh' in args.components:
-        if 'ihs' not in args.components:
-            raise RuntimeError('To compute delihh must first compute ihs')
-        calc_delihh(readfilename=f'{hapset_dir}/{out_basename}.ihs.out',
-                    writefilename=f'{hapset_dir}/{out_basename}.delihh.out')
+    if False:
+        execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+                f'--out {args.replica_id_string} ')
+        execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+                f'--out {args.replica_id_string} ')
+        execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
+                f'--out {args.replica_id_string} ')
 
-    if 'fst' in args.components or 'delDAF' in args.components:
-        fst_and_delDAF_out_fname = os.path.join(hapset_dir, out_basename + '.fst_and_delDAF.tsv')
-        cmd = \
-            f'freqs_stats {sel_pop_tped} {alt_pop_tped} ' \
-            f' {fst_and_delDAF_out_fname}'
-        execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.fst_and_delDAF.tsv', cwd=hapset_dir, checkpoint_file=checkpoint_file)
-
-    if 'derFreq' in args.components:
-        calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=f'{hapset_dir}/{out_basename}.derFreq.tsv')
-
-    # if False:
-    #     execute(f'selscan --threads {args.threads} --ihh12 --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-    #             f'--out {args.replica_id_string} ')
-    #     execute(f'selscan --threads {args.threads} --ihs --ihs-detail --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-    #             f'--out {args.replica_id_string} ')
-    #     execute(f'selscan --threads {args.threads} --nsl --tped {replicaInfo["tpedFiles"][sel_pop_idx]} '
-    #             f'--out {args.replica_id_string} ')
-
-    # if False:
-    #     for alt_pop in replicaInfo['popIds']:
-    #         if alt_pop == args.sel_pop: continue
-    #         alt_pop_idx = pop_id_to_idx[alt_pop]
-    #         execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
-    #                 f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
-    #                 f'--out {args.replica_id_string}__altpop_{alt_pop} ')
+    if False:
+        for alt_pop in replicaInfo['popIds']:
+            if alt_pop == args.sel_pop: continue
+            alt_pop_idx = pop_id_to_idx[alt_pop]
+            execute(f'selscan --threads {args.threads} --xpehh --tped {replicaInfo["tpedFiles"][this_pop_idx]} '
+                    f'--tped-ref {replicaInfo["tpedFiles"][alt_pop_idx]} '
+                    f'--out {args.replica_id_string}__altpop_{alt_pop} ')
 
     # if args.ihs_bins:
     #     execute(f'norm --ihs --bins {args.n_bins_ihs} --load-bins {args.ihs_bins} --files {args.replica_id_string}.ihs.out '
@@ -455,6 +321,81 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
     # else:
     #     execute(f'touch {args.replica_id_string}.ihh12.out.norm {args.replica_id_string}.ihh12.out.norm.log')
 
+def save_hapset_data_and_metadata_to_hdf5(hapsets_data, hapsets_metadata, out_hdf5):
+    """Save all hapset data (component stats) and metadata to one hdf5 store.
+
+Layout:
+
+.
+├── version_info
+|   ├── terra_workflow_id
+|   └── freeze_date
+├── component_info
+|   └── component_score_keys
+├── meta_data
+|   ├── hap_set_ID
+|   ├── pressured_population
+|   ├── selection_coefficient
+|   ├── time_under_selection
+|   ├── allele_age
+|   ├── demographic_model
+|   ├── physical_chr
+|   ├── physical_start
+|   ├── physical_end
+|   └── database
+└── data
+    ├── {hap_set_ID_1}
+    |   ├── YRI
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   ├── CEU
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   ├── CHB
+    |   |   ├── physical_position
+    |   |   ├── component_1
+    |   |   ...
+    |   |   └── component_n
+    |   └── BEB
+    |       ├── physical_position
+    |       ├── component_1
+    |       ...
+    |       └── component_n
+     ...
+    └── {hap_set_ID_N}
+        ├── YRI
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        ├── CEU
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        ├── CHB
+        |   ├── physical_position
+        |   ├── component_1
+        |   ...
+        |   └── component_n
+        └── BEB
+            ├── physical_position
+            ├── component_1
+            ...
+            └── component_n  
+
+"""
+    pd.set_option('io.hdf.default_format','table')
+    with pd.HDFStore(out_hdf5, complevel=9) as store:
+        store['data'] = hapsets_data
+        store['metadata'] = hapsets_metadata
+    
+
+
 def parse_file_list(z):
     z_orig = copy.deepcopy(z)
     z = list(z or [])
@@ -468,24 +409,63 @@ def parse_file_list(z):
     _log.info(f'parse_file_list: parsed {z_orig} as {result}')
     return result[::-1]
 
-def compute_component_scores(args):
-    _log.info(f'Starting compute_component_scores: args={args}')
-    if args.checkpoint_file:
-        if os.path.isfile(args.checkpoint_file) and os.path.getsize(args.checkpoint_file) > 0:
-            checkpoint_file_size = os.path.getsize(args.checkpoint_file)
-            _log.info(f'Checkpoint file found! Restoring from {args.checkpoint_file} '
-                      f'of size {checkpoint_file_size}')
-            execute(f'tar -xvf {args.checkpoint_file} 1>&2')
-        else:
-            _log.info(f'Checkpoint file NOT found; creating checkpoint file {args.checkpoint_file}')
-            execute(f'rm -f {args.checkpoint_file}')
-            execute(f'touch dummy.dat')
-            execute(f'tar cvf {args.checkpoint_file} dummy.dat')
 
-    for hapset_num, f in enumerate(parse_file_list(args.region_haps_tar_gzs)):
-        compute_component_scores_for_one_hapset(args=copy.deepcopy(args),
-                                                hapset_haps_tar_gz=f, hapset_num=hapset_num,
-                                                checkpoint_file=args.checkpoint_file)
+def collate_stats_and_metadata_for_all_sel_sims(args):
+
+    def descr_df(df, msg):
+        """Describe a DataFrame"""
+        return
+        print('===BEG=======================\n', msg)
+        print(df.describe(), '\n')
+        df.info(verbose=True, null_counts=True)
+        print('===END=======================\n', msg)
         
+
+    inps = _json_loadf(args.input_json)
+
+    def chk_idx(pd, name):
+        chk(pd.index.is_unique, f'Bad {name} index: has non-unique values')
+        chk(pd.index.is_monotonic_increasing, f'Bad {name} index: not monotonically increasing')
+        descr_df(pd, name)
+
+    #hapset_dfs = []
+    hapset_metadata_records = []
+
+    min_hapset_id_size = 256
+    
+    pd.set_option('io.hdf.default_format','table')
+    with pd.HDFStore(inps['experimentId']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
+        for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
+            hapset_replica_info = _json_loadf(hapset_replica_info_json)['replicaInfo']
+            hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
+            hapset_id = hapset_compstats['hapset_id'].iat[0]
+            hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
+            #hapset_dfs.append(hapset_compstats)
+            store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': min_hapset_id_size})
+            hapset_metadata_records.append({'hapset_id': hapset_id,
+                                            'is_sim': True,
+                                            'start_pos:': 0,
+                                            'model_id': hapset_replica_info['modelInfo']['modelId'],
+                                            'sel_pop': hapset_replica_info['modelInfo']['sweepInfo']['selPop'],
+                                            'sel_gen': hapset_replica_info['modelInfo']['sweepInfo']['selGen'],
+                                            'sel_beg_pop': hapset_replica_info['modelInfo']['sweepInfo']['selBegPop'],
+                                            'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
+                                            'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
+                                            'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
+        #all_hapset_dfs = pd.concat(hapset_dfs)
+        #store.append('hapset_data', all_hapset_dfs)
+    #print(all_hapset_dfs.columns)
+    #all_hapset_dfs.set_index(['hapset_id', 'pos'], verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv.gz', na_rep='nan', sep='\t')
+        hapset_metadata = pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True)
+        store.append('hapset_metadata', hapset_metadata)
+        #hapsets_metadata.to_csv(inps['experimentId']+'.metadata.tsv.gz', na_rep='nan', sep='\t')
+        
+    #save_hapset_data_and_metadata_to_hdf5()
+    
+
+# end: def normalize_and_collate_scores(args)
+
 if __name__=='__main__':
-  compute_component_scores(parse_args())
+  #compute_component_scores(parse_args())
+  vstack_collated_h5s(parse_args())
+

@@ -2,7 +2,6 @@
 
 import argparse
 import copy
-import datetime
 #from firecloud import fiss
 import json
 import operator
@@ -74,7 +73,7 @@ tot_time = 0
 for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)):
     print('looking at submission from', s['submissionDate'])
     submission_date = s['submissionDate']
-    if not submission_date.startswith(datetime.datetime.now().strftime('%Y-%m-%d')): 
+    if not submission_date.startswith('2021-06-10'): 
         print('skipping submission date ', submission_date)
         continue
 
@@ -90,25 +89,49 @@ for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgette
         continue
     print('getting workflow metadata for workflow id ', y['workflows'][0]['workflowId'])
     beg = time.time()
-    zz_result = get_workflow_metadata_gz(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=submission_id,
-                                    workflow_id=y['workflows'][0]['workflowId'])
-    print('ZZ_RESULT: ', type(zz_result), dir(zz_result), zz_result)
-    for f in dir(zz_result):
-        print('  ', f, ' = ', getattr(zz_result, f))
-    print('ZZ_RESULT.raw: ', type(zz_result.raw), dir(zz_result.raw), zz_result.raw)
-    for f in dir(zz_result.raw):
-        print('  ', f, ' = ', getattr(zz_result.raw, f))
-    print('converting workflow metadata to json')
-    try:
-        zz = zz_result.json()
-    except Exception as e:
-        print('Error converting to json:', e)
-        zz = {}
-    tot_time += (time.time() - beg)
-    print('saving workflow metadata')
-    _write_json(f'tmp/{submission_date}.{submission_idx}.{submission_id}.mdata.json', **zz)
-    if 'submittedFiles' in zz:
-        dump_file(fname=f'tmp/{submission_date}.{submission_idx}.{submission_id}.workflow.wdl', value=zz['submittedFiles']['workflow'])
+
+    workflow_ids = [y['workflows'][0]['workflowId']]
+    while workflow_ids:
+        workflow_id = workflow_ids.pop()
+        print('PROCESSING WORKFLOW:', workflow_id)
+
+        zz_result = get_workflow_metadata_gz(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=submission_id,
+                                             workflow_id=workflow_id)
+        #print('ZZ_RESULT: ', type(zz_result), dir(zz_result), zz_result)
+        for f in dir(zz_result):
+            print('  ', f, ' = ', getattr(zz_result, f))
+        #print('ZZ_RESULT.raw: ', type(zz_result.raw), dir(zz_result.raw), zz_result.raw)
+        for f in dir(zz_result.raw):
+            print('  ', f, ' = ', getattr(zz_result.raw, f))
+        print('converting workflow metadata to json')
+        try:
+            zz = zz_result.json()
+        except Exception as e:
+            print('Error converting to json:', e)
+            zz = {}
+        tot_time += (time.time() - beg)
+        print('saving workflow metadata')
+        workflow_name = zz.get('workflowName', 'no_wf_name')
+        _write_json(f'tmp/{submission_date}.{submission_idx}.{submission_id}.{workflow_id}.{workflow_name}.mdata.json', **zz)
+        if 'submittedFiles' in zz:
+            dump_file(fname=f'tmp/{submission_date}.{submission_idx}.{submission_id}.{workflow_id}.workflow.wdl',
+                      value=zz['submittedFiles']['workflow'])
+
+        jsons = [zz]
+        while jsons:
+            js = jsons.pop()
+            #print('EXAMINING js: ', js)
+            if isinstance(js, list):
+                jsons.extend(js)
+            elif isinstance(js, dict):
+                if 'subWorkflowId' in js:
+                    print('Found subworkflow id:', js['subWorkflowId'])
+                    workflow_ids.append(js['subWorkflowId'])
+                jsons.extend(list(js.values()))
+            else:
+                if 'subWorkflowId' in str(js):
+                    raise RuntimeError(f'Missed subworkflowId in {js}')
+                
 
     #succ = [v["succeeded"] for v in zz['outputs']["run_sims_cosi2.replicaInfos"]]
     #print(f'Succeeded: {sum(succ)} of {len(succ)}')

@@ -3,115 +3,6 @@ version 1.0
 import "./structs.wdl"
 
 # * task compute_one_pop_cms2_components
-task old_compute_one_pop_cms2_components {
-  meta {
-    description: "Compute one-pop CMS2 component scores assuming selection in a given pop"
-  }
-  input {
-    File region_haps_tar_gz
-    Pop sel_pop
-
-    File script = "./old_remodel_components.py"
-    String docker
-    Int preemptible
-    ComputeResources compute_resources
-  }
-
-  String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop.pop_id
-  String script_used_name = "script-used." + basename(script)
-
-  String ihs_out_fname = out_basename + ".ihs.out"
-  String nsl_out_fname = out_basename + ".nsl.out"
-  String ihh12_out_fname = out_basename + ".ihh12.out"
-  String delihh_out_fname = out_basename + ".delihh.out"
-  String derFreq_out_fname = out_basename + ".derFreq.tsv"
-
-  command <<<
-    tar xvfz "~{region_haps_tar_gz}"
-
-    cp "~{script}" "~{script_used_name}"
-    python3 "~{script}" --replica-info *.replicaInfo.json --replica-id-string "~{out_basename}" \
-      --out-basename "~{out_basename}" --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
-  >>>
-
-  output {
-    File ihs = ihs_out_fname
-    File nsl = nsl_out_fname
-    File ihh12 = ihh12_out_fname
-    File delihh = delihh_out_fname
-    File derFreq = derFreq_out_fname
-
-    File script_used = script_used_name
-  }
-
-  runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
-    cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
-  }
-}
-
-# * task compute_two_pop_cms2_components_
-task old_compute_two_pop_cms2_components {
-  meta {
-    description: "Compute cross-pop comparison CMS2 component scores"
-  }
-# ** inputs
-  input {
-#    ReplicaInfo replicaInfo
-    File region_haps_tar_gz
-    Pop sel_pop
-    Pop alt_pop
-
-    #File? xpehh_bins
-
-    File script = "./old_remodel_components.py"
-    ComputeResources compute_resources
-    String docker
-    Int preemptible
-  }
-  String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop.pop_id + "__altpop_" + alt_pop.pop_id
-  String script_used_name = out_basename + ".script-used." + basename(script)
-
-  String xpehh_out_fname = out_basename + ".xpehh.out"
-  String xpehh_log_fname = out_basename + ".xpehh.log"
-
-  String fst_and_delDAF_out_fname = out_basename + ".fst_and_delDAF.tsv"
-
-# ** command
-  command <<<
-    tar xvfz "~{region_haps_tar_gz}"
-
-    cp "~{script}" "~{script_used_name}"
-    python3 "~{script}" --replica-info *.replicaInfo.json --out-basename "~{out_basename}" \
-        --replica-id-string "~{out_basename}" --sel-pop ~{sel_pop.pop_id} --alt-pop ~{alt_pop.pop_id} \
-        --threads ~{compute_resources.cpus} --components xpehh fst delDAF
-  >>>
-
-# ** outputs
-  output {
-    File xpehh = xpehh_out_fname
-    File xpehh_log = xpehh_log_fname
-    File fst_and_delDAF = fst_and_delDAF_out_fname
-    Pop sel_pop_used = sel_pop
-    Pop alt_pop_used = alt_pop
-    File script_used = script_used_name
-  }
-
-# ** runtime
-  runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
-    cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
-  }
-}
-
-
-# * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
   meta {
     description: "Compute one-pop CMS2 component scores assuming selection in a given pop"
@@ -136,7 +27,8 @@ task compute_one_pop_cms2_components {
 
   command <<<
     python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
-      --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq
+      --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq \
+      --checkpoint-file "checkpoint.tar"
   >>>
 
   output {
@@ -154,6 +46,7 @@ task compute_one_pop_cms2_components {
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
     disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
+    checkpointFile: "checkpoint.tar"
   }
 }
 
@@ -187,7 +80,7 @@ task compute_two_pop_cms2_components {
   command <<<
     python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
         --sel-pop ~{sel_pop.pop_id} --alt-pop ~{alt_pop.pop_id} \
-        --threads ~{compute_resources.cpus} --components xpehh fst delDAF
+        --threads ~{compute_resources.cpus} --components xpehh fst delDAF --checkpoint-file checkpoint.tar
   >>>
 
 # ** outputs
@@ -207,6 +100,7 @@ task compute_two_pop_cms2_components {
     memory: select_first([compute_resources.mem_gb, 4]) + " GB"
     cpu: select_first([compute_resources.cpus, 1])
     disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
+    checkpointFile: "checkpoint.tar"
   }
 }
 
@@ -364,6 +258,7 @@ task normalize_and_collate_block {
     memory: "1 GB"
     cpu: 1
     disks: "local-disk 10 HDD"
+    preemptible: 1
   }
 }
 
@@ -373,25 +268,29 @@ struct collate_stats_and_metadata_for_all_sel_sims_input {
     Array[File] replica_infos
 }
 
-task collate_stats_and_metadata_for_all_sel_sims {
+task collate_stats_and_metadata_for_sel_sims_block {
   meta {
-    description: "Collate component stats and metadata for all selection sims"
+    description: "Collate component stats and metadata for a block of selection sims"
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
-    File collate_stats_and_metadata_for_all_sel_sims_script = "./collate_stats_and_metadata_for_all_sel_sims.py"
+    File collate_stats_and_metadata_for_sel_sims_block_script = "./collate_stats_and_metadata_for_sel_sims_block.py"
   }
+  #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
+  #Int disk_size_max_gb = 4096
+  #Int disk_size_capped_gb = if disk_size_gb < disk_size_max_gb then disk_size_gb else disk_size_max_gb
   command <<<
-    python3 "~{collate_stats_and_metadata_for_all_sel_sims_script}" --input-json "~{write_json(inp)}" 
+    python3 "~{collate_stats_and_metadata_for_sel_sims_block_script}" --input-json "~{write_json(inp)}" 
   >>>
   output {
-    File all_hapsets_component_stats_h5 = inp.experimentId+".all_component_stats.h5"
+    File hapsets_component_stats_h5 = inp.experimentId+".all_component_stats.h5"
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    memory: "16 GB"
+    memory: "4 GB"
     cpu: 1
-    disks: "local-disk 50 HDD"
+    disks: "local-disk 25 HDD"
+    preemptible: 1
   }
 }
 
