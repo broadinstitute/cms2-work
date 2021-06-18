@@ -14,6 +14,17 @@ Workflows to run population genetics simulations and compute component scores fo
   quay.io/ilya_broad/cms .  Currently, after updating that, you have to manually update the docker runtime attribute
   in each task in tassk.wdl; this should be automated.
 
+  That docker image includes a customized version of selscan, which can save normalization stats computed from one set of
+  data and then use them to normalize another set of data.   (We compute normalization stats for neutral sims/regions,
+  and then use that to normalize component stats for selection sims/regions.)
+  Updating that currently requires tagging a new version at https://github.com/notestaff/selscan , 
+  then updating docker/cms2-docker-component-stats/bioconda-recipes/recipes/selscan/meta.yaml to use that tag.
+  Then when a commit is pushed to cms2-docker-component-stats, Travis will build a new conda package for selscan and
+  include it in the docker image.
+
+  
+  
+
 
   
   
