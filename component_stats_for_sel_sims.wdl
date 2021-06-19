@@ -1,14 +1,14 @@
 version 1.0
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-origin-me/is-add-fst-deldaf-delihh--374acd6bee0f513a59b66b1dc16b0705ee2d6494/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-origin-me/is-add-fst-deldaf-delihh--374acd6bee0f513a59b66b1dc16b0705ee2d6494/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
     Array[Pair[ReplicaInfo, File]] selection_sims
-    File compute_components_script = "./remodel_components.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/origin-me/is-add-fst-deldaf-delihh/374acd6bee0f513a59b66b1dc16b0705ee2d6494/remodel_components.py"
+    File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/dockstore-tool-cms2/origin-me/is-add-fst-deldaf-delihh/374acd6bee0f513a59b66b1dc16b0705ee2d6494/norm_and_collate.py"
     PopsInfo pops_info
 
     Int n_bins_ihs = 20
