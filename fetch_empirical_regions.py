@@ -168,10 +168,38 @@ def parse_args():
 def fetch_empirical_regions(empirical_regions_bed):
     """Fetch hapsets for specified empirical regions"""
     
+    # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
+    # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt
+    # Sample NA20318 was recorded in 'integrated_call_samples_v2.20130502.ALL.ped' as being unrelated and assigned family ID 2480a. Based on    # information from Coriell and IBD data, we believe that this sample is part of family 2480 and related to samples NA20317 and NA20319.
+
+    # Ancestral allele (based on 1000 genomes reference data).
+    # The following comes from its original README file: ACTG -
+    # high-confidence call, ancestral state supproted by the other
+    # two sequences actg - low-confindence call, ancestral state
+    # supported by one sequence only N - failure, the ancestral
+    # state is not supported by any other sequence =- - the extant
+    # species contains an insertion at this postion . - no coverage
+    # in the alignment
+
+    # genetic maps: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130507_omni_recombination_rates/
+
+    # recent genetic maps:
+    # https://advances.sciencemag.org/content/5/10/eaaw9206.full
+    # https://drive.google.com/file/d/17KWNaJQJuldfbL9zljFpqj5oPfUiJ0Nv/view?usp=sharing
+
+    
+
+    
+
+    
+
+
+    
     
 
 
 if __name__=='__main__':
   #compute_component_scores(parse_args())
-  collate_stats_and_metadata_for_all_sel_sims(parse_args())
+  fetch_empirical_regions(parse_args())
+
 

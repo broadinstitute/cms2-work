@@ -328,7 +328,7 @@ task fetch_empirical_hapsets_from_1KG {
     empirical_regions_bed: "(File) empirical regions to fetch.  Column 5 (score), if present, is interpreted as the name of the putatively selected population.  The same region may be listed multiple times to test for selection in multiple populations."
     # add: metadata to attach to all regions
 # ** outputs
-    empirical_hapset_tar_gzs: "(Array[File]) "
+    empirical_hapset_tar_gzs: "(Array[File]) for each empirical region, a .tar.gz file containing one tped for each pop, and a *.replicaInfo.json file describing the hapset"
   }
   input {
     File empirical_regions_bed
