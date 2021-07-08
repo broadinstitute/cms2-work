@@ -23,6 +23,7 @@ import pathlib
 import random
 import re
 import shutil
+import string
 import subprocess
 import sys
 import tempfile
@@ -144,14 +145,26 @@ def available_cpu_count():
                cgroup_cpus, proc_cpus, multiprocessing.cpu_count())
     return min(cgroup_cpus, proc_cpus, multiprocessing.cpu_count())
 
-def execute(action, **kw):
+def execute(cmd, retries=0, retry_delay=0, **kw):
     succeeded = False
-    try:
-        _log.debug('Running command: %s', action)
-        subprocess.check_call(action, shell=True, **kw)
-        succeeded = True
-    finally:
-        _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
+    attempt = 0
+    while not succeeded:
+        try:
+            attempt += 1
+            _log.debug(f'Running command ({attempt=}, {kw=}): {cmd}')
+            subprocess.check_call(cmd, shell=True, **kw)
+            succeeded = True
+        except Exception as e:
+            if retries > 0:
+                retries -= 1
+                _log.warning(f'Retrying command {cmd} after failure {e}; {retries=} left, {retry_delay=}')
+                retry_delay_here = retry_delay * (.9 + .2 * random.random())
+                _log.debug(f'Sleeping before retrying for {retry_delay_here}s')
+                time.sleep(retry_delay_here)
+            else:
+                raise
+        finally:
+            _log.debug(f'Returned from running command: {succeeded=}, {cmd=}')
 
 def chk(cond, msg='condition failed'):
     if not cond:
@@ -163,10 +176,22 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--empirical-regions-bed', required=True, help='empirical regions bed file')
+    parser.add_argument('--phased-vcfs-url-template',
+                        default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/' \
+                        'ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz',
+                        help='URL template for phased vcfs for each chromosome; ${chrom} will be replaced with chrom name')
+    parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
     return parser.parse_args()
 
-def fetch_empirical_regions(empirical_regions_bed):
+def fetch_empirical_regions(args):
     """Fetch hapsets for specified empirical regions"""
+
+    # TODO:
+    #   - remove related individuals (see ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt
+    #         and later files)
+    #   - record region coords as offset from start, to keep region coord values low
+
+    # https://www.internationalgenome.org/faq/how-do-i-get-a-genomic-region-sub-section-of-your-files/
     
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt
@@ -187,19 +212,25 @@ def fetch_empirical_regions(empirical_regions_bed):
     # https://advances.sciencemag.org/content/5/10/eaaw9206.full
     # https://drive.google.com/file/d/17KWNaJQJuldfbL9zljFpqj5oPfUiJ0Nv/view?usp=sharing
 
-    
+    chrom2regions = collections.defaultdict(collections.OrderedDict)
 
-    
+    with open(args.empirical_regions_bed) as empirical_regions_bed_in:
+        for line in empirical_regions_bed_in:
+            chrom, beg, end, region_name, sel_pop = line.strip().split('\t')
+            chrom2regions[chrom][(beg, end)] = (region_name, sel_pop)
 
-    
-
-
-    
-    
-
+    for chrom in sorted(chrom2regions):
+        _log.info(f'Processing chrom {chrom}: {len(chrom2regions[chrom])=}')
+        chrom_regions_fname = os.path.realpath(f'{args.tmp_dir}/chrom_{chrom}_sel_regions_deduped.bed')
+        with open(chrom_regions_fname, 'w') as chrom_regions_out:
+            for region in sorted(chrom2regions[chrom]):
+                chrom_regions_out.write(f'{chrom}\t{region[0]}\t{region[1]}\n')
+        chrom_all_regions_vcf = os.path.realpath(f'{args.tmp_dir}/chrom_{chrom}_all_regions_vcf.vcf')
+        chrom_phased_vcf_url = string.Template(args.phased_vcfs_url_template).substitute(chrom=chrom)
+        execute(f'tabix -h --separate-regions -R {chrom_regions_fname} {chrom_phased_vcf_url} > {chrom_all_regions_vcf}',
+                cwd=os.path.realpath(args.tmp_dir), retries=3, retry_delay=5)
 
 if __name__=='__main__':
   #compute_component_scores(parse_args())
   fetch_empirical_regions(parse_args())
-
 
