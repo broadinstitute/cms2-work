@@ -180,6 +180,9 @@ def parse_args():
                         default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/' \
                         'ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz',
                         help='URL template for phased vcfs for each chromosome; ${chrom} will be replaced with chrom name')
+    parser.add_argument('--pops-to-sample-ids-ped-url'
+                        default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped',
+                        help='URL for the file mapping populations to sample IDs')
     parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
     return parser.parse_args()
 
@@ -188,8 +191,12 @@ def fetch_empirical_regions(args):
 
     # TODO:
     #   - remove related individuals (see ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt
-    #         and later files)
+    #         and later files, and based on the relationships in the .ped file)
     #   - record region coords as offset from start, to keep region coord values low
+
+    #   - split into separate tasks?   e.g. filtering of related individuals, choosing individuals for each pop,
+    #     determining ancestral alleles?   [OTOH to get majority alleel have to fetch data for all pops]
+    #   - use ancient dna data to get ancestral allele?
 
     # https://www.internationalgenome.org/faq/how-do-i-get-a-genomic-region-sub-section-of-your-files/
     
@@ -212,6 +219,9 @@ def fetch_empirical_regions(args):
     # https://advances.sciencemag.org/content/5/10/eaaw9206.full
     # https://drive.google.com/file/d/17KWNaJQJuldfbL9zljFpqj5oPfUiJ0Nv/view?usp=sharing
 
+    # which samples are in which pops; pedigree information:
+    # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped
+
     chrom2regions = collections.defaultdict(collections.OrderedDict)
 
     with open(args.empirical_regions_bed) as empirical_regions_bed_in:
@@ -229,6 +239,14 @@ def fetch_empirical_regions(args):
         chrom_phased_vcf_url = string.Template(args.phased_vcfs_url_template).substitute(chrom=chrom)
         execute(f'tabix -h --separate-regions -R {chrom_regions_fname} {chrom_phased_vcf_url} > {chrom_all_regions_vcf}',
                 cwd=os.path.realpath(args.tmp_dir), retries=3, retry_delay=5)
+
+        with open(chrom_all_regions_vcf) as chrom_all_regions_vcf_in:
+            for vcf_line in chrom_all_regions_vcf_in:
+                if vcf_line.startswith('##'): continue
+                if vcf_line.startswith('#CHROM'):
+                    vcf_cols = vcf_line.strip().split('\t')
+                    continue
+                
 
 if __name__=='__main__':
   #compute_component_scores(parse_args())
