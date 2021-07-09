@@ -183,6 +183,9 @@ def parse_args():
     parser.add_argument('--pedigree-data-url'
                         default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped',
                         help='URL for the file mapping populations to sample IDs and giving relationships between samples')
+    parser.add_argument('--related-individuals-url',
+                        default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
+                        help='list of individuals related to other 1KG individuals, to be dropped from analysis')
     parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
     return parser.parse_args()
 
@@ -210,15 +213,49 @@ def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template,
             cwd=os.path.realpath(tmp_dir), retries=5, retry_delay=10)
     return chrom_regions_vcf
 
-def load_pedigree_data(pedigree_data_url, tmp_dir):
-    """Fetch and parse the .ped file giving each individual's population and familial relationships to other individuals"""
-    ped_fname = os.path.realpath(os.path.join(tmp_dir, os.path.basename(pedigree_data_url)))
-    execute(f'wget -O {ped_fname} {pedigree_data_url}', retries=5, retry_delay=10)
-    return pd.read_table(ped_fname)
-
-def gather_unrelated_individuals(ped_data):
+def gather_unrelated_individuals(ped_data, related_individuals_url):
     """Pick a subset of the 1KG individuals such that no two are known to be related."""
-    
+
+    related_individuals = pd.read_table(related_individuals_url)
+
+
+    orig_len = len(ped_data)
+    ped_data = ped_data.rename(columns={c: c.replace(' ', '_') for c in ped_data.columns})
+    ped_data = ped_data[(~ped_data['Individual_ID'].isin(related_individuals['Sample '])) & \
+                        (ped_data['Paternal_ID'] == '0') & \
+                        (ped_data['Maternal_ID'] == '0') & \
+                        (ped_data['Relationship'] != 'child')]
+
+
+    _log.debug(f'{len(ped_data)-orig_len=}')
+
+    keep = []
+    related_to_kept = set()
+    skip_reasons = collections.defaultdict(list)
+    _log.debug(ped_data.columns)
+    for row in ped_data.itertuples():
+        r = row._asdict()
+        this_id = r['Individual_ID']
+        keep_this = False
+        if this_id not in related_to_kept:
+            keep_this = True
+            for col in ('Siblings', 'Second_Order', 'Third_Order'):
+                val = r[col].strip()
+                if val != '0':
+                    if val.startswith('"'):
+                        val = val[1:]
+                    if val.endswith('"'):
+                        val = val[:-1]
+                    for rel in val.split(','):
+                        related_to_kept.add(rel)
+                        skip_reasons[rel].append(this_id)
+        if not keep_this:
+            _log.debug(f'skipping {this_id} due to {skip_reasons[this_id]}')
+        keep.append(keep_this)
+    ped_data = ped_data[keep]
+    _log.debug(f'{len(ped_data)-orig_len=}')
+
+    return ped_data
 
 def fetch_empirical_regions(args):
     """Fetch data for empirical regions thought to have been under selection, and construct hapsets for them."""
@@ -261,7 +298,8 @@ def fetch_empirical_regions(args):
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.superpopulations.tsv
 
-    ped_df = load_pedigree_data(args.pedigree_data_url, args.tmp_dir)
+    ped_data = pd.read_table(args.pedigree_data_url)
+    ped_data = gather_unrelated_individuals(ped_data, args.related_individuals_url)
     
     chrom2regions = load_empirical_regions(args.empirical_regions_bed)
 
