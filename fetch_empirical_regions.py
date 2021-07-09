@@ -180,14 +180,48 @@ def parse_args():
                         default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/' \
                         'ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz',
                         help='URL template for phased vcfs for each chromosome; ${chrom} will be replaced with chrom name')
-    parser.add_argument('--pops-to-sample-ids-ped-url'
+    parser.add_argument('--pedigree-data-url'
                         default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped',
-                        help='URL for the file mapping populations to sample IDs')
+                        help='URL for the file mapping populations to sample IDs and giving relationships between samples')
     parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
     return parser.parse_args()
 
+
+def load_empirical_regions(empirical_regions_bed):
+    """Load the list of empirical regions containing putatively selected variants"""
+    chrom2regions = collections.defaultdict(collections.OrderedDict)
+
+    with open(empirical_regions_bed) as empirical_regions_bed_in:
+        for line in empirical_regions_bed_in:
+            chrom, beg, end, region_name, sel_pop = line.strip().split('\t')
+            chrom2regions[chrom][(beg, end)] = (region_name, sel_pop)
+    return chrom2regions
+
+def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template, tmp_dir):
+    """Fetch phased vcf subset for the empirical regions on one chromosome"""
+    _log.info(f'Processing chrom {chrom}: {len(regions)=}')
+    chrom_regions_deduped_bed = os.path.realpath(f'{tmp_dir}/chrom_{chrom}_sel_regions_deduped.bed')
+    with open(chrom_regions_deduped_bed, 'w') as chrom_regions_out:
+        for region in sorted(regions):
+            chrom_regions_out.write(f'{chrom}\t{region[0]}\t{region[1]}\n')
+    chrom_regions_vcf = os.path.realpath(f'{tmp_dir}/chrom_{chrom}_regions_vcf.vcf')
+    chrom_phased_vcf_url = string.Template(phased_vcfs_url_template).substitute(chrom=chrom)
+    execute(f'tabix -h --separate-regions -R {chrom_regions_deduped_bed} {chrom_phased_vcf_url} > {chrom_regions_vcf}',
+            cwd=os.path.realpath(tmp_dir), retries=5, retry_delay=10)
+    return chrom_regions_vcf
+
+def load_pedigree_data(pedigree_data_url, tmp_dir):
+    """Fetch and parse the .ped file giving each individual's population and familial relationships to other individuals"""
+    ped_fname = os.path.realpath(os.path.join(tmp_dir, os.path.basename(pedigree_data_url)))
+    execute(f'wget -O {ped_fname} {pedigree_data_url}', retries=5, retry_delay=10)
+    return pd.read_table(ped_fname)
+
+def gather_unrelated_individuals(ped_data):
+    """Pick a subset of the 1KG individuals such that no two are known to be related."""
+    
+
 def fetch_empirical_regions(args):
-    """Fetch hapsets for specified empirical regions"""
+    """Fetch data for empirical regions thought to have been under selection, and construct hapsets for them."""
 
     # TODO:
     #   - remove related individuals (see ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt
@@ -222,23 +256,17 @@ def fetch_empirical_regions(args):
     # which samples are in which pops; pedigree information:
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped
 
-    chrom2regions = collections.defaultdict(collections.OrderedDict)
+    # populations and superpopulations:
+    # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/README_populations.md
+    # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv
+    # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.superpopulations.tsv
 
-    with open(args.empirical_regions_bed) as empirical_regions_bed_in:
-        for line in empirical_regions_bed_in:
-            chrom, beg, end, region_name, sel_pop = line.strip().split('\t')
-            chrom2regions[chrom][(beg, end)] = (region_name, sel_pop)
+    ped_df = load_pedigree_data(args.pedigree_data_url, args.tmp_dir)
+    
+    chrom2regions = load_empirical_regions(args.empirical_regions_bed)
 
     for chrom in sorted(chrom2regions):
-        _log.info(f'Processing chrom {chrom}: {len(chrom2regions[chrom])=}')
-        chrom_regions_fname = os.path.realpath(f'{args.tmp_dir}/chrom_{chrom}_sel_regions_deduped.bed')
-        with open(chrom_regions_fname, 'w') as chrom_regions_out:
-            for region in sorted(chrom2regions[chrom]):
-                chrom_regions_out.write(f'{chrom}\t{region[0]}\t{region[1]}\n')
-        chrom_all_regions_vcf = os.path.realpath(f'{args.tmp_dir}/chrom_{chrom}_all_regions_vcf.vcf')
-        chrom_phased_vcf_url = string.Template(args.phased_vcfs_url_template).substitute(chrom=chrom)
-        execute(f'tabix -h --separate-regions -R {chrom_regions_fname} {chrom_phased_vcf_url} > {chrom_all_regions_vcf}',
-                cwd=os.path.realpath(args.tmp_dir), retries=3, retry_delay=5)
+        chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom, chrom2regions[chrom], args.phased_vcfs_url_template, args.tmp-dir)
 
         with open(chrom_all_regions_vcf) as chrom_all_regions_vcf_in:
             for vcf_line in chrom_all_regions_vcf_in:
