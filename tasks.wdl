@@ -327,21 +327,28 @@ task fetch_empirical_hapsets_from_1KG {
 # ** inputs
     empirical_regions_bed: "(File) empirical regions to fetch.  Column 5 (score), if present, is interpreted as the name of the putatively selected population.  The same region may be listed multiple times to test for selection in multiple populations."
     # add: metadata to attach to all regions
+    genetic_maps_tar_gz: "(File) genetic maps"
+    pops_outgroups_json: "(File) map from each pop to the ones to compare it to"
+
 # ** outputs
     empirical_hapset_tar_gzs: "(Array[File]) for each empirical region, a .tar.gz file containing one tped for each pop, and a *.replicaInfo.json file describing the hapset"
   }
   input {
     File empirical_regions_bed
+    File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
+    File pops_outgroups_json
+
     File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
   }
   #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
   #Int disk_size_max_gb = 4096
   #Int disk_size_capped_gb = if disk_size_gb < disk_size_max_gb then disk_size_gb else disk_size_max_gb
   command <<<
-    python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}"
+    mkdir hsets
+    python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}" --tmp-dir $PWD/hsets
   >>>
   output {
-    Array[File] empirical_hapsets_tar_gzs
+    Array[File] empirical_hapsets_tar_gzs = glob("hsets/*.hapset.tar.gz")
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
