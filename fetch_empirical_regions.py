@@ -13,6 +13,7 @@ import copy
 import functools
 import glob
 import gzip
+import hashlib
 import io
 import itertools
 import json
@@ -292,13 +293,23 @@ def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template,
     """Fetch phased vcf subset for the empirical regions on one chromosome"""
     _log.info(f'Processing chrom {chrom}: {len(regions)=}')
     chrom_regions_deduped_bed = os.path.realpath(f'{tmp_dir}/chrom_{chrom}_sel_regions_deduped.bed')
+
+    cache_key_parts = [chrom, phased_vcfs_url_template]
     with open(chrom_regions_deduped_bed, 'w') as chrom_regions_out:
         for region in sorted(regions):
-            chrom_regions_out.write(f'{chrom}\t{region[0]}\t{region[1]}\n')
+            region_chrom, region_beg_end = region.split(':')
+            region_beg, region_end = region_beg_end.split('-')
+            chrom_regions_line = f'{chrom}\t{int(region_beg)-1}\t{region_end}\n'
+            chrom_regions_out.write(chrom_regions_line)
+            cache_key_parts.append(chrom_regions_line)
     chrom_regions_vcf = os.path.realpath(f'{tmp_dir}/chrom_{chrom}_regions_vcf.vcf')
-    chrom_phased_vcf_url = string.Template(phased_vcfs_url_template).substitute(chrom=chrom)
-    execute(f'tabix -h --separate-regions -R {chrom_regions_deduped_bed} {chrom_phased_vcf_url} > {chrom_regions_vcf}',
-            cwd=os.path.realpath(tmp_dir), retries=5, retry_delay=10)
+    cache_key = hashlib.md5(''.join(cache_key_parts).encode()).hexdigest()
+    done_fname = f'{chrom_regions_vcf}.{cache_key}.done'
+    if not os.path.isfile(done_fname):
+        chrom_phased_vcf_url = string.Template(phased_vcfs_url_template).substitute(chrom=chrom)
+        execute(f'tabix -h --separate-regions -R {chrom_regions_deduped_bed} {chrom_phased_vcf_url} > {chrom_regions_vcf}',
+                cwd=os.path.realpath(tmp_dir), retries=5, retry_delay=10)
+        execute(f'touch {done_fname}')
     return chrom_regions_vcf
 
 def gather_unrelated_individuals(ped_data, related_individuals_url):
@@ -553,6 +564,7 @@ def fetch_empirical_regions(args):
     ped_data = gather_unrelated_individuals(ped_data, args.related_individuals_url)
     
     chrom2regions = load_empirical_regions_bed(args.empirical_regions_bed)
+    _log.debug(f'{chrom2regions=}')
     
     pops_outgroups_json = _json_loadf(args.pops_outgroups_json)
 
@@ -561,8 +573,9 @@ def fetch_empirical_regions(args):
     for chrom in sorted(chrom2regions):
         chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom, chrom2regions[chrom], args.phased_vcfs_url_template, args.tmp_dir)
         region_lines = []
-        with open(chrom_all_regions_vcf) as chrom_all_regions_vcf_in:
-            for vcf_line in itertools.chain(chrom_all_regions_vcf_in, ['#EOF']):
+        with open(chrom_regions_vcf) as chrom_regions_vcf_in:
+            for vcf_line in itertools.chain(chrom_regions_vcf_in, ['#EOF']):
+                _log.debug(f'{vcf_line[:200]=}')
                 if vcf_line.startswith('##'): continue
                 if vcf_line.startswith('#CHROM'):
                     vcf_cols = vcf_line.strip().split('\t')
@@ -571,10 +584,12 @@ def fetch_empirical_regions(args):
                     if region_lines:
                         for region_sel_pop in chrom2regions[chrom][region_key]:
                             construct_hapset_for_one_empirical_region_and_one_sel_pop(
-                                region_key=region_lines[0].strip()[1:], region_lines=region_lines[1:],
-                                region_sel_pop=region_el_pop,
+                                region_key=region_key, region_lines=region_lines[1:],
+                                region_sel_pop=region_sel_pop,
                                 tmp_dir=args.tmp_dir)
+                    region_key = vcf_line.strip()[1:]
                     region_lines = []
+                region_lines.append(vcf_line)
     # for chrom in sorted(chrom2regions)
     _log.info(f'{stats=}')
     
