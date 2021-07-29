@@ -274,6 +274,7 @@ def parse_args():
                         default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
                         help='list of individuals related to other 1KG individuals, to be dropped from analysis')
     parser.add_argument('--genetic-maps-tar-gz', required=True, help='genetic maps')
+    parser.add_argument('--pops-data', required=True, help='info on pops and superpops')
     parser.add_argument('--pops-outgroups-json', required=True, help='map from pop to pops to use as outgroups')
     parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
     return parser.parse_args()
@@ -364,6 +365,7 @@ def get_pop2vcfcols(samples_ped_data, pops_data, vcf_cols):
     pop2cols = collections.defaultdict(list)
     for vcf_col, sample_name in enumerate(vcf_cols):
         if vcf_col < 9: continue
+        if sample_name not in sample2pop: continue
         sample_pop = sample2pop[sample_name]
         pop2cols[sample_pop].append(vcf_col)
         pop2cols[pop2superpop[sample_pop]].append(vcf_col)
@@ -377,15 +379,22 @@ class GeneticMaps(object):
     def __init__(self, genetic_maps_tar_gz, tmp_dir):
         tmp_dir = os.path.realpath(tmp_dir)
         self.genmaps_dir = os.path.join(tmp_dir, 'genmaps')
-        os.mkdir(self.genmaps_dir)
-        execute(f'tar xvzf {genetic_maps_tar_gz} -C {self.genmaps_dir}')
+        if not os.path.isdir(self.genmaps_dir):
+            os.mkdir(self.genmaps_dir)
+            execute(f'tar xvzf {genetic_maps_tar_gz} -C {self.genmaps_dir}')
         self.pop_chrom_to_genmap = {}
+        self.superpop_to_representative_pop = {'AFR': 'YRI', 'EUR': 'CEU', 'SAS': 'BEB', 'EAS': 'CHB'}
 
     def __call__(self, chrom, pos, pop):
+        if pop in self.superpop_to_representative_pop:
+            pop = self.superpop_to_representative_pop[pop]
+            # TODO: weigh genmap based on relative sample sizes
         if (pop, chrom) not in self.pop_chrom_to_genmap:
             self.pop_chrom_to_genmap[(pop, chrom)] = \
-                pd.read_table(os.path.join(self.genmaps_dir, f'{pop}_recombination_map_hapmap_format_hg19_chr_{chrom}.txt'))
+                pd.read_table(os.path.join(self.genmaps_dir, 'hg19', pop,
+                                           f'{pop}_recombination_map_hapmap_format_hg19_chr_{chrom}.txt'))
         # TODO: add check np.all(np.diff(xp) > 0)
+        #return np.float64(239.239)
         return np.interp(np.float64(pos),
                          xp=self.pop_chrom_to_genmap[(pop, chrom)]['Position(bp)'].astype(np.float64),
                          fp=self.pop_chrom_to_genmap[(pop, chrom)]['Map(cM)'].astype(np.float64))
@@ -411,7 +420,7 @@ def determine_ancestral_allele(info_dict, all_alleles):
     return allele2anc
 
 def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region_lines, region_sel_pop, outgroup_pops, pop2vcfcols,
-                                                              genmap, tmp_dir):
+                                                              genmap, stats, tmp_dir):
     """Given one empirical region and the pops in which it is putatively been under selection,
     for each such pop, create a hapset.
 
@@ -427,10 +436,13 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
       path to a .tar.gz of the hapset
     """
     tmp_dir = os.path.realpath(tmp_dir)
-    hapset_name = string_to_file_name(f'hg19_{region_key_as_fname}_{region_sel_pop}')
-    hapset_dir = os.mkdir(os.path.join(tmp_dir, hapset_name))
+    hapset_name = string_to_file_name(f'hg19_{region_key}_{region_sel_pop}')
+    hapset_dir = os.path.join(tmp_dir, hapset_name)
+    if not os.path.isdir(hapset_dir):
+        os.mkdir(hapset_dir)
     all_pops = [region_sel_pop] + list(outgroup_pops)
-    tpeds_fnames = [os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}_{pop}')) for pop in all_pops]
+    tped_fnames = [os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}_{pop}.tped')) for pop in all_pops]
+    _log.debug(f'{tped_fnames=}')
     with contextlib.ExitStack() as exit_stack:
         tpeds = [exit_stack.enter_context(open(tped_fname, 'w')) for tped_fname in tped_fnames]
         region_beg = None
@@ -452,7 +464,7 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
                 stats['bad_allele'] += 1
                 continue
 
-            if not format.startswith('GT'):
+            if not format_.startswith('GT'):
                 stats['bad_format'] += 1
                 continue
 
@@ -472,13 +484,18 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
             for pop in all_pops:
                 pop_gts = ''
                 for vcf_col in pop2vcfcols[pop]:
-                    gt = vcf_line[vcf_col].split(':', maxsplit=1)[0]
+                    try:
+                        gt = sample_data[vcf_col-9].split(':', maxsplit=1)[0]
+                    except IndexError:
+                        _log.warning(f'gt issue: {vcf_line_num=} {pos=} {vcf_col=} {len(sample_data)=}')
+                        raise
                     gt_match = gt_re.match(gt)
                     if not gt_match:
                         bad_gt = True
+                        _log.warning(f'BAD GT: {gt=} {vcf_col=} {vcf_line_num=} {pos=}')
                         break
-                    for gt_idx in (0,1):
-                        ancestral_or_not = allele2anc[gt_match.group(gt_idx)]
+                    for gt_grp_idx in (1,2):
+                        ancestral_or_not = allele2anc[gt_match.group(gt_grp_idx)]
                         if ancestral_or_not == '1':
                             has_ancestral = True
                         if ancestral_or_not == '0':
@@ -563,10 +580,14 @@ def fetch_empirical_regions(args):
     ped_data = pd.read_table(args.pedigree_data_url)
     ped_data = gather_unrelated_individuals(ped_data, args.related_individuals_url)
     
+    pops_data = pd.read_table(args.pops_data)
+    
     chrom2regions = load_empirical_regions_bed(args.empirical_regions_bed)
     _log.debug(f'{chrom2regions=}')
     
     pops_outgroups_json = _json_loadf(args.pops_outgroups_json)
+
+    genmap = GeneticMaps(args.genetic_maps_tar_gz, args.tmp_dir)
 
     stats = collections.Counter()
 
@@ -579,6 +600,7 @@ def fetch_empirical_regions(args):
                 if vcf_line.startswith('##'): continue
                 if vcf_line.startswith('#CHROM'):
                     vcf_cols = vcf_line.strip().split('\t')
+                    pop2vcfcols = get_pop2vcfcols(ped_data, pops_data, vcf_cols)
                     continue
                 if vcf_line.startswith('#'):
                     if region_lines:
@@ -586,6 +608,10 @@ def fetch_empirical_regions(args):
                             construct_hapset_for_one_empirical_region_and_one_sel_pop(
                                 region_key=region_key, region_lines=region_lines[1:],
                                 region_sel_pop=region_sel_pop,
+                                outgroup_pops=pops_outgroups_json[region_sel_pop],
+                                pop2vcfcols=pop2vcfcols,
+                                genmap=genmap,
+                                stats=stats,
                                 tmp_dir=args.tmp_dir)
                     region_key = vcf_line.strip()[1:]
                     region_lines = []
