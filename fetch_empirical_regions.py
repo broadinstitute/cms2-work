@@ -4,6 +4,13 @@
 and a json file of metadata).
 """
 
+# * imports etc
+
+import platform
+
+if not tuple(map(int, platform.python_version_tuple())) >= (3,8):
+    raise RuntimeError('Python >=3.8 required')
+
 import argparse
 import csv
 import collections
@@ -274,11 +281,15 @@ def parse_args():
                         default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
                         help='list of individuals related to other 1KG individuals, to be dropped from analysis')
     parser.add_argument('--genetic-maps-tar-gz', required=True, help='genetic maps')
-    parser.add_argument('--pops-data', required=True, help='info on pops and superpops')
-    parser.add_argument('--pops-outgroups-json', required=True, help='map from pop to pops to use as outgroups')
+    parser.add_argument('--pops-data-url', default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv',
+                        help='info on pops and superpops')
+    #parser.add_argument('--pops-outgroups-json', required=True, help='map from pop to pops to use as outgroups')
+    parser.add_argument('--superpop-to-representative-pop-json', required=True,
+                        help='map from superpop to representative sub-pop used in model-fitting')
     parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
     return parser.parse_args()
 
+# * def load_empirical_regions_bed(empirical_regions_bed)
 
 def load_empirical_regions_bed(empirical_regions_bed):
     """Load the list of empirical regions containing putatively selected variants"""
@@ -290,6 +301,7 @@ def load_empirical_regions_bed(empirical_regions_bed):
             chrom2regions[chrom].setdefault(f'{chrom}:{beg}-{end}', []).append(sel_pop)
     return chrom2regions
 
+# * def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template, tmp_dir)
 def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template, tmp_dir):
     """Fetch phased vcf subset for the empirical regions on one chromosome"""
     _log.info(f'Processing chrom {chrom}: {len(regions)=}')
@@ -313,6 +325,8 @@ def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template,
         execute(f'touch {done_fname}')
     return chrom_regions_vcf
 
+
+# * def gather_unrelated_individuals(ped_data, related_individuals_url)
 def gather_unrelated_individuals(ped_data, related_individuals_url):
     """Pick a subset of the 1KG individuals such that no two are known to be related."""
 
@@ -358,6 +372,7 @@ def gather_unrelated_individuals(ped_data, related_individuals_url):
     return ped_data
 # end: def gather_unrelated_individuals(ped_data, related_individuals_url)
 
+# * def get_pop2vcfcols(samples_ped_data, pops_data, vcf_cols)
 def get_pop2vcfcols(samples_ped_data, pops_data, vcf_cols):
     """For each pop, get the numbers of the vcf columns for individuals in that pop"""
     sample2pop = dict(samples_ped_data[['Individual_ID', 'Population']].itertuples(index=False))
@@ -373,17 +388,40 @@ def get_pop2vcfcols(samples_ped_data, pops_data, vcf_cols):
     
 # end: def get_pop2vcfcols(ped_data, pop_data)
 
+# * def compute_outgroup_pops(pops_data, superpop_to_representative_pop)
+def compute_outgroup_pops(pops_data, superpop_to_representative_pop):
+    """For each pop and superpop, compute list of pops that serve as outgroups"""
+    
+    pop2outgroup_pops = collections.defaultdict(list)
+
+    superpop_to_representative_outgroup_pops = {}
+    for superpop in superpop_to_representative_pop:
+        pop2outgroup_pops[superpop] = sorted(set(superpop_to_representative_pop) - set([superpop]))
+        superpop_to_representative_outgroup_pops[superpop] = [superpop_to_representative_pop[outgroup_superpop]
+                                                              for outgroup_superpop in pop2outgroup_pops[superpop]]
+
+    _log.debug(f'{pops_data.columns=}')
+    for pops_data_row in pops_data.rename(columns={c: c.replace(' ', '_') for c in pops_data.columns}).itertuples(index=False):
+        if pops_data_row.Super_Population in superpop_to_representative_pop:
+            pop2outgroup_pops[pops_data_row.Population_Code] = superpop_to_representative_outgroup_pops[pops_data_row.Super_Population]
+
+    _log.debug(f'{pop2outgroup_pops=}')
+
+    return pop2outgroup_pops
+
+# end: def compute_outgroup_pops(pops_data, superpop_to_representative_pop)
+# * class GeneticMaps()
 class GeneticMaps(object):
     """Keeps track of genetic maps and provides interpolation"""
 
-    def __init__(self, genetic_maps_tar_gz, tmp_dir):
+    def __init__(self, genetic_maps_tar_gz, superpop_to_representative_pop, tmp_dir):
         tmp_dir = os.path.realpath(tmp_dir)
         self.genmaps_dir = os.path.join(tmp_dir, 'genmaps')
         if not os.path.isdir(self.genmaps_dir):
             os.mkdir(self.genmaps_dir)
             execute(f'tar xvzf {genetic_maps_tar_gz} -C {self.genmaps_dir}')
         self.pop_chrom_to_genmap = {}
-        self.superpop_to_representative_pop = {'AFR': 'YRI', 'EUR': 'CEU', 'SAS': 'BEB', 'EAS': 'CHB'}
+        self.superpop_to_representative_pop = superpop_to_representative_pop
 
     def __call__(self, chrom, pos, pop):
         if pop in self.superpop_to_representative_pop:
@@ -402,23 +440,46 @@ class GeneticMaps(object):
 # end: class GeneticMaps(object)
 
 def has_bad_allele(all_alleles):
+    """Determine if the list of alleles contains an allele that is not one of T, C, G, A"""
     bad_allele = False
     for a in all_alleles:
         if len(a) != 1 or a not in 'TCGA':
             return True
     return False
 
-def determine_ancestral_allele(info_dict, all_alleles):
-    ancestral_allele = info_dict.get('AA', '|').split(sep='|', maxsplit=1)[0].upper()
-    if ancestral_allele not in all_alleles:
-        alt_freqs = list(map(float, info_dict['AF'].split(',')))
-        all_freqs = [1.0 - sum(alt_freqs)] + alt_freqs
-        ancestral_allele = all_alleles[np.argmax(all_freqs)]
-    ancestral_allele_idx = all_alleles.index(ancestral_allele)
+# * determine_ancestral_allele
+def determine_ancestral_allele(info_dict, all_alleles, stats):
+    """For a given genetic variant in a vcf, determine the ancestral allele.
+
+    Method: if the ancestral allele is given in the AA part of the INFO field, and matches either the REF allele or one of the
+    ALT alleles, then use the matched allele as the ancestral allele; otherwise, use the most frequent allele as the ancestral
+    allele.   Merge all non-ancestral alleles into one non-ancestral allele.
+    
+    Args:
+      info_dict: contents of the INFO field of the vcf line
+      all_alleles: list of alleles at a given position, starting with the reference allele
+      stats: count of various scenarios
+    Returns:
+      map from allele index (as as string) to either '0' or '1' for ancestral and derived alleles, respectively.
+    """
+    ancestral_allele_from_vcf_info = info_dict.get('AA', '|').split(sep='|', maxsplit=1)[0].upper()
+
+    stats[f'{ancestral_allele_from_vcf_info in all_alleles=}'] += 1
+
+    alt_freqs = list(map(float, info_dict['AF'].split(',')))
+    all_freqs = [1.0 - sum(alt_freqs)] + alt_freqs
+    major_allele = all_alleles[np.argmax(all_freqs)].upper()
+
+    stats[f'{ancestral_allele_from_vcf_info == major_allele=}']
+    
+    ancestral_allele_idx = all_alleles.index(ancestral_allele_from_vcf_info \
+                                             if ancestral_allele_from_vcf_info in all_alleles \
+                                             else major_allele)
 
     allele2anc = {str(i): '1' if i == ancestral_allele_idx else '0' for i in range(len(all_alleles))}
     return allele2anc
 
+# * construct_hapset_for_one_empirical_region_and_one_sel_pop
 def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region_lines, region_sel_pop, outgroup_pops, pop2vcfcols,
                                                               genmap, stats, tmp_dir):
     """Given one empirical region and the pops in which it is putatively been under selection,
@@ -469,7 +530,7 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
                 continue
 
             # determine the ancestral allele
-            allele2anc = determine_ancestral_allele(info_dict=info_dict, all_alleles=all_alleles)
+            allele2anc = determine_ancestral_allele(info_dict=info_dict, all_alleles=all_alleles, stats=stats)
             
             if region_beg is None:
                 region_beg = pos
@@ -536,6 +597,7 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
 
 # end: def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region_lines, region_sel_pop, outgroup_pops, pop2cols, ...)
         
+# * fetch_empirical_regions
 def fetch_empirical_regions(args):
     """Fetch data for empirical regions thought to have been under selection, and construct hapsets for them."""
 
@@ -577,17 +639,17 @@ def fetch_empirical_regions(args):
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.superpopulations.tsv
 
-    ped_data = pd.read_table(args.pedigree_data_url)
-    ped_data = gather_unrelated_individuals(ped_data, args.related_individuals_url)
+    ped_data = gather_unrelated_individuals(pd.read_table(args.pedigree_data_url), args.related_individuals_url)
     
-    pops_data = pd.read_table(args.pops_data)
+    pops_data = pd.read_table(args.pops_data_url)
+    superpop_to_representative_pop = _json_loadf(args.superpop_to_representative_pop_json)
+    pop2outgroup_pops = compute_outgroup_pops(pops_data=pops_data,
+                                              superpop_to_representative_pop=superpop_to_representative_pop)
     
     chrom2regions = load_empirical_regions_bed(args.empirical_regions_bed)
     _log.debug(f'{chrom2regions=}')
     
-    pops_outgroups_json = _json_loadf(args.pops_outgroups_json)
-
-    genmap = GeneticMaps(args.genetic_maps_tar_gz, args.tmp_dir)
+    genmap = GeneticMaps(args.genetic_maps_tar_gz, superpop_to_representative_pop, args.tmp_dir)
 
     stats = collections.Counter()
 
@@ -608,7 +670,7 @@ def fetch_empirical_regions(args):
                             construct_hapset_for_one_empirical_region_and_one_sel_pop(
                                 region_key=region_key, region_lines=region_lines[1:],
                                 region_sel_pop=region_sel_pop,
-                                outgroup_pops=pops_outgroups_json[region_sel_pop],
+                                outgroup_pops=pop2outgroup_pops['region_sel_pop'],
                                 pop2vcfcols=pop2vcfcols,
                                 genmap=genmap,
                                 stats=stats,
