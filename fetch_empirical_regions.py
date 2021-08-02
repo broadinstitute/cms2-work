@@ -407,7 +407,7 @@ def compute_outgroup_pops(pops_data, superpop_to_representative_pop):
 
     _log.debug(f'{pop2outgroup_pops=}')
 
-    return pop2outgroup_pops
+    return dict(pop2outgroup_pops)
 
 # end: def compute_outgroup_pops(pops_data, superpop_to_representative_pop)
 # * class GeneticMaps()
@@ -470,7 +470,7 @@ def determine_ancestral_allele(info_dict, all_alleles, stats):
     all_freqs = [1.0 - sum(alt_freqs)] + alt_freqs
     major_allele = all_alleles[np.argmax(all_freqs)].upper()
 
-    stats[f'{ancestral_allele_from_vcf_info == major_allele=}']
+    stats[f'{ancestral_allele_from_vcf_info == major_allele=}'] += 1
     
     ancestral_allele_idx = all_alleles.index(ancestral_allele_from_vcf_info \
                                              if ancestral_allele_from_vcf_info in all_alleles \
@@ -496,6 +496,8 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
     Returns:
       path to a .tar.gz of the hapset
     """
+    _log.debug(f'in comstruct_hapset_for_one_empirical_region_and_one_selpop: '
+               f'{region_key=} {len(region_lines)=} {region_sel_pop=} {outgroup_pops=} {pop2vcfcols=} {stats=}')
     tmp_dir = os.path.realpath(tmp_dir)
     hapset_name = string_to_file_name(f'hg19_{region_key}_{region_sel_pop}')
     hapset_dir = os.path.join(tmp_dir, hapset_name)
@@ -670,7 +672,7 @@ def fetch_empirical_regions(args):
                             construct_hapset_for_one_empirical_region_and_one_sel_pop(
                                 region_key=region_key, region_lines=region_lines[1:],
                                 region_sel_pop=region_sel_pop,
-                                outgroup_pops=pop2outgroup_pops['region_sel_pop'],
+                                outgroup_pops=pop2outgroup_pops[region_sel_pop],
                                 pop2vcfcols=pop2vcfcols,
                                 genmap=genmap,
                                 stats=stats,
