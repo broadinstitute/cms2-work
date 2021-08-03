@@ -589,8 +589,16 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
 
     # specify that it's a real region etc
     # then, tar it up, with either tar command or the tarfile module.
-    hapset_manifest = {'hapset_id': hapset_name, 'region_beg': region_beg, 'simulated': False, 'selpop': region_sel_pop,
-                       'tpeds': { pop: os.path.basename(tped_fname) for pop, tped_fname in zip(all_pops, tped_fnames)}}
+    hapset_manifest = {
+        'hapset_id': hapset_name,
+        'region_beg': region_beg,
+        'simulated': False,
+        'selection': True,
+        'selpop': region_sel_pop,
+        'tpeds': { 
+            pop: os.path.basename(tped_fname) for pop, tped_fname in zip(all_pops, tped_fnames)
+        }
+    }
     _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.manifest.json')),
                 json_val=hapset_manifest)
     hapset_tar_gz = os.path.join(tmp_dir, f'{hapset_name}.hapset.tar.gz')
