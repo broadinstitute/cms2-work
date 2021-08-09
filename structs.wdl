@@ -4,7 +4,12 @@ version 1.0
 #
 # Identifier for one population.
 struct Pop {
-  Int pop_id
+  String pop_id
+}
+
+struct PopPair {
+  Pop sel_pop
+  Pop alt_pop
 }
 
 #
@@ -16,21 +21,21 @@ struct Pop {
 # (0-based index of the pop in the list of pop ids).
 #
 struct PopsInfo {
-    Array[Int] pop_ids  # population IDs, used throughout to identify populations
+    Array[String] pop_ids  # population IDs, used throughout to identify populations
     Array[String] pop_names
     Array[Pop] pops
-    Map[Int,Int] pop_id_to_idx  # map from pop id to its index in pop_ids
-    Map[Int,Array[Int]] pop_alts  # map from pop id to list of all other pop ids
-    Array[Pair[Int,Int]] pop_pairs # all two-pop sets, for cross-pop comparisons
+    Map[String,String] pop_id_to_idx  # map from pop id to its index in pop_ids
+    Map[String,Array[String]] pop_alts  # map from pop id to list of all other pop ids
+    Array[Pair[String,String]] pop_pairs # all two-pop sets, for cross-pop comparisons
 
-    Array[Int] sel_pop_ids  # for each sweep definition in paramFiles_selection input to
+    Array[String] sel_pop_ids  # for each sweep definition in paramFiles_selection input to
     # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
 }
 
 struct SweepInfo {
-  Int  selPop
+  String  selPop
   Float selGen
-  Int selBegPop
+  String selBegPop
   Float selBegGen
   Float selCoeff
   Float selFreq
@@ -39,7 +44,7 @@ struct SweepInfo {
 struct ModelInfo {
   String modelId
   Array[String] modelIdParts
-  Array[Int] popIds
+  Array[String] popIds
   Array[String] popNames
   SweepInfo sweepInfo
 }
@@ -65,8 +70,8 @@ struct ReplicaInfo {
 struct NormalizeAndCollateInput {
     #ReplicaInfo replica_info
     File replica_info_file
-    Array[Int] pop_ids
-    Array[Pair[Int,Int]] pop_pairs
+    Array[String] pop_ids
+    Array[Pair[String,String]] pop_pairs
     #String replica_id_str
     Pop sel_pop
     File ihs_out

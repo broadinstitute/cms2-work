@@ -158,7 +158,7 @@ def run_one_replica(replicaNum, args, paramFile):
             for line in paramFileHandle:
                 if line.startswith('pop_define'):
                     pop_define, pop_id, pop_name = line.strip().split()
-                    pop_ids.append(int(pop_id))
+                    pop_ids.append(pop_id)
                     pop_names.append(pop_name)
         return pop_ids, pop_names
 
@@ -189,7 +189,7 @@ def run_one_replica(replicaNum, args, paramFile):
         result = copy.deepcopy(no_sweep)
         try:
             simNum, selPop, selGen, selBegPop, selBegGen, selCoeff, selFreq = map(float, slurp_file(sweepInfoFile).strip().split())
-            result = dict(selPop=int(selPop), selGen=selGen, selBegPop=int(selBegPop),
+            result = dict(selPop=str(int(selPop)), selGen=selGen, selBegPop=str(int(selBegPop)),
                           selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
         except Exception as e:
             _log.warning(f'Could not load sweep info file {sweepInfoFile}: {e}')
