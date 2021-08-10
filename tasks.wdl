@@ -331,7 +331,7 @@ task fetch_empirical_hapsets_from_1KG {
     superpop_to_representative_pop_json: "(File) map from superpop to the pop used to represent it in model-fitting simulations"
 
 # ** outputs
-    empirical_hapset_tar_gzs: "(Array[File]) for each empirical region, a .tar.gz file containing one tped for each pop, and a *.replicaInfo.json file describing the hapset"
+    empirical_hapsets_tar_gzs: "(Array[File]) for each empirical region, a .tar.gz file containing one tped for each pop, and a *.replicaInfo.json file describing the hapset"
   }
   input {
     File empirical_regions_bed
