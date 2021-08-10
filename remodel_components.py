@@ -206,8 +206,8 @@ def parse_args():
     parser.add_argument('--region-haps-tar-gzs', nargs='+',
                         required=True, help='list of .tar.gz files where each contains the haps for one hapset')
     #parser.add_argument('--out-basename', required=True, help='base name for output files')
-    parser.add_argument('--sel-pop', type=int, required=True, help='test for selection in this population')
-    parser.add_argument('--alt-pop', type=int, help='for two-pop tests, compare with this population')
+    parser.add_argument('--sel-pop', required=True, help='test for selection in this population')
+    parser.add_argument('--alt-pop', help='for two-pop tests, compare with this population')
     parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, default=1, help='selscan threads')
@@ -297,7 +297,7 @@ def orig_main(args):
 
 
     altpops = pops[:]
-    altpops.remove(int(thispop))
+    altpops.remove(thispop)
     for altpop in altpops:
         #xpehh_commandstring = "python " + cmsdir + "scans.py selscan_xpehh --threads 7"
         xpehh_commandstring = "/ilya/miniconda3/envs/selscan-env/bin/selscan"
