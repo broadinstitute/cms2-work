@@ -45,7 +45,7 @@ jobs:
       stage: main
       python: "3.8"
       before_install:
-        - openssl aes-256-cbc -K $encrypted_6f4cffd5a0cd_key -iv $encrypted_6f4cffd5a0cd_iv -in terra/gcloud-config.tar.gz.enc -out terra/gcloud-config.tar.gz -d
+        - openssl aes-256-cbc -K $encrypted_833b0d9c0b92_key -iv $encrypted_833b0d9c0b92_iv -in terra/gcloud-config.tar.gz.enc -out terra/gcloud-config.tar.gz -d
         - sudo apt-get update
         - sudo apt-get -y install openjdk-8-jre-headless
       install:
