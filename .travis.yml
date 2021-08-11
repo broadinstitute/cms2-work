@@ -47,4 +47,7 @@ jobs:
         - set -e
         - ./travis/test-wdl.sh
         - tar -xzf terra/gcloud-config.tar.gz -C $HOME
-        - python3 travis/deploy-to-terra.py
+        - ./terra/terra_utils.py cmd_with_filename -f myfile.txt
+        - ./terra/terra_utils.py deploy_to_terra
+
+
