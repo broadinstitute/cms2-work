@@ -15,7 +15,7 @@ env:
   global:
     - LANGUAGE=wdl
     # GH_TOKEN
-    - secure: "It3NFjyFxrWV4giAI3Ai9GbiMtK35MbZM5Fnf9qGHXlYOO4VL9u/0CXICyf7Wo0mi5nl5DjBPdE/MoDNaudKMqDpPoZNTc7+yOJJNOMrl+NGNOu8QADNNYK/y6WrJRkV/AzXcFnQOOFbOm18EIkvEFGnvYgg1jFNvD6auqZrZImXMB1SimwerfcyIUymxiWBNA32+Sr+4rpeFHVnKIlM6n2Be3SXZ5KCpHW/RV+oyyjTpRutq3k4RIPNYinwNmg8G2kHdGDzbMjD5S03cLAzQq7+F3M+1AnrvT8xZOGZmoQGWAJw2BMm5pDbQAufaotO2W6N68CVo2FCnCrHYs82lovmF6aEq0Qed2wmmupd8pXpVBCdhpYBu4M6tOjbaT4FsPyC7EtkC5a/ft63htge5NNs3ikao4vezADdtDn9z4eFgUDi45HaRom9rTEi1ePLHa1ryhICU63+T1nKBOenYzQ/en7kRwir1yljDUiOQ+/fLr25uS0c2F9X4J8GCoVRQCV4jhMAq8Qjt0nvvogYE9OEMrbD4FT9SDc5+VprCPjfSY1PK9WRskW1rb5/7jD2iRA8u1PJ8yk2mOebt6HwvRmhkgiZzOFBgZNELn9kJSmQcx3M2eCLIZRHfCuYztP+6xZn4vRi10MVxwHMoVUWpyCCrPmG4aVnAJZIcET91uA="
+    - secure: "V0pLOrVC1vfMh2+UYPVMbAVrcwnUpiw/ceJVgGpUSWip0oHtnDX3aTYI1q/AghM1bqwskq1AHcCRhLAVnLXgCktgGR/q4rdReRqlcEK5Z5fsDOyI7lGuHaTxXZpAw1HhKLK3jQ0tUq6wSVEk7m9gbpoDZAzRIYc8UueOi3EgJvDHkVQCQeDWq6lDsIIhsnkXy5fsmbFlU2vQdkPELQRYbhM5sYQepD9nvJOHHgWRgzWjmrBAUcvh9FLlYrOw/AKrdPbNruUAFbEjvMfULfA64sVf476TEsa5YVZuQ1Fr9PoEZDynt/6/AG3IAt6kmXFGdn5Hx0oL/RRx4lBtAKxUsuBWzpBni1pM8/IS13w4pTHhc+6AzPw1P+vKwhuzKG6bSo6xRiBkEiKY37UrzJIvb54s0Zv9aF/azPhyEBCLi0lRamSSXDbY+uAWBlL5n7dk7FzZi+30K3437sKt00rsEsP8mmH5tvuiSooVEbuAzxq034wBc6WflypzDg3o7s5Tb9Pfdm+XmaTc3EhjU8ZAF+07pFTaJk/YAfFrT3bUB3vf9CGTyiPEe8xj5oMio9+4yf0v5FHyM3FFtKu8ewLUIhUwfvvBVTX3k+/50VPCwmwiJgODgjG+rbQjOyZZVgXLNUKV5L1h6N7D/5XlFG3w4desU4fn9Jw9KwMlKw/ueeg="
 
 branches:
   except:
@@ -37,7 +37,7 @@ jobs:
       stage: main
       python: "3.8"
       before_install:
-        - openssl aes-256-cbc -K $encrypted_833b0d9c0b92_key -iv $encrypted_833b0d9c0b92_iv -in terra/gcloud-config.tar.gz.enc -out terra/gcloud-config.tar.gz -d
+        - openssl aes-256-cbc -K $encrypted_cd0220f97c1a_key -iv $encrypted_cd0220f97c1a_iv -in gcloud-config.tar.gz.enc -out terra/gcloud-config.tar.gz -d
         - sudo apt-get update
         - sudo apt-get -y install openjdk-8-jre-headless
       install:
