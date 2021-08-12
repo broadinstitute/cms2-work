@@ -15,7 +15,7 @@ env:
   global:
     - LANGUAGE=wdl
     # GH_TOKEN
-    - secure: "V0pLOrVC1vfMh2+UYPVMbAVrcwnUpiw/ceJVgGpUSWip0oHtnDX3aTYI1q/AghM1bqwskq1AHcCRhLAVnLXgCktgGR/q4rdReRqlcEK5Z5fsDOyI7lGuHaTxXZpAw1HhKLK3jQ0tUq6wSVEk7m9gbpoDZAzRIYc8UueOi3EgJvDHkVQCQeDWq6lDsIIhsnkXy5fsmbFlU2vQdkPELQRYbhM5sYQepD9nvJOHHgWRgzWjmrBAUcvh9FLlYrOw/AKrdPbNruUAFbEjvMfULfA64sVf476TEsa5YVZuQ1Fr9PoEZDynt/6/AG3IAt6kmXFGdn5Hx0oL/RRx4lBtAKxUsuBWzpBni1pM8/IS13w4pTHhc+6AzPw1P+vKwhuzKG6bSo6xRiBkEiKY37UrzJIvb54s0Zv9aF/azPhyEBCLi0lRamSSXDbY+uAWBlL5n7dk7FzZi+30K3437sKt00rsEsP8mmH5tvuiSooVEbuAzxq034wBc6WflypzDg3o7s5Tb9Pfdm+XmaTc3EhjU8ZAF+07pFTaJk/YAfFrT3bUB3vf9CGTyiPEe8xj5oMio9+4yf0v5FHyM3FFtKu8ewLUIhUwfvvBVTX3k+/50VPCwmwiJgODgjG+rbQjOyZZVgXLNUKV5L1h6N7D/5XlFG3w4desU4fn9Jw9KwMlKw/ueeg="
+    - secure: "TZgdT3wn1oJ8TJhlTBI1kZ65/MxHRViHiQj9sqDZuGJrp3D86Kb7LZsa6VxQz4GIeqAWZASBKJLD7K5x52VEzJpW80VkrTN7gh4DpCb/VaG2ymNiF9P1TP0AEVeXzdyaQ2ZyaKTDaDTwSA3yRHGSiJSlm2bPfKYT87O+d1YtvShfKmMecBN7U6ph8hqch9y79KAmGjsquX/VN61F+TIhMzu8OrQ6j1Hcu3MX/wWLA71vXO6QrwIHS1mz2nQfCkQVGJQ2gymlE2ppop17j9aIdcBn2K5gpW737bWMMh5Ki5ckWvoSFkxySryZ+ylkfmPOPWBE/FZc0kX4qJ3GCTE5PkEgosbRF723u82xaYLplQQClQwLhfmwhzS8+4AXol20tjDaXma5koV+C3HJq3icvZytBfnJoSi6KDLgXbl/pxddJ4+XR7NDpbB64NT28RMmAwFyTYSzFiacFtRMusE8BtLNosWrjfCdmKm03fOMpK00y4mLiQGBApRJ4gfadDiYdVnYNnfrjryLdc/pMPdF1RBXuBBObG6XxwrwE4nRpTbOJO8Ee/szt8f1TbXR/sHdeDn/Yi/71XlqJdG/vmRmU/5Ew9MX+BkiYK/+cCzLz++G2GvIP1gox2IykKz/9t+rk77i/KIcAdJjAg3Bq3vtkuXSPd2GWRf22hND9tOw0EQ="
 
 branches:
   except:
@@ -37,11 +37,10 @@ jobs:
       stage: main
       python: "3.8"
       before_install:
-        - openssl aes-256-cbc -K $encrypted_cd0220f97c1a_key -iv $encrypted_cd0220f97c1a_iv -in gcloud-config.tar.gz.enc -out terra/gcloud-config.tar.gz -d
+        - openssl aes-256-cbc -K $encrypted_cd0220f97c1a_key -iv $encrypted_cd0220f97c1a_iv -in terra/gcloud-config.tar.gz.enc -out terra/gcloud-config.tar.gz -d
         - sudo apt-get update
         - sudo apt-get -y install openjdk-8-jre-headless
       install:
-#        - pip3 -q install miniwdl
         - pip3 -q install firecloud
       script:
         - set -e
@@ -49,5 +48,3 @@ jobs:
         - tar -xzf terra/gcloud-config.tar.gz -C $HOME
         - ./terra/terra_utils.py cmd_with_filename -f myfile.txt
         - ./terra/terra_utils.py deploy_to_terra
-
-
