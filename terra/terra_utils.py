@@ -199,8 +199,8 @@ def customize_wdls_for_git_commit():
     execute(f'git remote add origin-staging "https://{GH_TOKEN}@github.com/{STAGING_TRAVIS_REPO_SLUG}.git"')
     execute(f'git push --set-upstream origin-staging {STAGING_BRANCH}')
 
-# * def do_deploy_wdl_to_terra()
-def do_deploy_wdl_to_terra():
+# * def do_deploy_to_terra()
+def do_deploy_to_terra():
     """Create Terra method and configuration for the workflow."""
 
     SEL_NAMESPACE='um1-encode-y2s1'
