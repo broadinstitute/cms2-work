@@ -161,10 +161,6 @@ def execute(action, **kw):
 def customize_wdls_for_git_commit():
     """Upload files from this commit to the cloud, and create customized WDLs referencing this commit's version of files.   """
 
-    SEL_NAMESPACE='um1-encode-y2s1'
-    SEL_WORKSPACE='selection-sim'
-    TERRA_METHOD_NAME='test-cosi2-method-01'
-    TERRA_CONFIG_NAME='dockstore-tool-cms2'
     TERRA_GS_BUCKET='fc-21baddbc-5142-4983-a26e-7d85a72c830b'
     TRAVIS_COMMIT=os.environ['TRAVIS_COMMIT']
     TRAVIS_BRANCH=os.environ['TRAVIS_BRANCH']
@@ -207,16 +203,6 @@ def do_deploy_to_terra():
     SEL_WORKSPACE='selection-sim'
     TERRA_METHOD_NAME='test-cosi2-method-01'
     TERRA_CONFIG_NAME='dockstore-tool-cms2'
-    TERRA_GS_BUCKET='fc-21baddbc-5142-4983-a26e-7d85a72c830b'
-    TRAVIS_COMMIT=os.environ['TRAVIS_COMMIT']
-    TRAVIS_BRANCH=os.environ['TRAVIS_BRANCH']
-    TRAVIS_REPO_SLUG=os.environ['TRAVIS_REPO_SLUG']
-    STAGING_TRAVIS_REPO_SLUG='notestaff/cms2-staging'
-    STAGING_BRANCH=f'staging-{TRAVIS_BRANCH}--{TRAVIS_COMMIT}'
-    GITHUB_REPO=TRAVIS_REPO_SLUG.split('/')[1]
-
-    TERRA_DEST=f'gs://{TERRA_GS_BUCKET}/{GITHUB_REPO}/{TRAVIS_BRANCH}/{TRAVIS_COMMIT}/'
-    GH_TOKEN=os.environ['GH_TOKEN']
 
     z = fapi.update_repository_method(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, synopsis='run sims and compute component stats',
                                       wdl=os.path.abspath(f'./Dockstore.wdl'))
