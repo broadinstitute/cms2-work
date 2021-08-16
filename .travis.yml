@@ -41,7 +41,7 @@ jobs:
         - sudo apt-get update
         - sudo apt-get -y install openjdk-8-jre-headless
       install:
-        - pip3 -q install firecloud
+        - pip3 -q install firecloud PyYAML
       script:
         - set -e
         - ./travis/test-wdl.sh
