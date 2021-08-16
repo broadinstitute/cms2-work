@@ -152,9 +152,12 @@ def available_cpu_count():
 
 def load_yaml_or_json(fname):
     '''Load a dictionary from either a yaml or a json file'''
+    _log.debug(f'load_yaml_or_json: {fname=}')
     with open(fname) as f:
-        if fname.upper().endswith('.YAML') or fname.upper().endswith('.YML'): return yaml.safe_load(f) or {}
-        if fname.upper().endswith('.JSON'): return json.load(f) or {}
+        if fname.upper().endswith('.YAML') or fname.upper().endswith('.YML'):
+            return yaml.safe_load(f) or {}
+        if fname.upper().endswith('.JSON'):
+            return json.load(f) or {}
         raise TypeError('Unsupported dict file format: ' + fname)
 
 
