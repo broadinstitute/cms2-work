@@ -193,7 +193,7 @@ def do_deploy_to_terra(args):
 # https://gist.github.com/mivade/384c2c41c3a29c637cb6c603d4197f9f
 cli = argparse.ArgumentParser()
 
-cli.add_argument('--config-file', default='config/cms2_work_config.json')
+cli.add_argument('--config-file', default='config/cms2_work_config.yml')
 subparsers = cli.add_subparsers(dest="subcommand")
 
 def argument(*name_or_flags, **kwargs):
