@@ -1,14 +1,14 @@
 version 1.0
 
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210614-1134-add-empirical-data-processing--97d26b9d394e57134151a45270c30e93513f75a9/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
     String modelId
     String experimentId = "default"
     Array[Array[Array[File]]] selection_sims
-    File compute_components_script = "./remodel_components.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
+    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210614-1134-add-empirical-data-processing/97d26b9d394e57134151a45270c30e93513f75a9/remodel_components.py"
+    File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210614-1134-add-empirical-data-processing/97d26b9d394e57134151a45270c30e93513f75a9/norm_and_collate.py"
     PopsInfo pops_info
 
     Int n_bins_ihs = 20
