@@ -256,3 +256,4 @@ if __name__ == "__main__":
         cli.print_help()
     else:
         args.func(args)
+
