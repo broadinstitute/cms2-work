@@ -1,0 +1,12 @@
+# coveralls
+# flake8
+# lxml
+# mock
+# pycodestyle
+# pytest
+# pytest
+# pytest
+# pytest
+# coverage
+# six
+

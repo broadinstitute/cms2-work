@@ -1,0 +1,10 @@
+#cromwell=0.36
+#cromshell=0.2.3
+w3m
+#gnupg=2.2.11
+#emacs=26.1
+anaconda-client
+#git-annex
+#dxpy
+patch
+#datalad=0.11.7
