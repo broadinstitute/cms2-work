@@ -1,7 +1,7 @@
 version 1.0
 
-import "./structs.wdl"
-import "./run_sims_and_compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210614-1134-add-empirical-data-processing--0d5b63d8cb201a3bb5691c942534d4cdd6b4b06e/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210614-1134-add-empirical-data-processing--0d5b63d8cb201a3bb5691c942534d4cdd6b4b06e/run_sims_and_compute_cms2_components.wdl"
 
 # * workflow cms2_main_emp
 workflow cms2_main_emp {
