@@ -22,5 +22,3 @@ terra:
       config_name: cms2-emp-data
       test_data: test.02.wdl.json
 
-
-
