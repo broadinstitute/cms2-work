@@ -20,4 +20,4 @@ terra:
       synopsis: fetch empirical data and compute component stats
       method_name: cosi2_test_01
       config_name: cms2-emp-data
-      test_data: test.02.wdl.json
+      test_data: test.cms2_main_emp.wdl.json
