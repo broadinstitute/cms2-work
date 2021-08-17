@@ -1,7 +1,7 @@
 version 1.0
 
-import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210614-1134-add-empirical-data-processing--b1e00f8173f968750f70a20bb02dc889b0d7308c/run_sims.wdl"
-import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210614-1134-add-empirical-data-processing--b1e00f8173f968750f70a20bb02dc889b0d7308c/tasks.wdl"
+import "./run_sims.wdl"
+import "./tasks.wdl"
 
 # * workflow compute_normalization_stats_wf
 workflow compute_normalization_stats_wf {
@@ -25,7 +25,7 @@ workflow compute_normalization_stats_wf {
     PopsInfo pops_info
     Array[File] neut_sim_region_haps_tar_gzs
 
-    File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210614-1134-add-empirical-data-processing/b1e00f8173f968750f70a20bb02dc889b0d7308c/remodel_components.py"
+    File compute_components_script = "./remodel_components.py"
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
