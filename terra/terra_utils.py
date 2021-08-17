@@ -64,7 +64,7 @@ def customize_wdls_for_git_commit():
                           f'import "https://raw.githubusercontent.com/{STAGING_TRAVIS_REPO_SLUG}/{STAGING_BRANCH}/\\1"',
                           wdl, flags=re.MULTILINE)
         if wdl_repl != wdl:
-            print('Replaced in file', wdl_fname)
+            _log.debug(f'Replaced in file {wdl_fname}')
             misc_utils.dump_file(wdl_fname, wdl_repl)
 
     execute = misc_utils.execute
@@ -100,53 +100,33 @@ def do_deploy_to_terra(args):
         z = fapi.update_repository_method(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME,
                                           synopsis=root_workflow_def['synopsis'],
                                           wdl=os.path.abspath(root_workflow_def['wdl']))
-        #print('UPDATE IS', z, z.json())
-        new_method = z.json()
-        print('NEW_METHOD IS', new_method)
+        
+        def _log_json(heading, json_val):
+            orig_val = ''
+            if hasattr(json_val, 'json'):
+                orig_val = str(json_val) + ' '
+                json_val = json_val.json()
+            _log.debug(f'{heading}: {orig_val}{misc_utils.pretty_print_json(json_val)}')
 
-        #z = fapi.list_repository_methods(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME).json()
-        #print('METHODS LIST AFT', z)
+        new_method = z.json()
+        _log.debug(f'{misc_utils.pretty_print_json(new_method)=}')
 
         snapshot_id = new_method['snapshotId']
 
-        # z = fapi.get_repository_method_acl(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, snapshot_id=snapshot_id)
-        # print('ACL:', z, z.json())
-
+        acl_updates = [{'role': 'OWNER', 'user': user} for user in terra_config['users']]
+        _log_json('acl_updates', acl_updates)
         z = fapi.update_repository_method_acl(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, snapshot_id=snapshot_id,
-                                              acl_updates=[{'role': 'OWNER', 'user': user} for user in terra_config['users']])
-        print('ACL UPDATE:', z, z.json())
+                                              acl_updates=acl_updates)
+        _log_json('ACL UPDATE result', z)
         z = fapi.get_repository_method_acl(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, snapshot_id=snapshot_id)
-        print('ACL AFTER UPDATE:', z, z.json())
+        _log_json('ACL AFTER UPDATE', z)
 
         z = fapi.get_config_template(namespace=SEL_NAMESPACE, method=TERRA_METHOD_NAME, version=snapshot_id)
-        #print('CONFIG TEMPLATE AFT IS', z, z.json())
         config_template = z.json()
 
-        #z = fapi.list_workspace_configs(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, allRepos=True).json()
-        #print('LIST_WORKSPACE_CONFIGS allRepos', z)
         TERRA_CONFIG_NAME += f'_cfg_{snapshot_id}' 
-        # z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
-        #                               config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
-
-        # print('WORKSPACE_CONFIG_NOW_IS', z, z.json())
-
         config_json = copy.copy(config_template)
-        #print('CONFIG_JSON before deleting rootEntityType', config_json)
-        #del config_json['rootEntityType']
-        #print('CONFIG_JSON after deleting rootEntityType', config_json)
-        #print('CONFIG_JSON about to be updated with inputs:', inputs)
-        #config_json.update(namespace=SEL_NAMESPACE, name=TERRA_METHOD_NAME, inputs=inputs, outputs={})
-        #print('CONFIG_JSON AFTER UPDATING with inputs:', config_json)
-
-
-        # orig_template = copy.copy(config_template)
-        # print('ORIG_TEMPLATE is', orig_template)
-        # del orig_template['rootEntityType']
-        # z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=orig_template)
-        # print('CREATED CONFIG WITH ORIG TEMPLATE:', z, z.json())
-        print('methodConfigVersion was', config_json['methodConfigVersion'])
         config_json['methodConfigVersion'] = snapshot_id
-        print('methodConfigVersion now is', config_json['methodConfigVersion'])
         config_json['namespace'] = SEL_NAMESPACE   # configuration namespace
         config_json['name'] = TERRA_CONFIG_NAME
         config_json.pop('rootEntityType', None)
@@ -154,34 +134,28 @@ def do_deploy_to_terra(args):
         inputs = dict(misc_utils.json_loadf(terra_config['test_data']))
         config_json['inputs'].update(inputs)
 
-        print('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
+        _log_json('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
 
         z = fapi.create_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, body=config_json)
-        print('CREATED CONFIG WITH OUR INPUTS:', z, z.json())
+        _log_json('CREATED CONFIG WITH OUR INPUTS:', z)
 
         z = fapi.validate_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
-        print('VALIDATE_CONFIG:', z, z.json())
+        _log_json('VALIDATE_CONFIG:', z)
 
         z = fapi.get_repository_config_acl(namespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME, snapshot_id=1)
-        print('REPO CONFIG ACL:', z, z.json())
+        _log_json('REPO CONFIG ACL:', z)
 
         z = fapi.get_workspace_acl(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE)
-        print('WORKSPACE ACL:', z, z.json())
-
-
-        # z = fapi.overwrite_workspace_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
-        #                                     cnamespace=SEL_NAMESPACE, configname=TERRA_CONFIG_NAME, body=config_json)
-        # print('OVERWROTE', z, z.json())
+        _log_json('WORKSPACE ACL:', z)
 
         z = fapi.get_workspace_config(workspace=SEL_WORKSPACE, namespace=SEL_NAMESPACE,
                                       config=TERRA_CONFIG_NAME, cnamespace=SEL_NAMESPACE)
 
-        print('CONFIG_NOW_IS_2', z, z.json())
+        _log_json('CONFIG_NOW_IS_2', z)
 
-        if True:
-            z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
-                                       cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
-            print('SUBMISSION IS', z, z.json())
+        z = fapi.create_submission(wnamespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE,
+                                   cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
+        _log_json('SUBMISSION IS', z)
 
     # end: for root_workflow in terra_config['root_workflows']
 # end: def do_deploy_to_terra(args)
@@ -233,8 +207,12 @@ def subcommand(args=[], parent=subparsers):
 
 @subcommand()
 def deploy_to_terra(args):
-    customize_wdls_for_git_commit()
-    do_deploy_to_terra(args)
+    try:
+        customize_wdls_for_git_commit()
+        do_deploy_to_terra(args)
+    except Exception as e:
+        _log.error(f'deploy_to_terra: ERROR {e}')
+        raise
 
 # @subcommand([argument("-d", help="Debug mode", action="store_true")])
 # def test(args):
