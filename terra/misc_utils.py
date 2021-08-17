@@ -2,18 +2,20 @@
 
 """Miscellaneous utilities.
 
-Some are adapted from https://github.com/broadinstitute/viral-core/blob/master/util/misc.py
+Some are adapted from https://github.com/broadinstitute/viral-core/blob/master/util/{misc,file}.py
 """
 
 # * Preamble
 
 import argparse
+import builtins
 import csv
 import collections
 import collections.abc
 import concurrent.futures
 import contextlib
 import copy
+import errno
 import functools
 import glob
 import gzip
@@ -54,8 +56,87 @@ def pretty_print_json(json_val, sort_keys=True):
     """Return a pretty-printed version of a dict converted to json, as a string."""
     return json.dumps(json_val, indent=4, separators=(',', ': '), sort_keys=sort_keys)
 
+def mkdir_p(dirpath):
+    ''' Verify that the directory given exists, and if not, create it.
+    '''
+    try:
+        os.makedirs(dirpath)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(dirpath):
+            pass
+        else:
+            raise
+
+def touch_p(path, times=None):
+    '''Touch file, making parent directories if they don't exist.'''
+    mkdir_p(os.path.dirname(path))
+    touch(path, times=times)
+
 def write_json(fname, json_val):
     dump_file(fname=fname, value=pretty_print_json(json_val))
+
+def replace_ext(fname, new_ext):
+    """Replace file extension of `fname` with `new_ext`."""
+    return os.path.splitext(fname)[0] + new_ext
+
+def maps(obj, *keys):
+    """Return True if `obj` is a mapping that contains al `keys`."""
+    return isinstance(obj, collections.Mapping) and all(k in obj for k in keys)
+
+_str_type = basestring if hasattr(builtins, 'basestring') else str
+
+def is_str(obj):
+    """Test if obj is a string type, in a python2/3 compatible way.
+    From https://stackoverflow.com/questions/4232111/stringtype-and-nonetype-in-python3-x
+    """
+    return isinstance(obj, _str_type)
+
+# * json_to_org
+
+def _json_to_org(val, org_file, depth=1, heading='root', title=None, json_file=None):
+    """Transform a parsed json structure to an Org mode outliner file (see https://orgmode.org/ ).
+    """
+    _log.debug(f'Loaded json, writing org to {org_file}...')
+    with open(org_file, 'w') as out:
+        if title:
+            out.write('#+TITLE: {}\n\n'.format(title))
+        if json_file:
+            out.write('json file: [[{}]]\n\n'.format(json_file))
+        def _recurse(val, heading, depth):
+            def _header(s): out.write('*'*depth + ' ' + str(s) + '\n')
+            def _line(s): out.write(' '*depth + str(s) + '\n')
+            out.write('*'*depth + ' ' + heading)
+            if isinstance(val, list):
+                out.write(' - list of ' + str(len(val)) + '\n')
+                if len(val):
+                    for i, v in enumerate(val):
+                        _recurse(v, heading=str(i), depth=depth+2)
+            elif maps(val, '$git_link'):
+                rel_path = val['$git_link']
+                out.write(' - [[file:{}][{}]]\n'.format(rel_path, os.path.basename(rel_path)))
+            elif is_str(val) and os.path.isabs(val) and os.path.isdir(val):
+                out.write(' - [[file+emacs:{}][{}]]\n'.format(val, os.path.basename(val)))
+            elif isinstance(val, collections.Mapping):
+                out.write(' - map of ' + str(len(val)) + '\n')
+                if len(val):
+                    for k, v in val.items():
+                        _recurse(v, heading='_'+k+'_', depth=depth+2)
+            else:
+                out.write(' - ' + str(val) + '\n')
+        _recurse(val=val, heading=heading, depth=depth)
+# end: def _json_to_org(val, org_file, depth=1, heading='root')
+
+def json_to_org(json_fname, org_fname=None, maxSizeMb=500):
+    """Transform a parsed json structure to an Org mode outliner file (see https://orgmode.org/ ).
+    """
+    org_fname = org_fname or replace_ext(json_fname, '.org')
+    _log.debug(f'converting {json_fname} to {org_fname}')
+    _json_to_org(val=json_loadf(json_fname, maxSizeMb=maxSizeMb), org_file=org_fname, json_file=json_fname)
+    _log.debug(f'converted {json_fname} to {org_fname}')
+
+def write_json_and_org(fname, **json_dict):
+    dump_file(fname=fname, value=pretty_print_json(json_dict))
+    json_to_org(json_fname=fname)
 
 def load_dict_sorted(d):
     return collections.OrderedDict(sorted(d.items()))
@@ -63,10 +144,10 @@ def load_dict_sorted(d):
 def json_loads(s):
     return json.loads(s.strip(), object_hook=load_dict_sorted, object_pairs_hook=collections.OrderedDict)
 
-def json_loadf(fname):
-    return json_loads(slurp_file(fname))
+def json_loadf(fname, *args, **kw):
+    return json_loads(slurp_file(fname, *args, **kw))
 
-def slurp_file(fname, maxSizeMb=50):
+def slurp_file(fname, maxSizeMb=300):
     """Read entire file into one string.  If file is gzipped, uncompress it on-the-fly.  If file is larger
     than `maxSizeMb` megabytes, throw an error; this is to encourage proper use of iterators for reading
     large files.  If `maxSizeMb` is None or 0, file size is unlimited."""
@@ -340,7 +421,8 @@ def subparsers_helper(cli):
             parser.set_defaults(func=func)
         return decorator
 
-    def parse(args):
+    def parse():
+        args = cli.parse_args()
         if args.subcommand is None:
             cli.print_help()
         else:
