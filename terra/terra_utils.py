@@ -131,7 +131,7 @@ def do_deploy_to_terra(args):
         config_json['name'] = TERRA_CONFIG_NAME
         config_json.pop('rootEntityType', None)
 
-        inputs = dict(misc_utils.json_loadf(root_workflow_def['test_1data']))
+        inputs = dict(misc_utils.json_loadf(root_workflow_def['test_data']))
         config_json['inputs'].update(inputs)
 
         _log_json('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
