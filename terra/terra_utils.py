@@ -142,6 +142,10 @@ def do_deploy_to_terra(args):
 
         z = fapi.validate_config(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, cnamespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME)
         _log_json('VALIDATE_CONFIG:', z)
+        validation_json = z.json()
+        for field in ('extraInputs', 'invalidInputs', 'invalidOutputs', 'missingInputs'):
+            misc_utils.chk(not validation_json.get(field, []),
+                           f'Validation error in workflow {root_workflow_name}: {field} - {validation_json[field]}')
 
         z = fapi.get_repository_config_acl(namespace=SEL_NAMESPACE, config=TERRA_CONFIG_NAME, snapshot_id=1)
         _log_json('REPO CONFIG ACL:', z)

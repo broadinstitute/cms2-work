@@ -67,6 +67,12 @@ def mkdir_p(dirpath):
         else:
             raise
 
+def chk(condition, message='Check failed', exc=RuntimeError):
+    """Check a condition, raise an exception if bool(condition)==False, else return `condition`."""
+    if not condition:
+        raise exc(message)
+    return condition
+
 def touch_p(path, times=None):
     '''Touch file, making parent directories if they don't exist.'''
     mkdir_p(os.path.dirname(path))
