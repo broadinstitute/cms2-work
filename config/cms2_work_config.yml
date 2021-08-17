@@ -15,10 +15,10 @@ terra:
       config_name: cms2-sim-data
       test_data: test.02.wdl.json
 
-    cms2_emp_data:
-      wdl: cms2_main_emp.wdl
-      synopsis: fetch empirical data and compute component stats
-      method_name: cosi2_test_01
-      config_name: cms2-emp-data
-      test_data: test.02.wdl.json
+    # cms2_emp_data:
+    #   wdl: cms2_main_emp.wdl
+    #   synopsis: fetch empirical data and compute component stats
+    #   method_name: cosi2_test_01
+    #   config_name: cms2-emp-data
+    #   test_data: test.02.wdl.json
 
