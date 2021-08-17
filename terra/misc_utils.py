@@ -55,13 +55,13 @@ def pretty_print_json(json_val, sort_keys=True):
     return json.dumps(json_val, indent=4, separators=(',', ': '), sort_keys=sort_keys)
 
 def write_json(fname, json_val):
-    dump_file(fname=fname, value=_pretty_print_json(json_val))
+    dump_file(fname=fname, value=pretty_print_json(json_val))
 
 def load_dict_sorted(d):
     return collections.OrderedDict(sorted(d.items()))
 
 def json_loads(s):
-    return json.loads(s.strip(), object_hook=_load_dict_sorted, object_pairs_hook=collections.OrderedDict)
+    return json.loads(s.strip(), object_hook=load_dict_sorted, object_pairs_hook=collections.OrderedDict)
 
 def json_loadf(fname):
     return json_loads(slurp_file(fname))
