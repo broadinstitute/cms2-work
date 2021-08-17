@@ -165,72 +165,36 @@ def do_deploy_to_terra(args):
 
 # argparse subcommands setup from
 # https://gist.github.com/mivade/384c2c41c3a29c637cb6c603d4197f9f
-cli = argparse.ArgumentParser()
 
-cli.add_argument('--config-file', default='config/cms2_work_config.yml')
-subparsers = cli.add_subparsers(dest="subcommand")
+def parse_args():
 
-def argument(*name_or_flags, **kwargs):
-    """Convenience function to properly format arguments to pass to the
-    subcommand decorator.
+    cli = argparse.ArgumentParser()
+    cli.add_argument('--config-file', default='config/cms2_work_config.yml')
 
-    """
-    return (list(name_or_flags), kwargs)
+    argument, subcommand, parse = misc_utils.subparsers_helper(cli)
 
+    @subcommand()
+    def deploy_to_terra(args):
+        try:
+            customize_wdls_for_git_commit()
+            do_deploy_to_terra(args)
+        except Exception as e:
+            _log.error(f'deploy_to_terra: ERROR {e}')
+            raise
 
-def subcommand(args=[], parent=subparsers):
-    """Decorator to define a new subcommand in a sanity-preserving way.
-    The function will be stored in the ``func`` variable when the parser
-    parses arguments so that it can be called directly like so::
+    # @subcommand([argument("-d", help="Debug mode", action="store_true")])
+    # def test(args):
+    #     print(args)
 
-        args = cli.parse_args()
-        args.func(args)
+    @subcommand([argument("-f", "--filename", help="A thing with a filename")])
+    def cmd_with_filename(args):
+        print(args)
 
-    Usage example::
-
-        @subcommand([argument("-d", help="Enable debug mode", action="store_true")])
-        def subcommand(args):
-            print(args)
-
-    Then on the command line::
-
-        $ python cli.py subcommand -d
-
-    """
-    def decorator(func):
-        parser = parent.add_parser(func.__name__, description=func.__doc__)
-        for arg in args:
-            parser.add_argument(*arg[0], **arg[1])
-        parser.set_defaults(func=func)
-    return decorator
-
-
-@subcommand()
-def deploy_to_terra(args):
-    try:
-        customize_wdls_for_git_commit()
-        do_deploy_to_terra(args)
-    except Exception as e:
-        _log.error(f'deploy_to_terra: ERROR {e}')
-        raise
-
-# @subcommand([argument("-d", help="Debug mode", action="store_true")])
-# def test(args):
-#     print(args)
-
-
-@subcommand([argument("-f", "--filename", help="A thing with a filename")])
-def cmd_with_filename(args):
-    print(args)
-
-# @subcommand([argument("name", help="Name")])
-# def name(args):
-#     print(args.name)
-
+    # @subcommand([argument("name", help="Name")])
+    # def name(args):
+    #     print(args.name)
+    parse()
+# end: def parse_args()
 
 if __name__ == "__main__":
-    args = cli.parse_args()
-    if args.subcommand is None:
-        cli.print_help()
-    else:
-        args.func(args)
+    parse_args()
