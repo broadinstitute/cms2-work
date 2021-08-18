@@ -336,7 +336,7 @@ task fetch_empirical_hapsets_from_1KG {
   input {
     File empirical_regions_bed
     File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
-    File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop_to_representative_pop.json"
+    File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
 
     File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
   }
