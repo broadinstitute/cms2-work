@@ -1,7 +1,7 @@
 version 1.0
 
-import "./structs.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210816-1725-refactor-terra--43a1e26c69355bf12da1630b9c3f821337c9e4ab/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210816-1725-refactor-terra--43a1e26c69355bf12da1630b9c3f821337c9e4ab/tasks.wdl"
 
 workflow cms2_empirical {
   input {
