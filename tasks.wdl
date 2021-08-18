@@ -351,9 +351,15 @@ task fetch_empirical_hapsets_from_1KG {
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
-    memory: "8 GB"
+    memory: "16 GB"
     cpu: 1
     disks: "local-disk 25 HDD"
     preemptible: 1
   }
 }
+
+# task construct_empirical_neutral_regions_list_gazave14 {
+#   meta {
+#     description: "Construct a .bed file representing neutral empirical regions based on Gazave 2014 paper."
+#   }
+# }
