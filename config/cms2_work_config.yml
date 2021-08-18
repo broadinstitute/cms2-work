@@ -27,6 +27,6 @@ terra:
       synopsis: fetch empirical data
       method_name: cosi2_test_01
       config_name: cms2-empirical
-      test_data: test.cms2_main_emp.wdl.json
+      test_data: test.cms2_empirical.wdl.json
 
 
