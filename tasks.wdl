@@ -350,8 +350,8 @@ task fetch_empirical_hapsets_from_1KG {
     Array[File] empirical_hapsets_tar_gzs = glob("hapsets/*.hapset.tar.gz")
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    memory: "4 GB"
+    docker: "quay.io/ilya_broad/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
+    memory: "8 GB"
     cpu: 1
     disks: "local-disk 25 HDD"
     preemptible: 1
