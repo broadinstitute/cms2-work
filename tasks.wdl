@@ -345,6 +345,7 @@ task fetch_empirical_hapsets_from_1KG {
     python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
        --tmp-dir "${PWD}/hapsets"
+    df -h
   >>>
   output {
     Array[File] empirical_hapsets_tar_gzs = glob("hapsets/*.hapset.tar.gz")
@@ -353,7 +354,7 @@ task fetch_empirical_hapsets_from_1KG {
     docker: "quay.io/ilya_broad/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
     memory: "16 GB"
     cpu: 1
-    disks: "local-disk 25 HDD"
+    disks: "local-disk 256 HDD"
     preemptible: 1
   }
 }
