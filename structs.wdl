@@ -26,6 +26,8 @@ struct PopsInfo {
     Array[Pop] pops
     Map[String,String] pop_id_to_idx  # map from pop id to its index in pop_ids
     Map[String,Array[String]] pop_alts  # map from pop id to list of all other pop ids
+    Array[Array[Boolean]] pop_alts_used # pop_alts_used[pop1][pop2] is true iff pop2 in pop_alts[pop1]
+    #                                     pop_alts_used indicates which pop pair comparisons we need to do
     Array[Pair[String,String]] pop_pairs # all two-pop sets, for cross-pop comparisons
 
     Array[String] sel_pop_ids  # for each sweep definition in paramFiles_selection input to
@@ -67,40 +69,8 @@ struct ReplicaInfo {
   Float durationSeconds
 }
 
-struct NormalizeAndCollateInput {
-    #ReplicaInfo replica_info
-    File replica_info_file
-    Array[String] pop_ids
-    Array[Pair[String,String]] pop_pairs
-    #String replica_id_str
-    Pop sel_pop
-    File ihs_out
-    File nsl_out
-    File ihh12_out
-    File delihh_out
-    File derFreq_out
-    Array[File] xpehh_out
-    Array[File] fst_and_delDAF_out
-
-    File norm_bins_ihs
-    File norm_bins_nsl
-    File norm_bins_ihh12
-    File norm_bins_delihh
-    Array[File] norm_bins_xpehh
-
-    Int n_bins_ihs
-    Int n_bins_nsl
-    Int n_bins_ihh12
-    Int n_bins_delihh
-    Int n_bins_xpehh
-}
-
 struct NormalizeAndCollateBlockInput {
-    #ReplicaInfo replica_info
     Array[File] replica_info
-    #Array[Int] pop_ids
-    #Array[Pair[Int,Int]] pop_pairs
-    #String replica_id_str
     Pop sel_pop
     Array[File] ihs_out
     Array[File] nsl_out
@@ -121,6 +91,14 @@ struct NormalizeAndCollateBlockInput {
     Int n_bins_ihh12
     Int n_bins_delihh
     Int n_bins_xpehh
+
+    Pop one_pop_components_sel_pop_used
+    Array[Pop] two_pop_components_sel_pop_used
+    Array[Pop] two_pop_components_alt_pop_used
+
+    Pop norm_one_pop_components_sel_pop_used
+    Array[Pop] norm_two_pop_components_sel_pop_used
+    Array[Pop] norm_two_pop_components_alt_pop_used
 }
 
 

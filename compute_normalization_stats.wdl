@@ -109,7 +109,7 @@ workflow compute_normalization_stats_wf {
 # **** Compute two-pop CMS2 components for neutral sims
    scatter(sel_pop_idx in range(n_pops)) {
      scatter(alt_pop_idx in range(n_pops)) {
-       if (alt_pop_idx > sel_pop_idx) {
+       if ((alt_pop_idx > sel_pop_idx) && pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx]) {
 	 scatter(hapsets_block in neut_hapset_haps_tar_gzs_in_block) {
 	   call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
 	     input:
@@ -147,23 +147,39 @@ workflow compute_normalization_stats_wf {
 
   scatter(sel_pop_idx in range(n_pops)) {
     scatter(alt_pop_idx in range(n_pops)) {
-      if (alt_pop_idx != sel_pop_idx) {
+      if ((alt_pop_idx != sel_pop_idx) && pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx]) {
   	File norm_bins_xpehh_maybe = 
         select_first([
         compute_two_pop_bin_stats_for_normalization.norm_bins_xpehh[sel_pop_idx][alt_pop_idx],
         compute_two_pop_bin_stats_for_normalization.norm_bins_flip_pops_xpehh[alt_pop_idx][sel_pop_idx]
         ])
+  	Pop norm_bins_xpehh_sel_pop_used_maybe = 
+        select_first([
+        compute_two_pop_bin_stats_for_normalization.sel_pop_used[sel_pop_idx][alt_pop_idx],
+        compute_two_pop_bin_stats_for_normalization.alt_pop_used[alt_pop_idx][sel_pop_idx]
+        ])
+  	Pop norm_bins_xpehh_alt_pop_used_maybe = 
+        select_first([
+        compute_two_pop_bin_stats_for_normalization.alt_pop_used[sel_pop_idx][alt_pop_idx],
+        compute_two_pop_bin_stats_for_normalization.sel_pop_used[alt_pop_idx][sel_pop_idx]
+        ])
       }
     }
     Array[File] norm_bins_xpehh_vals = select_all(norm_bins_xpehh_maybe)
+    Array[Pop] norm_bins_xpehh_sel_pop_used_vals = select_all(norm_bins_xpehh_sel_pop_used_maybe)
+    Array[Pop] norm_bins_xpehh_alt_pop_used_vals = select_all(norm_bins_xpehh_alt_pop_used_maybe)
   }  # end: scatter(sel_pop_idx in range(length(pops)))
 
   output {
-
     Array[File] norm_bins_ihs=compute_one_pop_bin_stats_for_normalization.norm_bins_ihs
     Array[File] norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl
     Array[File] norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12
     Array[File] norm_bins_delihh=compute_one_pop_bin_stats_for_normalization.norm_bins_delihh
     Array[Array[File]] norm_bins_xpehh = norm_bins_xpehh_vals
+
+    Array[Pop] one_pop_bin_stats_sel_pop_used = compute_one_pop_bin_stats_for_normalization.sel_pop_used
+    Array[Array[Pop]] two_pop_bin_stats_sel_pop_used = norm_bins_xpehh_sel_pop_used_vals
+    Array[Array[Pop]] two_pop_bin_stats_alt_pop_used = norm_bins_xpehh_alt_pop_used_vals
   }
 }
+

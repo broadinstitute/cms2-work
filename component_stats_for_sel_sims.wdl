@@ -21,6 +21,10 @@ workflow component_stats_for_sel_sims_wf {
     Array[File] norm_bins_delihh
     Array[Array[File]] norm_bins_xpehh
 
+    Array[Pop] one_pop_bin_stats_sel_pop_used
+    Array[Array[Pop]] two_pop_bin_stats_sel_pop_used
+    Array[Array[Pop]] two_pop_bin_stats_alt_pop_used
+
     Int threads = 1
     Int mem_base_gb = 0
     Int mem_per_thread_gb = 1
@@ -63,7 +67,7 @@ workflow component_stats_for_sel_sims_wf {
 	preemptible=preemptible
       }
       scatter(alt_pop_idx in range(length(pops_info.pop_ids))) {
-	if (alt_pop_idx != sel_pop_idx) {
+	if ((alt_pop_idx != sel_pop_idx)  &&  pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx]) {
 	  call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_selection {
 	    input:
 	    sel_pop=sel_pop,
@@ -81,7 +85,7 @@ workflow component_stats_for_sel_sims_wf {
       # should normalize_and_collate be done by blocks?
       call tasks.normalize_and_collate_block {
 	input:
-	  inp = object {
+	  inp = object {  # struct NormalizeAndCollateBlockInput
 	    #replica_info: sel_sim_replicaInfo,
 	    #replica_id_str: sel_sim_replica_id_str,
 	    pop_ids: pops_info.pop_ids,
@@ -99,6 +103,10 @@ workflow component_stats_for_sel_sims_wf {
 	    xpehh_out: select_all(compute_two_pop_cms2_components_for_selection.xpehh),
 	    fst_and_delDAF_out: select_all(compute_two_pop_cms2_components_for_selection.fst_and_delDAF),
 
+	    one_pop_components_sel_pop_used: compute_one_pop_cms2_components_for_selection.sel_pop_used,
+	    two_pop_components_sel_pop_used: select_all(compute_two_pop_cms2_components_for_selection.sel_pop_used),
+	    two_pop_components_alt_pop_used: select_all(compute_two_pop_cms2_components_for_selection.alt_pop_used),
+
 	    n_bins_ihs: n_bins_ihs,
 	    n_bins_nsl: n_bins_nsl,
 	    n_bins_ihh12: n_bins_ihh12,
@@ -110,7 +118,11 @@ workflow component_stats_for_sel_sims_wf {
 	    norm_bins_ihh12: norm_bins_ihh12[sel_pop_idx],
 	    norm_bins_delihh: norm_bins_delihh[sel_pop_idx],
 
-	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx]
+	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx],
+
+	    norm_one_pop_bin_stats_sel_pop_used: one_pop_bin_stats_sel_pop_used[sel_pop_idx],
+	    norm_two_pop_bin_stats_sel_pop_used: two_pop_bin_stats_sel_pop_used[sel_pop_idx],
+	    norm_two_pop_bin_stats_alt_pop_used: two_pop_bin_stats_alt_pop_used[sel_pop_idx]
 	  }
        } # call tasks.normalize_and_collate_block
 

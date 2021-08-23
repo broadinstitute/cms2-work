@@ -232,6 +232,10 @@ workflow run_sims_and_compute_cms2_components_wf {
     norm_bins_delihh=compute_normalization_stats_wf.norm_bins_delihh,
     norm_bins_xpehh=compute_normalization_stats_wf.norm_bins_xpehh,
 
+    one_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.one_pop_bin_stats_sel_pop_used,
+    two_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_sel_pop_used,
+    two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used,
+
     compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
     compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
     docker=docker,

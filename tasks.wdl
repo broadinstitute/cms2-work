@@ -38,6 +38,7 @@ task compute_one_pop_cms2_components {
     Array[File] ihh12 = glob("hapset[0-9]*/*.ihh12.out")
     Array[File] delihh = glob("hapset[0-9]*/*.delihh.out")
     Array[File] derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
+    Pop sel_pop_used = sel_pop
   }
 
   runtime {
@@ -147,6 +148,7 @@ task compute_one_pop_bin_stats_for_normalization {
     File norm_bins_nsl_log = out_fnames_base + ".norm_bins_nsl.log"
     File norm_bins_ihh12_log = out_fnames_base + ".norm_bins_ihh12.log"
     File norm_bins_delihh_log = out_fnames_base + ".norm_bins_delihh.log"
+    Pop sel_pop_used = sel_pop
   }
 
   runtime {
@@ -198,6 +200,9 @@ task compute_two_pop_bin_stats_for_normalization {
     
     File norm_bins_flip_pops_xpehh = norm_bins_flip_pops_xpehh_fname
     File norm_bins_flip_pops_xpehh_log = norm_bins_flip_pops_xpehh_log_fname
+
+    Pop sel_pop_used = sel_pop
+    Pop alt_pop_used = alt_pop
   }
 
   runtime {
@@ -209,32 +214,7 @@ task compute_two_pop_bin_stats_for_normalization {
   }
 }
 
-# * task normalize_and_collate
-
-task normalize_and_collate {
-  meta {
-    description: "Normalize raw scores to neutral sims, and collate component scores into one table."
-  }
-  input {
-    NormalizeAndCollateInput inp
-    File normalize_and_collate_script
-  }
-  String replica_id_str = basename(inp.ihs_out, ".ihs.out")
-  String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
-  command <<<
-    python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}" --replica-id-str "~{replica_id_str}" --out-normed-collated "~{normed_collated_stats_fname}"
-  >>>  
-  output {
-    File replica_info = read_json(inp.replica_info_file)
-    File normed_collated_stats = normed_collated_stats_fname
-  }
-  runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    memory: "1 GB"
-    cpu: 1
-    disks: "local-disk 10 HDD"
-  }
-}
+# * task normalize_and_collate_block
 
 task normalize_and_collate_block {
   meta {
@@ -252,6 +232,7 @@ task normalize_and_collate_block {
   output {
     Array[File] replica_info = inp.replica_info
     Array[File] normed_collated_stats = glob("*.normed_and_collated.tsv")
+    Pop sel_pop_used = inp.sel_pop
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
