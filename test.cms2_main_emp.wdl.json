@@ -3,7 +3,7 @@
     "cms2_main_emp.nreps": "4",
     "cms2_main_emp.numRepsPerBlock": "2",
     "cms2_main_emp.paramFile_demographic_model": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/defdef15_hard_sel1_common.citest.par\"",
-    "cms2_main_emp.paramFile_neutral": "\"./test.neutral.cosiParams\"",
-    "cms2_main_emp.paramFiles_selection": "[\"./sel1_origin1.par\", \"./sel3_origin2.par\"]",
-    "cms2_main_emp.recombFile": "\"./test_recom.recom\""
+    "cms2_main_emp.paramFile_neutral": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/e4008e3f5fac825788832f4efbb27fc14c384f9b/test.neutral.cosiParams\"",
+    "cms2_main_emp.paramFiles_selection": "[\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/e4008e3f5fac825788832f4efbb27fc14c384f9b/sel1_origin1.par\", \"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/e4008e3f5fac825788832f4efbb27fc14c384f9b/sel3_origin2.par\"]",
+    "cms2_main_emp.recombFile": "\"gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/e4008e3f5fac825788832f4efbb27fc14c384f9b/test_recom.recom\""
 }
