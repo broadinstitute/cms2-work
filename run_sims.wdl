@@ -36,7 +36,8 @@ task cosi2_run_one_sim_block {
     Int          numRepsPerBlock = 1
     Int          numCpusPerBlock = numRepsPerBlock
     Int          maxAttempts = 10000000
-    Int          repTimeoutSeconds = 300
+    Int          repAttemptTimeoutSeconds = 300
+    Int          repTimeoutSeconds = 3600
     String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     String       memoryPerBlock = "3 GB"
     Int          preemptible = 3
@@ -49,7 +50,9 @@ task cosi2_run_one_sim_block {
     set -ex -o pipefail
 
     python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
-      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --numBlocks ~{numBlocks} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --tpedPrefix ~{tpedPrefix} --outJson replicaInfos.json
+      --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} \
+      --numBlocks ~{numBlocks} --maxAttempts ~{maxAttempts} --repAttemptTimeoutSeconds ~{repAttemptTimeoutSeconds} \
+      --repTimeoutSeconds ~{repTimeoutSeconds} --tpedPrefix ~{tpedPrefix} --outJson replicaInfos.json
   >>>
 
   output {
@@ -137,7 +140,8 @@ workflow run_sims_wf {
     Int maxAttempts = 10000000
     Int numRepsPerBlock = 1
     Int numCpusPerBlock = numRepsPerBlock
-    Int repTimeoutSeconds = 600
+    Int repAttemptTimeoutSeconds = 600
+    Int repTimeoutSeconds = 3600
     String       memoryPerBlock = "3 GB"
     String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     Int preemptible = 3
@@ -185,6 +189,7 @@ workflow run_sims_wf {
       numBlocks=numBlocksNeutral,
 
       maxAttempts=maxAttempts,
+      repAttemptTimeoutSeconds=repAttemptTimeoutSeconds,
       repTimeoutSeconds=repTimeoutSeconds,
       numRepsPerBlock=numRepsPerBlock,
       numCpusPerBlock=numCpusPerBlock,
@@ -224,6 +229,7 @@ workflow run_sims_wf {
 	simBlockId=modelId+"_"+basename(paramFile, ".par")+"__block_"+blockNum+"__of_"+numBlocks,
 	numBlocks=numBlocks,
 	maxAttempts=maxAttempts,
+	repAttemptTimeoutSeconds=repAttemptTimeoutSeconds,
 	repTimeoutSeconds=repTimeoutSeconds,
 	numRepsPerBlock=numRepsPerBlock,
 	numCpusPerBlock=numCpusPerBlock,

@@ -109,7 +109,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int maxAttempts = 10000000
     Int numRepsPerBlock = 1
     Int numCpusPerBlock = numRepsPerBlock
-    Int repTimeoutSeconds = 600
+    Int repAttemptTimeoutSeconds = 600
+    Int repTimeoutSeconds = 3600
     String       memoryPerBlock = "3 GB"
     String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     Int preemptible = 3
@@ -183,6 +184,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     numRepsPerBlock=numRepsPerBlock,
     numCpusPerBlock=numCpusPerBlock,
     repTimeoutSeconds=repTimeoutSeconds,
+    repAttemptTimeoutSeconds=repAttemptTimeoutSeconds,
     memoryPerBlock=memoryPerBlock,
     cosi2_docker=cosi2_docker,
     preemptible=preemptible,

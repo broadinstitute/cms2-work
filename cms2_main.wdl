@@ -29,7 +29,6 @@ workflow cms2_main {
     numRepsPerBlock: "(Int) Run this many simulations per block.  A block of simulations is run in a single task."
     numCpusPerBlock: "(Int) Allocate this many CPUs to each task running the simulations."
     memoryPerBlock: "(String) Memory spec for each task running a block of simulation replicas."
-    repTimeoutSeconds: "(Int) Time out (and fail) a simulation replica for a given random seed after this many seconds."
 
 # *** Component stats computation params
     n_bins: "Number of frequency bins for normalizing iHS, nSL and delIHH component statistics."
@@ -55,7 +54,7 @@ workflow cms2_main {
     Int maxAttempts = 10000000
     Int numRepsPerBlock = 1
     Int numCpusPerBlock = numRepsPerBlock
-    Int repTimeoutSeconds = 600
+
     String       memoryPerBlock = "3 GB"
 
     Int hapset_block_size = 2
