@@ -41,6 +41,13 @@ task compute_one_pop_cms2_components {
     Array[File]+ delihh = glob("hapset[0-9]*/*.delihh.out")
     Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
     Pop sel_pop_used = sel_pop
+    Boolean sanity_check = ((length(replicaInfos) == length(region_haps_tar_gzs)) &&
+                            (length(ihs) == length(region_haps_tar_gzs)) &&
+                            (length(nsl) == length(region_haps_tar_gzs)) &&
+                            (length(ihh12) == length(region_haps_tar_gzs)) &&
+                            (length(delihh) == length(region_haps_tar_gzs)) &&
+                            (length(derFreq) == length(region_haps_tar_gzs)))
+    Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
 
   runtime {
