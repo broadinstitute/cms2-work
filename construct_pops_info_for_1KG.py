@@ -273,6 +273,7 @@ def parse_args():
     #parser.add_argument('--pops-outgroups-json', required=True, help='map from pop to pops to use as outgroups')
     parser.add_argument('--superpop-to-representative-pop-json', required=True,
                         help='map from superpop to representative sub-pop used in model-fitting')
+    parser.add_argument('--empirical-regions-bed', required=True, help='empirical regions bed file')
 
     parser.add_argument('--out-pops-info-json', required=True, help='json file to which to write the popsinfo structure')
     return parser.parse_args()
@@ -299,8 +300,18 @@ def compute_outgroup_pops(pops_data, superpop_to_representative_pop):
     return dict(pop2outgroup_pops)
 # end: def compute_outgroup_pops(pops_data, superpop_to_representative_pop)
 
+def load_empirical_regions_pops(empirical_regions_bed):
+    """Load the list of pops used in empirical regions containing putatively selected variants"""
+    empirical_regions_pops = set()
+
+    with open(empirical_regions_bed) as empirical_regions_bed_in:
+        for line in empirical_regions_bed_in:
+            chrom, beg, end, region_name_ignored, sel_pop = line.strip().split('\t')
+            empirical_regions_pops.add(sel_pop)
+    return sorted(empirical_regions_pops)
+
 # * construct_pops_info
-def construct_pops_info(pop2outgroup_pops):
+def construct_pops_info(pop2outgroup_pops, empirical_regions_pops):
     """Construct a PopsInfo object (see structs.wdl) for the 1KG populations (including superpopulations)."""
     
     pops_info = {}
@@ -314,6 +325,8 @@ def construct_pops_info(pop2outgroup_pops):
     pops_info['pop_alts'] = copy.deepcopy(pop2outgroup_pops)
 
     pops_info['pop_alts_used'] = [[pop_id_2 in pops_info['pop_alts'][pop_id_1] for pop_id_2 in pop_ids] for pop_id_1 in pop_ids]
+
+    pops_info['sel_pop_ids'] = empirical_regions_pops
 
     return pops_info
 # end: def construct_pops_info(pop2outgroup_pops)
@@ -365,7 +378,9 @@ def construct_pops_info_for_1KG(args):
     pop2outgroup_pops = compute_outgroup_pops(pops_data=pops_data,
                                               superpop_to_representative_pop=superpop_to_representative_pop)
 
-    pops_info = construct_pops_info(pop2outgroup_pops)
+    empirical_regions_pops = load_empirical_regions_pops(empirical_regions_bed=args.empirical_regions_bed)
+
+    pops_info = construct_pops_info(pop2outgroup_pops=pop2outgroup_pops, empirical_regions_pops=empirical_regions_pops)
     _write_json(fname=args.out_pops_info_json, json_val=dict(pops_info=pops_info))
 # end: def construct_pops_info_for_1KG(args)
 

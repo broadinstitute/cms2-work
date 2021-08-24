@@ -320,12 +320,14 @@ task construct_pops_info_for_1KG {
   parameter_meta {
 # ** inputs
     superpop_to_representative_pop_json: "(File) map from superpop to the pop used to represent it in model-fitting simulations"
+    empirical_regions_bed: "(File) empirical regions to fetch.  Column 5 (score), if present, is interpreted as the name of the putatively selected population.  The same region may be listed multiple times to test for selection in multiple populations."
 
 # ** outputs
     pops_info: "(PopsInfo) a PopsInfo struct giving info for 1KG pops"
   }
   input {
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
+    File empirical_regions_bed
   }
   File construct_pops_info_for_1KG_script = "./construct_pops_info_for_1KG.py"
   String pops_info_fname = "pops_info.1KG.json"
