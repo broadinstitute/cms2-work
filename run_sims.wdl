@@ -53,8 +53,8 @@ task cosi2_run_one_sim_block {
   >>>
 
   output {
-    Array[ReplicaInfo] replicaInfos = read_json("replicaInfos.json").replicaInfos
-    Array[File] region_haps_tar_gzs = prefix(tpedPrefix + "__tar_gz__rep_", range(numRepsPerBlock))
+    Array[ReplicaInfo]+ replicaInfos = read_json("replicaInfos.json").replicaInfos
+    Array[File]+ region_haps_tar_gzs = prefix(tpedPrefix + "__tar_gz__rep_", range(numRepsPerBlock))
 
 #    String      cosi2_docker_used = ""
   }
@@ -196,7 +196,7 @@ workflow run_sims_wf {
   }
 
 # *** Gather successful neutral sims
-  Array[Pair[ReplicaInfo,File]] neutral_sims = 
+  Array[Pair[ReplicaInfo,File]]+ neutral_sims = 
       zip(flatten(run_neutral_sims.replicaInfos), flatten(run_neutral_sims.region_haps_tar_gzs))
 
   scatter(neut_sim in neutral_sims) {
@@ -240,13 +240,13 @@ workflow run_sims_wf {
 # *** Bookkeeping outputs
     PopsInfo pops_info = get_pops_info.pops_info
 # *** Simulation outputs
-    Array[File] neut_sim_region_haps_tar_gzs = select_all(neut_sim_region_haps_tar_gz_maybe)
+    Array[File]+ neut_sim_region_haps_tar_gzs = select_all(neut_sim_region_haps_tar_gz_maybe)
     # Array[Pair[ReplicaInfo,File]] selection_sims = 
     #     zip(flatten(run_selection_sims.replicaInfos),
     #         flatten(run_selection_sims.region_haps_tar_gzs))
 
     #Array[File] neutral_sims_tar_gzs = flatten(run_neutral_sims.region_haps_tar_gzs)
-    Array[Array[Array[File]]] selection_sims_tar_gzs = run_selection_sims.region_haps_tar_gzs
+    Array[Array[Array[File]+]+] selection_sims_tar_gzs = run_selection_sims.region_haps_tar_gzs
     #Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
     #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))

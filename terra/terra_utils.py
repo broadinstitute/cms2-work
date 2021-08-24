@@ -165,7 +165,7 @@ def do_deploy_to_terra(args):
     # end: for root_workflow in terra_config['root_workflows']
 # end: def do_deploy_to_terra(args)
 
-def get_workflow_metadata_gz(namespace, workspace, submission_id, workflow_id):
+def get_workflow_metadata_gz(namespace, workspace, submission_id, workflow_id, expand_subworkflows=False):
     """Request the metadata for a workflow in a submission.
 
     Args:
@@ -178,6 +178,8 @@ def get_workflow_metadata_gz(namespace, workspace, submission_id, workflow_id):
         https://api.firecloud.org/#!/Submissions/workflowMetadata
     """
     uri = "workspaces/{0}/{1}/submissions/{2}/workflows/{3}".format(namespace, workspace, submission_id, workflow_id)
+    if expand_subworkflows:
+        uri += '?expandSubWorkflows=true'
     try:
         headers = copy.deepcopy(fapi._fiss_agent_header())
         headers.update({'Accept-Encoding': 'gzip', 'User-Agent': 'gzip'})
@@ -227,7 +229,7 @@ def do_list_submissions(args):
             _log.info(f'PROCESSING WORKFLOW: {workflow_id}')
 
             zz_result = get_workflow_metadata_gz(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=submission_id,
-                                                 workflow_id=workflow_id)
+                                                 workflow_id=workflow_id, expand_subworkflows=args.expand_subworkflows)
             # #print('ZZ_RESULT: ', type(zz_result), dir(zz_result), zz_result)
             # for f in dir(zz_result):
             #     _log.debug(f'  {f} = {getattr(zz_result, f)}')
@@ -302,7 +304,8 @@ def parse_args():
     # def test(args):
     #     print(args)
 
-    @subcommand([argument('-s', '--submission-date', default=datetime.datetime.now().strftime('%Y-%m-%d'), help='submission date')])
+    @subcommand([argument('-s', '--submission-date', default=datetime.datetime.now().strftime('%Y-%m-%d'), help='submission date'),
+                 argument('--expand-subworkflows', action='store_true')])
     def list_submissions(args):
         do_list_submissions(args)
 

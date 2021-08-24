@@ -8,7 +8,7 @@ task compute_one_pop_cms2_components {
     description: "Compute one-pop CMS2 component scores assuming selection in a given pop"
   }
   input {
-    Array[File] region_haps_tar_gzs
+    Array[File]+ region_haps_tar_gzs
     Pop sel_pop
 
     File script = "./remodel_components.py"
@@ -34,12 +34,12 @@ task compute_one_pop_cms2_components {
   >>>
 
   output {
-    Array[File] replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
-    Array[File] ihs = glob("hapset[0-9]*/*.ihs.out")
-    Array[File] nsl = glob("hapset[0-9]*/*.nsl.out")
-    Array[File] ihh12 = glob("hapset[0-9]*/*.ihh12.out")
-    Array[File] delihh = glob("hapset[0-9]*/*.delihh.out")
-    Array[File] derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
+    Array[File]+ replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
+    Array[File]+ ihs = glob("hapset[0-9]*/*.ihs.out")
+    Array[File]+ nsl = glob("hapset[0-9]*/*.nsl.out")
+    Array[File]+ ihh12 = glob("hapset[0-9]*/*.ihh12.out")
+    Array[File]+ delihh = glob("hapset[0-9]*/*.delihh.out")
+    Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
     Pop sel_pop_used = sel_pop
   }
 
@@ -61,7 +61,7 @@ task compute_two_pop_cms2_components {
 # ** inputs
   input {
 #    ReplicaInfo replicaInfo
-    Array[File] region_haps_tar_gzs
+    Array[File]+ region_haps_tar_gzs
     Pop sel_pop
     Pop alt_pop
 
@@ -89,10 +89,10 @@ task compute_two_pop_cms2_components {
 
 # ** outputs
   output {
-    Array[File] replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
-    Array[File] xpehh = glob("hapset[0-9]*/*.xpehh.out")
-    Array[File] xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
-    Array[File] fst_and_delDAF = glob("hapset[0-9]*/*.fst_and_delDAF.tsv")
+    Array[File]+ replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
+    Array[File]+ xpehh = glob("hapset[0-9]*/*.xpehh.out")
+    Array[File]+ xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
+    Array[File]+ fst_and_delDAF = glob("hapset[0-9]*/*.fst_and_delDAF.tsv")
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
   }
@@ -239,8 +239,8 @@ task normalize_and_collate_block {
     python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
   >>>  
   output {
-    Array[File] replica_info = inp.replica_info
-    Array[File] normed_collated_stats = glob("*.normed_and_collated.tsv")
+    Array[File]+ replica_info = inp.replica_info
+    Array[File]+ normed_collated_stats = glob("*.normed_and_collated.tsv")
     Pop sel_pop_used = inp.sel_pop
   }
   runtime {
@@ -254,8 +254,8 @@ task normalize_and_collate_block {
 
 struct collate_stats_and_metadata_for_all_sel_sims_input {
     String experimentId
-    Array[File] sel_normed_and_collated
-    Array[File] replica_infos
+    Array[File]+ sel_normed_and_collated
+    Array[File]+ replica_infos
 }
 
 task collate_stats_and_metadata_for_sel_sims_block {
@@ -293,7 +293,7 @@ task create_tar_gz {
     email: "ilya_shl@alum.mit.edu"
   }
   input {
-    Array[File] files
+    Array[File]+ files
     String out_basename = "out"
   }
   String out_fname_tar_gz = out_basename + ".tar.gz"
@@ -383,7 +383,7 @@ task fetch_empirical_hapsets_from_1KG {
     df -h
   >>>
   output {
-    Array[File] empirical_hapsets_tar_gzs = glob("hapsets/*.hapset.tar.gz")
+    Array[File]+ empirical_hapsets_tar_gzs = glob("hapsets/*.hapset.tar.gz")
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
