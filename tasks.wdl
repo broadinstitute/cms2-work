@@ -102,6 +102,12 @@ task compute_two_pop_cms2_components {
     Array[File]+ fst_and_delDAF = glob("hapset[0-9]*/*.fst_and_delDAF.tsv")
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
+
+    Boolean sanity_check = ((length(replicaInfos) == length(region_haps_tar_gzs)) &&
+                            (length(xpehh) == length(region_haps_tar_gzs)) &&
+                            (length(xpehh_log) == length(region_haps_tar_gzs)) &&
+                            (length(fst_and_delDAF) == length(region_haps_tar_gzs)))
+    Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
 
 # ** runtime
