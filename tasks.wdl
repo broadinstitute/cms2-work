@@ -336,7 +336,7 @@ task construct_pops_info_for_1KG {
 
     mkdir "${PWD}/hapsets"
     python3 "~{construct_pops_info_for_1KG_script}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
-       --out-pops-info-json "~{pops_info_fname}"
+       --empirical-regions-bed "~{empirical_regions_bed}" --out-pops-info-json "~{pops_info_fname}"
   >>>
   output {
     PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
