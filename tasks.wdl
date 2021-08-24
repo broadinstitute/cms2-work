@@ -1,6 +1,6 @@
 version 1.0
 
-import "./structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--4573dc6050472db462d989a1b0f0add8bd50face/structs.wdl"
 
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
@@ -11,7 +11,7 @@ task compute_one_pop_cms2_components {
     Array[File] region_haps_tar_gzs
     Pop sel_pop
 
-    File script = "./remodel_components.py"
+    File script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/4573dc6050472db462d989a1b0f0add8bd50face/remodel_components.py"
     String docker
     Int preemptible
     ComputeResources compute_resources
@@ -230,7 +230,7 @@ task normalize_and_collate_block {
   input {
     NormalizeAndCollateBlockInput inp
   }
-  File normalize_and_collate_script = "./norm_and_collate_block.py"
+  File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/4573dc6050472db462d989a1b0f0add8bd50face/norm_and_collate_block.py"
   #String replica_id_str = basename(inp.ihs_out, ".ihs.out")
   #String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
   command <<<
@@ -264,7 +264,7 @@ task collate_stats_and_metadata_for_sel_sims_block {
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
-    File collate_stats_and_metadata_for_sel_sims_block_script = "./collate_stats_and_metadata_for_sel_sims_block.py"
+    File collate_stats_and_metadata_for_sel_sims_block_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/4573dc6050472db462d989a1b0f0add8bd50face/collate_stats_and_metadata_for_sel_sims_block.py"
   }
   #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
   #Int disk_size_max_gb = 4096
@@ -327,7 +327,7 @@ task construct_pops_info_for_1KG {
   input {
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
   }
-  File construct_pops_info_for_1KG_script = "./fetch_empirical_regions.py"
+  File construct_pops_info_for_1KG_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/4573dc6050472db462d989a1b0f0add8bd50face/fetch_empirical_regions.py"
   String pops_info_fname = "pops_info.1KG.json"
   command <<<
     set -ex -o pipefail
@@ -369,7 +369,7 @@ task fetch_empirical_hapsets_from_1KG {
     File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
 
-    File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
+    File fetch_empirical_regions_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/4573dc6050472db462d989a1b0f0add8bd50face/fetch_empirical_regions.py"
   }
   command <<<
     set -ex -o pipefail
