@@ -86,11 +86,9 @@ task get_pops_info {
   command <<<
     python3 "~{get_pops_info_script}" --dem-model "~{paramFile_demographic_model}" \
        --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "~{pops_info_fname}"
-    touch empty_file
   >>>
   output {
     PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
-    File empty_file = "empty_file"
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09

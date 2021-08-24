@@ -61,7 +61,7 @@ def do_get_pop_ids(args):
     pops_info['pop_id_to_idx'] = {pop_id: i for i, pop_id in enumerate(pop_ids)}
     pops_info['pop_alts'] = {pop_id: [alt_pop_id for alt_pop_id in pop_ids if alt_pop_id != pop_id] for pop_id in pop_ids}
 
-    pops_info['pop_alts_used'] = [[pop_id_2 in pops_info['pop_alts']['pop_id_1'] for pop_id_2 in pop_ids] for pop_id_1 in pop_ids]
+    pops_info['pop_alts_used'] = [[pop_id_2 in pops_info['pop_alts'][pop_id_1] for pop_id_2 in pop_ids] for pop_id_1 in pop_ids]
     
     # with open('pop_ids.txt', 'w') as out:
     #   out.write('\n'.join(pop_ids))
