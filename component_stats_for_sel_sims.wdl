@@ -120,9 +120,9 @@ workflow component_stats_for_sel_sims_wf {
 
 	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx],
 
-	    norm_one_pop_bin_stats_sel_pop_used: one_pop_bin_stats_sel_pop_used[sel_pop_idx],
-	    norm_two_pop_bin_stats_sel_pop_used: two_pop_bin_stats_sel_pop_used[sel_pop_idx],
-	    norm_two_pop_bin_stats_alt_pop_used: two_pop_bin_stats_alt_pop_used[sel_pop_idx]
+	    norm_one_pop_components_sel_pop_used: one_pop_bin_stats_sel_pop_used[sel_pop_idx],
+	    norm_two_pop_components_sel_pop_used: two_pop_bin_stats_sel_pop_used[sel_pop_idx],
+	    norm_two_pop_components_alt_pop_used: two_pop_bin_stats_alt_pop_used[sel_pop_idx]
 	  }
        } # call tasks.normalize_and_collate_block
 
