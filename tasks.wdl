@@ -327,7 +327,7 @@ task construct_pops_info_for_1KG {
   input {
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
   }
-  File construct_pops_info_for_1KG_script = "./fetch_empirical_regions.py"
+  File construct_pops_info_for_1KG_script = "./construct_pops_info_for_1KG.py"
   String pops_info_fname = "pops_info.1KG.json"
   command <<<
     set -ex -o pipefail

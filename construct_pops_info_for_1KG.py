@@ -366,7 +366,7 @@ def construct_pops_info_for_1KG(args):
                                               superpop_to_representative_pop=superpop_to_representative_pop)
 
     pops_info = construct_pops_info(pop2outgroup_pops)
-    _write_json(fname=args.pops_info_json, json_val=dict(pops_info=pops_info))
+    _write_json(fname=args.out_pops_info_json, json_val=dict(pops_info=pops_info))
 # end: def construct_pops_info_for_1KG(args)
 
 if __name__=='__main__':
