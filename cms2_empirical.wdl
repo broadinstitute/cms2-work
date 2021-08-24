@@ -7,8 +7,11 @@ workflow cms2_empirical {
   input {
     File empirical_sel_regions_bed
   }
+  call tasks.construct_pops_info_for_1KG {
+  }
   call tasks.fetch_empirical_hapsets_from_1KG  as fetch_sel_regions {
     input:
+    pops_info=construct_pops_info_for_1KG.pops_info,
     empirical_regions_bed=empirical_sel_regions_bed
   }
   output {

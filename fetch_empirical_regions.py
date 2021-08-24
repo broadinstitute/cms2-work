@@ -408,8 +408,8 @@ def compute_outgroup_pops(pops_data, superpop_to_representative_pop):
     _log.debug(f'{pop2outgroup_pops=}')
 
     return dict(pop2outgroup_pops)
-
 # end: def compute_outgroup_pops(pops_data, superpop_to_representative_pop)
+
 # * class GeneticMaps()
 class GeneticMaps(object):
     """Keeps track of genetic maps and provides interpolation"""
@@ -478,6 +478,7 @@ def determine_ancestral_allele(info_dict, all_alleles, stats):
 
     allele2anc = {str(i): '1' if i == ancestral_allele_idx else '0' for i in range(len(all_alleles))}
     return allele2anc
+# end: def determine_ancestral_allele(info_dict, all_alleles, stats)
 
 # * construct_hapset_for_one_empirical_region_and_one_sel_pop
 def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region_lines, region_sel_pop, outgroup_pops, pop2vcfcols,
@@ -606,6 +607,25 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
     return hapset_tar_gz
 
 # end: def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region_lines, region_sel_pop, outgroup_pops, pop2cols, ...)
+
+# * construct_pops_info
+def construct_pops_info(pop2outgroup_pops):
+    """Construct a PopsInfo object (see structs.wdl) for the 1KG populations (including superpopulations)."""
+    
+    pops_info = {}
+    #pops_info['pop_ids'] = list(pops_data['Population Code'].dropna())
+    pop_ids = sorted(pop2outgroup_pops)
+    pops_info['pop_ids'] = pop_ids
+    pops_info['pop_names'] = copy.deepcopy(pop_ids)
+    pops_info['pops'] = [{'pop_id': pop_id} for pop_id in pops_info['pop_ids']]
+
+    pops_info['pop_id_to_idx'] = {pop_id: i for i, pop_id in enumerate(pop_ids)}
+    pops_info['pop_alts'] = copy.deepcopy(pop2outgroup_pops)
+
+    pops_info['pop_alts_used'] = [[pop_id_2 in pops_info['pop_alts'][pop_id_1] for pop_id_2 in pop_ids] for pop_id_1 in pop_ids]
+
+    return pops_info
+# end: def construct_pops_info(pop2outgroup_pops)
         
 # * fetch_empirical_regions
 def fetch_empirical_regions(args):

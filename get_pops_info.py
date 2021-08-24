@@ -70,9 +70,9 @@ def do_get_pop_ids(args):
     # _write_json('pop_id_to_idx.json', {pop_id: i for i, pop_id in enumerate(pop_ids)})
 
 
-    pops_info['pop_pairs'] = [{"Left": pop_ids[i], "Right": pop_ids[j]}
-                              for i in range(len(pop_ids))
-                              for j in range(i+1, len(pop_ids))]
+    # pops_info['pop_pairs'] = [{"Left": pop_ids[i], "Right": pop_ids[j]}
+    #                           for i in range(len(pop_ids))
+    #                           for j in range(i+1, len(pop_ids))]
 
     sel_pops = []
     for sweep_def in (args.sweep_defs or []):

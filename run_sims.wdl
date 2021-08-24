@@ -46,6 +46,8 @@ task cosi2_run_one_sim_block {
   String tpedPrefix = "tpeds__${simBlockId}"
 
   command <<<
+    set -ex -o pipefail
+
     python3 ~{taskScript} --paramFileCommon ~{paramFileCommon} --paramFile ~{paramFile} --recombFile ~{recombFile} \
       --simBlockId ~{simBlockId} --modelId ~{modelId} --blockNum ~{blockNum} --numRepsPerBlock ~{numRepsPerBlock} --numBlocks ~{numBlocks} --maxAttempts ~{maxAttempts} --repTimeoutSeconds ~{repTimeoutSeconds} --tpedPrefix ~{tpedPrefix} --outJson replicaInfos.json
   >>>
@@ -84,6 +86,8 @@ task get_pops_info {
   String modelId = "model_"+basename(paramFile_demographic_model, ".par")
   String pops_info_fname = modelId + ".pops_info.json"
   command <<<
+    set -ex -o pipefail
+
     python3 "~{get_pops_info_script}" --dem-model "~{paramFile_demographic_model}" \
        --sweep-defs ~{sep=" " paramFiles_selection} --out-pops-info "~{pops_info_fname}"
   >>>

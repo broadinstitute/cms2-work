@@ -26,6 +26,8 @@ task compute_one_pop_cms2_components {
   # String derFreq_out_fname = out_basename + ".derFreq.tsv"
 
   command <<<
+    set -ex -o pipefail
+
     python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
       --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq \
       --checkpoint-file "checkpoint.tar"
@@ -79,6 +81,7 @@ task compute_two_pop_cms2_components {
 
 # ** command
   command <<<
+    set -ex -o pipefail
     python3 "~{script}" --region-haps-tar-gzs @~{write_lines(region_haps_tar_gzs)} \
         --sel-pop ~{sel_pop.pop_id} --alt-pop ~{alt_pop.pop_id} \
         --threads ~{compute_resources.cpus} --components xpehh fst delDAF --checkpoint-file checkpoint.tar
@@ -133,6 +136,8 @@ task compute_one_pop_bin_stats_for_normalization {
   }
 
   command <<<
+    set -ex -o pipefail
+
     norm --ihs --bins ~{n_bins_ihs} --files @~{write_lines(ihs_out)} --save-bins ~{out_fnames_base}.norm_bins_ihs.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_ihs.log
     norm --ihs --bins ~{n_bins_delihh} --files @~{write_lines(delihh_out)} --save-bins ~{out_fnames_base}.norm_bins_delihh.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_delihh.log
     norm --nsl --bins ~{n_bins_nsl} --files @~{write_lines(nsl_out)} --save-bins ~{out_fnames_base}.norm_bins_nsl.dat --only-save-bins --log ~{out_fnames_base}.norm_bins_nsl.log
@@ -187,6 +192,8 @@ task compute_two_pop_bin_stats_for_normalization {
   String norm_bins_flip_pops_xpehh_log_fname = "${out_fnames_base}__selpop_${alt_pop.pop_id}__altpop_${sel_pop.pop_id}.norm_bins_xpehh.log"
 
   command <<<
+    set -ex -o pipefail
+
     norm --xpehh --bins ~{n_bins_xpehh} --files @~{write_lines(xpehh_out)} --save-bins "~{norm_bins_xpehh_fname}" --only-save-bins \
         --log "~{norm_bins_xpehh_log_fname}"
     norm --xpehh --xpehh-flip-pops --bins ~{n_bins_xpehh} --files @~{write_lines(xpehh_out)} --save-bins "~{norm_bins_flip_pops_xpehh_fname}" \
@@ -227,6 +234,8 @@ task normalize_and_collate_block {
   #String replica_id_str = basename(inp.ihs_out, ".ihs.out")
   #String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
   command <<<
+    set -ex -o pipefail
+
     python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
   >>>  
   output {
@@ -261,6 +270,8 @@ task collate_stats_and_metadata_for_sel_sims_block {
   #Int disk_size_max_gb = 4096
   #Int disk_size_capped_gb = if disk_size_gb < disk_size_max_gb then disk_size_gb else disk_size_max_gb
   command <<<
+    set -ex -o pipefail
+
     python3 "~{collate_stats_and_metadata_for_sel_sims_block_script}" --input-json "~{write_json(inp)}" 
   >>>
   output {
@@ -287,6 +298,8 @@ task create_tar_gz {
   }
   String out_fname_tar_gz = out_basename + ".tar.gz"
   command <<<
+    set -ex -o pipefail
+
     tar cvfz ~{out_fname_tar_gz} ~{sep=" " files}
   >>>
   output {
@@ -300,12 +313,48 @@ task create_tar_gz {
   }
 }
 
+task construct_pops_info_for_1KG {
+  meta {
+    description: "Constructs a PopsInfo struct for 1KG populations"
+  }
+  parameter_meta {
+# ** inputs
+    superpop_to_representative_pop_json: "(File) map from superpop to the pop used to represent it in model-fitting simulations"
+
+# ** outputs
+    pops_info: "(PopsInfo) a PopsInfo struct giving info for 1KG pops"
+  }
+  input {
+    File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
+  }
+  File construct_pops_info_for_1KG_script = "./fetch_empirical_regions.py"
+  String pops_info_fname = "pops_info.1KG.json"
+  command <<<
+    set -ex -o pipefail
+
+    mkdir "${PWD}/hapsets"
+    python3 "~{construct_pops_info_for_1KG_script}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
+       --out-pops-info-json "~{pops_info_fname}"
+  >>>
+  output {
+    PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
+    memory: "16 GB"
+    cpu: 1
+    disks: "local-disk 256 HDD"
+    preemptible: 1
+  }
+}
+
 task fetch_empirical_hapsets_from_1KG {
   meta {
     description: "Fetches empirical hapsets for specified regions from 1KG, converts to hapset format"
   }
   parameter_meta {
 # ** inputs
+    pops_info: "(PopsInfo) information about 1KG pops, including the outgroups to compare with each pop"
     empirical_regions_bed: "(File) empirical regions to fetch.  Column 5 (score), if present, is interpreted as the name of the putatively selected population.  The same region may be listed multiple times to test for selection in multiple populations."
     # add: metadata to attach to all regions
     genetic_maps_tar_gz: "(File) genetic maps"
@@ -315,6 +364,7 @@ task fetch_empirical_hapsets_from_1KG {
     empirical_hapsets_tar_gzs: "(Array[File]) for each empirical region, a .tar.gz file containing one tped for each pop, and a *.replicaInfo.json file describing the hapset"
   }
   input {
+    PopsInfo pops_info
     File empirical_regions_bed
     File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
@@ -322,6 +372,8 @@ task fetch_empirical_hapsets_from_1KG {
     File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
   }
   command <<<
+    set -ex -o pipefail
+
     mkdir "${PWD}/hapsets"
     python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \

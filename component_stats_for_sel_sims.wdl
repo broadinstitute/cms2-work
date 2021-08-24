@@ -89,7 +89,7 @@ workflow component_stats_for_sel_sims_wf {
 	    #replica_info: sel_sim_replicaInfo,
 	    #replica_id_str: sel_sim_replica_id_str,
 	    pop_ids: pops_info.pop_ids,
-	    pop_pairs: pops_info.pop_pairs,
+	    #pop_pairs: pops_info.pop_pairs,
 	    sel_pop: sel_pop,
 
 	    replica_info: compute_one_pop_cms2_components_for_selection.replicaInfos,
