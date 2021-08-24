@@ -67,6 +67,7 @@ struct ReplicaInfo {
 
   Boolean succeeded
   Float durationSeconds
+  Int n_attempts
 }
 
 struct NormalizeAndCollateBlockInput {

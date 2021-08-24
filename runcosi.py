@@ -237,6 +237,19 @@ def run_one_replica(replicaNum, args, paramFile):
     return replicaInfo
 # end: def run_one_replica(replicaNum, args, paramFile)
 
+def run_one_replica_with_retries(replicaNum, args, paramFile):
+    attempt_num = 0
+    while True:
+        attempt_num += 1
+        _log.debug(f'run_one_replica: {args.blockNum} {replicaNum=} {attempt_num=}')
+        replicaInfo = run_one_replica(replicaNum, args, paramFile)
+        if replicaInfo['succeeded']:
+            replicaInfo['n_attempts'] = attempt_num
+            return replicaInfo
+        else:
+            time.sleep(1)
+            
+
 # * main
 
 def parse_args():
@@ -284,7 +297,7 @@ def do_main():
         executor = exit_stack.enter_context(concurrent.futures.ThreadPoolExecutor(max_workers=min(args.numRepsPerBlock,
                                                                                                   available_cpu_count())))
         paramFileCombined=constructParamFileCombined(paramFileCommon=args.paramFileCommon, paramFileVarying=args.paramFile)
-        replicaInfos = list(executor.map(functools.partial(run_one_replica, args=args, paramFile=paramFileCombined),
+        replicaInfos = list(executor.map(functools.partial(run_one_replica_with_retries, args=args, paramFile=paramFileCombined),
                                          range(args.numRepsPerBlock)))
 
     if args.outJson:
