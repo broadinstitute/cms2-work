@@ -1,7 +1,7 @@
 version 1.0
 
-import "./structs.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--b723da84961e9c6c839af8268a1934208bba0259/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--b723da84961e9c6c839af8268a1934208bba0259/tasks.wdl"
 
 workflow cms2_empirical {
   input {
