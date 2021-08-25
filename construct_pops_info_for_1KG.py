@@ -326,7 +326,7 @@ def construct_pops_info(pop2outgroup_pops, empirical_regions_pops):
 
     pops_info['pop_alts_used'] = [[pop_id_2 in pops_info['pop_alts'][pop_id_1] for pop_id_2 in pop_ids] for pop_id_1 in pop_ids]
 
-    pops_info['sel_pop_ids'] = empirical_regions_pops
+    pops_info['sel_pops'] = [{'pop_id': sel_pop_id} for sel_pop_id in empirical_regions_pops]
 
     return pops_info
 # end: def construct_pops_info(pop2outgroup_pops)
