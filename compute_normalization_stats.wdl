@@ -23,7 +23,7 @@ workflow compute_normalization_stats_wf {
   input {
     String modelId
     PopsInfo pops_info
-    Array[File] neut_sim_region_haps_tar_gzs
+    Array[File]+ neut_sim_region_haps_tar_gzs
 
     File compute_components_script = "./remodel_components.py"
 
@@ -56,7 +56,7 @@ workflow compute_normalization_stats_wf {
   Int n_bins_ihh12 = 1
   Int n_bins_xpehh = 1
 
-  Array[Pop] pops = pops_info.pops
+  Array[Pop]+ pops = pops_info.pops
   Int n_pops = length(pops)
 
   Int n_hapset_blocks = length(neut_sim_region_haps_tar_gzs) / hapset_block_size
@@ -165,21 +165,21 @@ workflow compute_normalization_stats_wf {
         ])
       }
     }
-    Array[File] norm_bins_xpehh_vals = select_all(norm_bins_xpehh_maybe)
-    Array[Pop] norm_bins_xpehh_sel_pop_used_vals = select_all(norm_bins_xpehh_sel_pop_used_maybe)
-    Array[Pop] norm_bins_xpehh_alt_pop_used_vals = select_all(norm_bins_xpehh_alt_pop_used_maybe)
+    Array[File]+ norm_bins_xpehh_vals = select_all(norm_bins_xpehh_maybe)
+    Array[Pop]+ norm_bins_xpehh_sel_pop_used_vals = select_all(norm_bins_xpehh_sel_pop_used_maybe)
+    Array[Pop]+ norm_bins_xpehh_alt_pop_used_vals = select_all(norm_bins_xpehh_alt_pop_used_maybe)
   }  # end: scatter(sel_pop_idx in range(length(pops)))
 
   output {
-    Array[File] norm_bins_ihs=compute_one_pop_bin_stats_for_normalization.norm_bins_ihs
-    Array[File] norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl
-    Array[File] norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12
-    Array[File] norm_bins_delihh=compute_one_pop_bin_stats_for_normalization.norm_bins_delihh
-    Array[Array[File]] norm_bins_xpehh = norm_bins_xpehh_vals
+    Array[File]+ norm_bins_ihs=compute_one_pop_bin_stats_for_normalization.norm_bins_ihs
+    Array[File]+ norm_bins_nsl=compute_one_pop_bin_stats_for_normalization.norm_bins_nsl
+    Array[File]+ norm_bins_ihh12=compute_one_pop_bin_stats_for_normalization.norm_bins_ihh12
+    Array[File]+ norm_bins_delihh=compute_one_pop_bin_stats_for_normalization.norm_bins_delihh
+    Array[Array[File]+]+ norm_bins_xpehh = norm_bins_xpehh_vals
 
-    Array[Pop] one_pop_bin_stats_sel_pop_used = compute_one_pop_bin_stats_for_normalization.sel_pop_used
-    Array[Array[Pop]] two_pop_bin_stats_sel_pop_used = norm_bins_xpehh_sel_pop_used_vals
-    Array[Array[Pop]] two_pop_bin_stats_alt_pop_used = norm_bins_xpehh_alt_pop_used_vals
+    Array[Pop]+ one_pop_bin_stats_sel_pop_used = compute_one_pop_bin_stats_for_normalization.sel_pop_used
+    Array[Array[Pop]+]+ two_pop_bin_stats_sel_pop_used = norm_bins_xpehh_sel_pop_used_vals
+    Array[Array[Pop]+]+ two_pop_bin_stats_alt_pop_used = norm_bins_xpehh_alt_pop_used_vals
   }
 }
 

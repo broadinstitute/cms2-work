@@ -81,12 +81,12 @@ def do_get_pop_ids(args):
         for line in f:
           m = re.search(r'^\s*pop_event\s+sweep_mult(?:_standing)?\s+"[^"]*"\s+(?P<sel_pop_id>\d+)\s+', line) # "
           if m:
-            sel_pops_here.append(m.group('sel_pop_id'))
+            sel_pops_here.append({'pop_id': m.group('sel_pop_id')})
       if len(sel_pops_here) != 1:
         raise RuntimeError(f"Could not find sole sweep in {sweep_def}")
       sel_pops.extend(sel_pops_here)
 
-      pops_info['sel_pop_ids'] = sel_pops
+      pops_info['sel_pops'] = sel_pops
 
     _write_json(fname=args.out_pops_info, json_val=dict(pops_info=pops_info))
 

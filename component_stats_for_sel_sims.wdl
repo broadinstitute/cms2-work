@@ -15,15 +15,15 @@ workflow component_stats_for_sel_sims_wf {
     Int n_bins_nsl = 20
     Int n_bins_delihh = 20
 
-    Array[File] norm_bins_ihs
-    Array[File] norm_bins_nsl
-    Array[File] norm_bins_ihh12
-    Array[File] norm_bins_delihh
-    Array[Array[File]] norm_bins_xpehh
+    Array[File]+ norm_bins_ihs
+    Array[File]+ norm_bins_nsl
+    Array[File]+ norm_bins_ihh12
+    Array[File]+ norm_bins_delihh
+    Array[Array[File]+]+ norm_bins_xpehh
 
-    Array[Pop] one_pop_bin_stats_sel_pop_used
-    Array[Array[Pop]] two_pop_bin_stats_sel_pop_used
-    Array[Array[Pop]] two_pop_bin_stats_alt_pop_used
+    Array[Pop]+ one_pop_bin_stats_sel_pop_used
+    Array[Array[Pop]+]+ two_pop_bin_stats_sel_pop_used
+    Array[Array[Pop]+]+ two_pop_bin_stats_alt_pop_used
 
     Int threads = 1
     Int mem_base_gb = 0
@@ -48,7 +48,7 @@ workflow component_stats_for_sel_sims_wf {
   Int n_bins_xpehh = 1
 
   scatter(sel_scen_idx in range(length(selection_sims))) {
-    Pop sel_pop = object { pop_id: pops_info.sel_pop_ids[sel_scen_idx] }
+    Pop sel_pop = pops_info.sel_pops[sel_scen_idx]
     Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop.pop_id]
     scatter(sel_blk_idx in range(length(selection_sims[sel_scen_idx]))) {
     # if (sel_sim.left.succeeded  &&  (sel_sim.left.modelInfo.sweepInfo.selPop == sel_pop)) {
@@ -82,7 +82,6 @@ workflow component_stats_for_sel_sims_wf {
 	}
       }  # for each comparison pop
 
-      # should normalize_and_collate be done by blocks?
       call tasks.normalize_and_collate_block {
 	input:
 	  inp = object {  # struct NormalizeAndCollateBlockInput
@@ -140,7 +139,7 @@ workflow component_stats_for_sel_sims_wf {
 
 
   output {
-    Array[File] all_hapsets_component_stats_h5_blocks =
+    Array[File]+ all_hapsets_component_stats_h5_blocks =
     flatten(collate_stats_and_metadata_for_sel_sims_block.hapsets_component_stats_h5)
   }
 }

@@ -371,6 +371,7 @@ task fetch_empirical_hapsets_from_1KG {
 # ** inputs
     pops_info: "(PopsInfo) information about 1KG pops, including the outgroups to compare with each pop"
     empirical_regions_bed: "(File) empirical regions to fetch.  Column 5 (score), if present, is interpreted as the name of the putatively selected population.  The same region may be listed multiple times to test for selection in multiple populations."
+    sel_pop: "(Pop?) if not given, assume empirical_regions_bed are neutral, else take only regions with selection in this pop"
     # add: metadata to attach to all regions
     genetic_maps_tar_gz: "(File) genetic maps"
     superpop_to_representative_pop_json: "(File) map from superpop to the pop used to represent it in model-fitting simulations"
@@ -380,18 +381,20 @@ task fetch_empirical_hapsets_from_1KG {
   }
   input {
     PopsInfo pops_info
+    Pop? sel_pop
     File empirical_regions_bed
     File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
-
-    File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
   }
+  File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
+
   command <<<
     set -ex -o pipefail
 
     mkdir "${PWD}/hapsets"
     python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
+       ${"--sel-pop=" + sel_pop} \
        --tmp-dir "${PWD}/hapsets"
     df -h
   >>>

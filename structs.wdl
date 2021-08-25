@@ -30,7 +30,7 @@ struct PopsInfo {
     #                                     pop_alts_used indicates which pop pair comparisons we need to do
     #Array[Pair[String,String]] pop_pairs # all two-pop sets, for cross-pop comparisons
 
-    Array[String] sel_pop_ids  # for each sweep definition in paramFiles_selection input to
+    Array[Pop] sel_pops  # for each sweep definition in paramFiles_selection input to
     # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
 }
 

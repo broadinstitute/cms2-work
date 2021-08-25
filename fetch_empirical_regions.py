@@ -270,6 +270,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--empirical-regions-bed', required=True, help='empirical regions bed file')
+    parser.add_argument('--sel-pop',
+                        help='only use regions with putative selection in this pop; if not specified, treat all regions as neutral')
     parser.add_argument('--phased-vcfs-url-template',
                         default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/' \
                         'ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz',
@@ -291,14 +293,22 @@ def parse_args():
 
 # * def load_empirical_regions_bed(empirical_regions_bed)
 
-def load_empirical_regions_bed(empirical_regions_bed):
+def load_empirical_regions_bed(empirical_regions_bed, sel_pop):
     """Load the list of empirical regions containing putatively selected variants"""
     chrom2regions = collections.defaultdict(collections.OrderedDict)
 
     with open(empirical_regions_bed) as empirical_regions_bed_in:
         for line in empirical_regions_bed_in:
-            chrom, beg, end, region_name_ignored, sel_pop = line.strip().split('\t')
-            chrom2regions[chrom].setdefault(f'{chrom}:{beg}-{end}', []).append(sel_pop)
+            
+            chrom, beg, end, rest = line.strip().split('\t', maxsplit=3)
+            if sel_pop:
+                region_name_ignored, region_sel_pop = rest.split('\t')
+                if region_sel_pop != sel_pop:
+                    continue
+            else:
+                region_sel_pop = None
+                
+            chrom2regions[chrom].setdefault(f'{chrom}:{beg}-{end}', []).append(region_sel_pop)
     return chrom2regions
 
 # * def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template, tmp_dir)
@@ -332,14 +342,12 @@ def gather_unrelated_individuals(ped_data, related_individuals_url):
 
     related_individuals = pd.read_table(related_individuals_url)
 
-
     orig_len = len(ped_data)
     ped_data = ped_data.rename(columns={c: c.replace(' ', '_') for c in ped_data.columns})
     ped_data = ped_data[(~ped_data['Individual_ID'].isin(related_individuals['Sample '])) & \
                         (ped_data['Paternal_ID'] == '0') & \
                         (ped_data['Maternal_ID'] == '0') & \
                         (ped_data['Relationship'] != 'child')]
-
 
     _log.debug(f'{len(ped_data)-orig_len=}')
 
@@ -480,17 +488,17 @@ def determine_ancestral_allele(info_dict, all_alleles, stats):
     return allele2anc
 # end: def determine_ancestral_allele(info_dict, all_alleles, stats)
 
-# * construct_hapset_for_one_empirical_region_and_one_sel_pop
-def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region_lines, region_sel_pop, outgroup_pops, pop2vcfcols,
-                                                              genmap, stats, tmp_dir):
+# * construct_hapset_for_one_empirical_region
+def construct_hapset_for_one_empirical_region(region_key, region_lines, region_sel_pop, pops_to_include, pop2vcfcols,
+                                              genmap, stats, tmp_dir):
     """Given one empirical region and the pops in which it is putatively been under selection,
     for each such pop, create a hapset.
 
     Args:
       region_key: a string of the form chr:beg-end defining the extent of the region
       region_lines: a list of vcf lines for the region
-      region_sel_pop: pop in which the region is selected
-      outgroup_pops: comparison pops for region_sel_pop
+      region_sel_pop: pop in which the region is selected (or None if neutral)
+      pops_to_include: pops to include in the hapset
       pop2cols: map from pop to the vcf cols containing data for samples from that pop
       genmap: callable mapping basepair position to genetic map position in centimorgans
       tmp_dir: temp dir to use
@@ -498,13 +506,13 @@ def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region
       path to a .tar.gz of the hapset
     """
     _log.debug(f'in comstruct_hapset_for_one_empirical_region_and_one_selpop: '
-               f'{region_key=} {len(region_lines)=} {region_sel_pop=} {outgroup_pops=} {pop2vcfcols=} {stats=}')
+               f'{region_key=} {len(region_lines)=} {region_sel_pop=} {pops_to_include=} {pop2vcfcols=} {stats=}')
     tmp_dir = os.path.realpath(tmp_dir)
     hapset_name = string_to_file_name(f'hg19_{region_key}_{region_sel_pop}')
     hapset_dir = os.path.join(tmp_dir, hapset_name)
     if not os.path.isdir(hapset_dir):
         os.mkdir(hapset_dir)
-    all_pops = [region_sel_pop] + list(outgroup_pops)
+    all_pops = pops_to_include # [region_sel_pop] + list(outgroup_pops)
     tped_fnames = [os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}_{pop}.tped')) for pop in all_pops]
     _log.debug(f'{tped_fnames=}')
     with contextlib.ExitStack() as exit_stack:
@@ -675,8 +683,9 @@ def fetch_empirical_regions(args):
     superpop_to_representative_pop = _json_loadf(args.superpop_to_representative_pop_json)
     pop2outgroup_pops = compute_outgroup_pops(pops_data=pops_data,
                                               superpop_to_representative_pop=superpop_to_representative_pop)
+    all_pops = list(pop2outgroup_pops.keys())
     
-    chrom2regions = load_empirical_regions_bed(args.empirical_regions_bed)
+    chrom2regions = load_empirical_regions_bed(args.empirical_regions_bed, args.sel_pop)
     _log.debug(f'{chrom2regions=}')
     
     genmap = GeneticMaps(args.genetic_maps_tar_gz, superpop_to_representative_pop, args.tmp_dir)
@@ -684,7 +693,8 @@ def fetch_empirical_regions(args):
     stats = collections.Counter()
 
     for chrom in sorted(chrom2regions):
-        chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom, chrom2regions[chrom], args.phased_vcfs_url_template, args.tmp_dir)
+        chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom, chrom2regions[chrom].keys(),
+                                                               args.phased_vcfs_url_template, args.tmp_dir)
         region_lines = []
         with open(chrom_regions_vcf) as chrom_regions_vcf_in:
             for vcf_line in itertools.chain(chrom_regions_vcf_in, ['#EOF']):
@@ -697,10 +707,12 @@ def fetch_empirical_regions(args):
                 if vcf_line.startswith('#'):
                     if region_lines:
                         for region_sel_pop in chrom2regions[chrom][region_key]:
-                            construct_hapset_for_one_empirical_region_and_one_sel_pop(
+                            pops_to_use = ([region_sel_pop] + list(pop2outgroup_pops[region_sel_pop])) \
+                                if region_sel_pop else all_pops
+                            construct_hapset_for_one_empirical_region(
                                 region_key=region_key, region_lines=region_lines[1:],
                                 region_sel_pop=region_sel_pop,
-                                outgroup_pops=pop2outgroup_pops[region_sel_pop],
+                                pops_to_use=pops_to_use,
                                 pop2vcfcols=pop2vcfcols,
                                 genmap=genmap,
                                 stats=stats,
