@@ -353,7 +353,8 @@ task construct_pops_info_for_1KG {
 
     mkdir "${PWD}/hapsets"
     python3 "~{construct_pops_info_for_1KG_script}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
-       --empirical-regions-bed "~{empirical_regions_bed}" --out-pops-info-json "~{pops_info_fname}"
+       --empirical-regions-bed "~{empirical_regions_bed}" \
+       --out-pops-info-json "~{pops_info_fname}"
   >>>
   output {
     PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
@@ -387,6 +388,7 @@ task fetch_empirical_hapsets_from_1KG {
     PopsInfo pops_info
     String? sel_pop_id
     File empirical_regions_bed
+    String out_fnames_prefix
     File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
   }
@@ -398,6 +400,7 @@ task fetch_empirical_hapsets_from_1KG {
     mkdir "${PWD}/hapsets"
     python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
+       --out-fnames-prefix "~{out_fnames_prefix}" \
        ~{"--sel-pop " + sel_pop_id} \
        --tmp-dir "${PWD}/hapsets"
     df -h

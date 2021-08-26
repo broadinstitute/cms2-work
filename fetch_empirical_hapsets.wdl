@@ -16,7 +16,8 @@ workflow fetch_empirical_hapsets_wf {
   call tasks.fetch_empirical_hapsets_from_1KG  as fetch_neutral_regions {
     input:
     pops_info=pops_info_1KG,
-    empirical_regions_bed=empirical_hapsets_def.empirical_neutral_regions_bed
+    empirical_regions_bed=empirical_hapsets_def.empirical_neutral_regions_bed,
+    out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id
   }
 
   scatter(sel_pop in pops_info_1KG.sel_pops) {
@@ -24,7 +25,8 @@ workflow fetch_empirical_hapsets_wf {
       input:
       pops_info=pops_info_1KG,
       sel_pop_id=sel_pop.pop_id,
-      empirical_regions_bed=empirical_hapsets_def.empirical_selection_regions_bed
+      empirical_regions_bed=empirical_hapsets_def.empirical_selection_regions_bed,
+      out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id
     }
     Array[Array[File]+]+ selection_hapsets_for_sel_pop = [fetch_selection_regions.empirical_hapsets]
   }

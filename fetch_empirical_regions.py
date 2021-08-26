@@ -289,6 +289,7 @@ def parse_args():
     parser.add_argument('--superpop-to-representative-pop-json', required=True,
                         help='map from superpop to representative sub-pop used in model-fitting')
     parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
+    parser.add_argument('--out-fnames-prefix', required=True, help='prefix for output filenames')
     return parser.parse_args()
 
 # * def load_empirical_regions_bed(empirical_regions_bed)
@@ -490,7 +491,7 @@ def determine_ancestral_allele(info_dict, all_alleles, stats):
 
 # * construct_hapset_for_one_empirical_region
 def construct_hapset_for_one_empirical_region(region_key, region_lines, region_sel_pop, pops_to_include, pop2vcfcols,
-                                              genmap, stats, tmp_dir):
+                                              genmap, stats, tmp_dir, out_fnames_prefix):
     """Given one empirical region and the pops in which it is putatively been under selection,
     for each such pop, create a hapset.
 
@@ -508,7 +509,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
     _log.debug(f'in comstruct_hapset_for_one_empirical_region_and_one_selpop: '
                f'{region_key=} {len(region_lines)=} {region_sel_pop=} {pops_to_include=} {pop2vcfcols=} {stats=}')
     tmp_dir = os.path.realpath(tmp_dir)
-    hapset_name = string_to_file_name(f'hg19_{region_key}_{region_sel_pop}')
+    hapset_name = string_to_file_name(f'{out_fnames_prefix}_hg19_{region_key}_{region_sel_pop}')
     hapset_dir = os.path.join(tmp_dir, hapset_name)
     if not os.path.isdir(hapset_dir):
         os.mkdir(hapset_dir)
@@ -606,15 +607,16 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
         'selpop': region_sel_pop,
         'tpeds': { 
             pop: os.path.basename(tped_fname) for pop, tped_fname in zip(all_pops, tped_fnames)
-        }
+        },
+        popIds: all_pops,
+        tpedFiles: [os.path.basename(tped_fname) for tped_fname in tped_fnames]
     }
-    _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.manifest.json')),
+    _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.replicaInfo.json')),
                 json_val=hapset_manifest)
     hapset_tar_gz = os.path.join(tmp_dir, f'{hapset_name}.hapset.tar.gz')
-    execute(f'tar cvfz {hapset_tar_gz} -C {tmp_dir} {hapset_name}/ ')
+    execute(f'tar cvfz {hapset_tar_gz} -C {hapset_dir} .')
     return hapset_tar_gz
-
-# end: def construct_hapset_for_one_empirical_region_and_one_sel_pop(region_key, region_lines, region_sel_pop, outgroup_pops, pop2cols, ...)
+# end: def construct_hapset_for_one_empirical_region(region_key, region_lines, region_sel_pop, outgroup_pops, pop2cols, ...)
 
 # * construct_pops_info
 def construct_pops_info(pop2outgroup_pops):
@@ -728,4 +730,3 @@ def fetch_empirical_regions(args):
 if __name__=='__main__':
   #compute_component_scores(parse_args())
   fetch_empirical_regions(parse_args())
-
