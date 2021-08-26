@@ -24,7 +24,7 @@ workflow cms2_empirical {
     call tasks.fetch_empirical_hapsets_from_1KG  as fetch_sel_regions {
       input:
       pops_info=pops_info_1KG,
-      sel_pop=sel_pop,
+      sel_pop_id=sel_pop.pop_id,
       empirical_regions_bed=empirical_sel_regions_bed
     }
     Array[Array[File]+]+ sel_hapsets_tar_gzs = [fetch_sel_regions.empirical_hapsets_tar_gzs]
