@@ -1,9 +1,9 @@
 version 1.0
 
-import "./structs.wdl"
-import "./tasks.wdl"
-import "./fetch_empirical_hapsets.wdl"
-import "./compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/fetch_empirical_hapsets.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/compute_cms2_components.wdl"
 
 workflow cms2_empirical {
   input {

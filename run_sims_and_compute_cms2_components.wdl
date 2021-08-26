@@ -68,10 +68,10 @@ version 1.0
 # Computation of CMS2 component scores
 #
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
-import "./compute_normalization_stats.wdl"
-import "./component_stats_for_sel_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/compute_normalization_stats.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/component_stats_for_sel_sims.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow run_sims_and_compute_cms2_components_wf {

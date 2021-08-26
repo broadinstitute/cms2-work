@@ -1,7 +1,7 @@
 version 1.0
 
-import "./structs.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--53bd73f6c39242431906295f995e98dba884abaa/tasks.wdl"
 
 workflow fetch_empirical_hapsets_wf {
   input {
