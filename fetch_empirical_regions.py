@@ -300,9 +300,9 @@ def load_empirical_regions_bed(empirical_regions_bed, sel_pop):
     with open(empirical_regions_bed) as empirical_regions_bed_in:
         for line in empirical_regions_bed_in:
             
-            chrom, beg, end, rest = line.strip().split('\t', maxsplit=3)
+            chrom, beg, end, *rest = line.strip().split('\t')
             if sel_pop:
-                region_name_ignored, region_sel_pop = rest.split('\t')
+                region_name, region_sel_pop = rest
                 if region_sel_pop != sel_pop:
                     continue
             else:

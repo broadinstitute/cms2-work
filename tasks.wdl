@@ -388,7 +388,7 @@ task fetch_empirical_hapsets_from_1KG {
     String? null_str
   }
   File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
-  String? sel_pop_id = if defined(sel_pop) then select_first([sel_pop]).pop_id else null_str
+  Array[String?] sel_pop_id = if defined(sel_pop) then [select_first([sel_pop]).pop_id] else [null_str]
 
   command <<<
     set -ex -o pipefail
@@ -396,7 +396,7 @@ task fetch_empirical_hapsets_from_1KG {
     mkdir "${PWD}/hapsets"
     python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
-       ~{"--sel-pop" + sel_pop_id} \
+       ~{"--sel-pop " + sel_pop_id[0]} \
        --tmp-dir "${PWD}/hapsets"
     df -h
   >>>
