@@ -387,7 +387,7 @@ task fetch_empirical_hapsets_from_1KG {
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
   }
   File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
-  String sel_pop_option = if defined(sel_pop) then ("--sel-pop=" + sel_pop.pop_id) else ""
+  String sel_pop_option = if defined(sel_pop) then ("--sel-pop=" + select_first([sel_pop]).pop_id) else ""
 
   command <<<
     set -ex -o pipefail
