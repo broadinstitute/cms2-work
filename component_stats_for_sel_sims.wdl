@@ -1,13 +1,13 @@
 version 1.0
 
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210822-2127-add-pop-pair-match-checks--19549bbc002f42d46edeabf42a334e76148126b4/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
     String out_fnames_prefix
     Array[Array[Array[File]+]+] selection_sims
-    #File compute_components_script = "./remodel_components.py"
-    #File normalize_and_collate_script = "./norm_and_collate.py"
+    #File compute_components_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/19549bbc002f42d46edeabf42a334e76148126b4/remodel_components.py"
+    #File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210822-2127-add-pop-pair-match-checks/19549bbc002f42d46edeabf42a334e76148126b4/norm_and_collate.py"
     PopsInfo pops_info
 
     Int n_bins_ihs = 20
