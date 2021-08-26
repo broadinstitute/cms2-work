@@ -390,6 +390,90 @@ def execute(action, **kw):
     finally:
         _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
 
+def _get_pathconf(file_system_path, param_suffix, default):
+    """Return a pathconf parameter value for a filesystem.
+    """
+    param_str = [s for s in os.pathconf_names if s.endswith(param_suffix)]
+    if len(param_str) == 1:
+        try:
+            return os.pathconf(file_system_path, param_str[0])
+        except OSError:
+            pass
+    return default
+
+def max_file_name_length(file_system_path):
+    """Return the maximum valid length of a filename (path component) on the given filesystem."""
+    return _get_pathconf(file_system_path, '_NAME_MAX', 80)-1
+
+def max_path_length(file_system_path):
+    """Return the maximum valid length of a path on the given filesystem."""
+    return _get_pathconf(file_system_path, '_PATH_MAX', 255)-1
+
+def string_to_file_name(string_value, file_system_path=None, length_margin=0):
+    """Constructs a valid file name from a given string, replacing or deleting invalid characters.
+    If `file_system_path` is given, makes sure the file name is valid on that file system.
+    If `length_margin` is given, ensure a string that long can be added to filename without breaking length limits.
+    """
+    replacements_dict = {
+        "\\": "-", # win directory separator
+        "/": "-", # posix directory separator
+        os.sep: "-", # directory separator
+        "^": "_", # caret
+        "&": "_and_", # background
+        "\"": "", # double quotes
+        r"'": "", # single quotes
+        r":": "_", # colon (problem for ntfs)
+        r" ": "_", # spaces
+        r"|": "-", # shouldn't confuse a vertical bar for a shell pipe
+        r"!": ".", # not a bash operator
+        r";": ".", # not a terminator
+        r"?": "_", # could be mistaken for a wildcard
+        r"*": "_", # could be mistaken for a wildcard
+        r"`": "_", # no subshells
+        r" -": "_-", # could be mistaken for an argument
+        r" --": "_--", # could be mistaken for an argument
+        r">": "_", # no redirect chars
+        r"<": "_", # no redirect chars
+        r"(": "__", # special character
+        r")": "__", # special character
+        r"\\x": "_", # hex char
+        r"\\o": "_", # octal char
+        #r"\\u": "", # unicode char
+        #"": "", # other illegal strings to replace
+    }
+
+    # group of ascii control and non-printable characters
+    control_chars = ''.join( map(chr, list(range(0,32)) + list(range(127,160)) ) )
+    control_char_re = re.compile('[%s]' % re.escape(control_chars))
+    string_value = control_char_re.sub("_", string_value)
+
+    # replacements from the dictionary above
+    strs_to_replace_re = re.compile(r'|'.join(re.escape(key) for key in replacements_dict.keys()))
+    string_value = strs_to_replace_re.sub(lambda x: replacements_dict.get(x.group(), "_"), string_value)
+
+    # condense runs of underscores
+    double_underscore_re = re.compile(r'_{2,}')
+    string_value = double_underscore_re.sub("_", string_value)
+
+    # condense runs of dashes
+    double_dash_re = re.compile(r'-{2,}')
+    string_value = double_dash_re.sub("-", string_value)
+
+    # remove leading or trailing periods (no hidden files (*NIX) or missing file extensions (NTFS))
+    string_value = string_value.strip(".")
+
+    # comply with file name length limits
+    if file_system_path is not None:
+        max_len = max(1, max_file_name_length(file_system_path) - length_margin)
+        string_value = string_value[:max_len]
+        while len(string_value.encode('utf-8')) > max_len:
+            string_value = string_value[:-1]
+
+    # ensure all the character removals did not make the name empty
+    string_value = string_value or '_'
+
+    return string_value
+
 def subparsers_helper(cli):
     subparsers = cli.add_subparsers(dest="subcommand")
 
