@@ -1,4 +1,7 @@
 {
-    "cms2_empirical.empirical_neut_regions_bed": "test/pos_con_sorted.hg19.bed",
-    "cms2_empirical.empirical_sel_regions_bed": "test/gazave14.NR_all_final_masked.hg19.sorted.mrg10000.nochr.bed"
+    "cms2_empirical.empirical_hapsets_def" : {
+	"empirical_hapsets_bundle_id": "g1k",
+	"empirical_neutral_regions_bed": "test/pos_con_sorted.hg19.bed",
+	"empirical_selection_regions_bed": "test/gazave14.NR_all_final_masked.hg19.sorted.mrg10000.nochr.bed"
+    }
 }

@@ -203,7 +203,7 @@ def parse_args():
     # parser.add_argument('--pops', nargs='+')
     #parser.add_argument('--replica-info')
     #parser.add_argument('--replica-id-string')
-    parser.add_argument('--region-haps-tar-gzs', nargs='+',
+    parser.add_argument('--hapsets', nargs='+',
                         required=True, help='list of .tar.gz files where each contains the haps for one hapset')
     #parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', required=True, help='test for selection in this population')
@@ -371,8 +371,8 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
     # maybe using psutils, and add to the output.  [is this monitoring feature of cromwell supported by terra?]
 
     if os.path.getsize(hapset_haps_tar_gz) == 0:
-        _log.info(f'Skipping failed sim {hapset_haps_tar_gz} hapset_num={hapset_num}')
-        return
+        raise RuntimeError(f'Skipping failed sim {hapset_haps_tar_gz} hapset_num={hapset_num}')
+
     hapset_dir = os.path.realpath(f'hapset{hapset_num:06}')
     execute(f'mkdir -p {hapset_dir}')
     execute(f'tar -zvxf {hapset_haps_tar_gz} -C {hapset_dir}/')
@@ -482,7 +482,7 @@ def compute_component_scores(args):
             execute(f'touch dummy.dat')
             execute(f'tar cvf {args.checkpoint_file} dummy.dat')
 
-    for hapset_num, f in enumerate(parse_file_list(args.region_haps_tar_gzs)):
+    for hapset_num, f in enumerate(parse_file_list(args.hapsets)):
         compute_component_scores_for_one_hapset(args=copy.deepcopy(args),
                                                 hapset_haps_tar_gz=f, hapset_num=hapset_num,
                                                 checkpoint_file=args.checkpoint_file)

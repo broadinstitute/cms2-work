@@ -4,11 +4,10 @@ import "./tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
-    String modelId
-    String experimentId = "default"
-    Array[Array[Array[File]]] selection_sims
-    File compute_components_script = "./remodel_components.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
+    String out_fnames_prefix
+    Array[Array[Array[File]+]+] selection_sims
+    #File compute_components_script = "./remodel_components.py"
+    #File normalize_and_collate_script = "./norm_and_collate.py"
     PopsInfo pops_info
 
     Int n_bins_ihs = 20
@@ -30,7 +29,7 @@ workflow component_stats_for_sel_sims_wf {
     Int mem_per_thread_gb = 1
     Int local_disk_gb = 50
     String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    Int preemptible
+    Int preemptible = 3
 
     ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
       mem_gb: 4,
@@ -59,11 +58,9 @@ workflow component_stats_for_sel_sims_wf {
       call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
-	region_haps_tar_gzs=selection_sims[sel_scen_idx][sel_blk_idx],
+	hapsets=selection_sims[sel_scen_idx][sel_blk_idx],
 
-	script=compute_components_script,
 	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
-	docker=docker,
 	preemptible=preemptible
       }
       scatter(alt_pop_idx in range(length(pops_info.pop_ids))) {
@@ -72,11 +69,9 @@ workflow component_stats_for_sel_sims_wf {
 	    input:
 	    sel_pop=sel_pop,
 	    alt_pop=pops_info.pops[alt_pop_idx],
-	    region_haps_tar_gzs=selection_sims[sel_scen_idx][sel_blk_idx],
+	    hapsets=selection_sims[sel_scen_idx][sel_blk_idx],
 
-	    script=compute_components_script,
 	    compute_resources=compute_resources_for_compute_two_pop_cms2_components,
-	    docker=docker,
 	    preemptible=preemptible
 	  }
 	}
@@ -127,8 +122,8 @@ workflow component_stats_for_sel_sims_wf {
 
        call tasks.collate_stats_and_metadata_for_sel_sims_block {
 	    input:
-	    inp = object {
-	      experimentId: experimentId + "__selscen_" + sel_scen_idx + "__selblk_" + sel_blk_idx,
+	    inp = object {  # struct collate_stats_and_metadata_for_all_sel_sims_input
+	      out_fnames_prefix: out_fnames_prefix + "__selscen_" + sel_scen_idx + "__selblk_" + sel_blk_idx,
 	      sel_normed_and_collated: normalize_and_collate_block.normed_collated_stats,
 	      replica_infos: normalize_and_collate_block.replica_info
 	    }

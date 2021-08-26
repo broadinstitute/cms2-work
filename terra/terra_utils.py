@@ -95,6 +95,9 @@ def do_deploy_to_terra(args):
     SEL_WORKSPACE = terra_config['workspace']
     for root_workflow_name, root_workflow_def in terra_config['root_workflows'].items():
         _log.debug(f'{root_workflow_name=} {root_workflow_def=}')
+        if root_workflow_def.get('skip', False):
+            _log.debug(f'skipping {root_workflow_name=} because of skip: True')
+            continue
         TERRA_METHOD_NAME=root_workflow_def['method_name']
         TERRA_CONFIG_NAME=root_workflow_def['config_name']
 

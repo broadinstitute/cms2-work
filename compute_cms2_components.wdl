@@ -68,58 +68,28 @@ version 1.0
 # Computation of CMS2 component scores
 #
 
-import "./run_sims.wdl"
 import "./tasks.wdl"
 import "./compute_normalization_stats.wdl"
 import "./component_stats_for_sel_sims.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
-workflow run_sims_and_compute_cms2_components_wf {
+workflow compute_cms2_components_wf {
   meta {
-    description: "Run simulations and compute CMS2 component scores"
+    description: "Compute CMS2 component scores"
     email: "ilya_shl@alum.mit.edu"
   }
 # ** parameter_meta
-  parameter_meta {
-    experimentId: "String identifying this computational experiment; used to name output files."
-    experiment_description: "Free-from string describing the analysis"
-    paramFile_demographic_model: "The unvarying part of the parameter file"
-    modelId: "String identifying the demographic model"
-    paramFiles_selection: "The varying part of the parameter file, appended to paramFileCommon; first element represents neutral model."
-    recombFile: "Recombination map from which map of each simulated region is sampled"
-    nreps_neutral: "Number of neutral replicates to simulate"
-    nreps: "Number of replicates for _each_ non-neutral file in paramFiles"
-  }
 
 # ** inputs
   input {
-    #
-    # Simulation params
-    #
-
-    String experimentId = "default"
-    String experiment_description = "an experiment"
-    File paramFile_demographic_model
-    File paramFile_neutral
-    String modelId = "model_"+basename(paramFile_demographic_model, ".par")
-    Array[File] paramFiles_selection
-    File recombFile
-    Int nreps_neutral
-    Int nreps
-    Int maxAttempts = 10000000
-    Int numRepsPerBlock = 1
-    Int numCpusPerBlock = numRepsPerBlock
-    Int repAttemptTimeoutSeconds = 600
-    Int repTimeoutSeconds = 3600
-    String       memoryPerBlock = "3 GB"
-    Int preemptible = 3
-
     #
     # Component score computation params
     #
 
     #Array[File] region_haps_tar_gzs
     #Array[File] neutral_region_haps_tar_gzs
+
+    HapsetsBundle hapsets_bundle
 
     Int n_bins_ihs = 20
     Int n_bins_nsl = 20
@@ -129,11 +99,6 @@ workflow run_sims_and_compute_cms2_components_wf {
 
     Int hapset_block_size = 2
     
-    Int threads = 1
-    Int mem_base_gb = 0
-    Int mem_per_thread_gb = 1
-    Int local_disk_gb = 50
-
     ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
       mem_gb: 4,
       cpus: 1,
@@ -144,42 +109,15 @@ workflow run_sims_and_compute_cms2_components_wf {
       cpus: 1,
       local_storage_gb: 50
     }
-
-  }
-
-
-  ####################################################
-  # Run neutral sims
-  ####################################################
-
-# ** Call the simulations
-  call run_sims.run_sims_wf as sims_wf {
-    input:
-    experimentId = experimentId,
-    experiment_description = experiment_description,
-    paramFile_demographic_model = paramFile_demographic_model,
-    paramFile_neutral = paramFile_neutral,
-    modelId=modelId,
-    paramFiles_selection=paramFiles_selection,
-    recombFile=recombFile,
-    nreps_neutral=nreps_neutral,
-    nreps=nreps,
-    maxAttempts=maxAttempts,
-    numRepsPerBlock=numRepsPerBlock,
-    numCpusPerBlock=numCpusPerBlock,
-    repTimeoutSeconds=repTimeoutSeconds,
-    repAttemptTimeoutSeconds=repAttemptTimeoutSeconds,
-    memoryPerBlock=memoryPerBlock,
-    preemptible=preemptible
   }
 
 # ** Compute normalization stats
 # *** Compute one-pop CMS2 components for neutral sims
   call compute_normalization_stats.compute_normalization_stats_wf {
     input:
-    out_fnames_prefix=modelId,
-    pops_info=sims_wf.simulated_hapsets_bundle.pops_info,
-    neutral_hapsets=sims_wf.simulated_hapsets_bundle.neutral_hapsets,
+    out_fnames_prefix=hapsets_bundle.hapsets_bundle_id,
+    pops_info=hapsets_bundle.pops_info,
+    neutral_hapsets=hapsets_bundle.neutral_hapsets,
 
     n_bins_ihs=n_bins_ihs,
     n_bins_nsl=n_bins_nsl,
@@ -188,16 +126,15 @@ workflow run_sims_and_compute_cms2_components_wf {
     hapset_block_size=hapset_block_size,
 
     compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
-    preemptible=preemptible
+    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
   }
 
 # ** Component stats for selection sims
   call component_stats_for_sel_sims.component_stats_for_sel_sims_wf {
     input:
-    out_fnames_prefix=sims_wf.simulated_hapsets_bundle.hapsets_bundle_id,
-    selection_sims=sims_wf.simulated_hapsets_bundle.selection_hapsets,
-    pops_info=sims_wf.simulated_hapsets_bundle.pops_info,
+    out_fnames_prefix=hapsets_bundle.hapsets_bundle_id,
+    selection_sims=hapsets_bundle.selection_hapsets,
+    pops_info=hapsets_bundle.pops_info,
 
     n_bins_ihs=n_bins_ihs,
     n_bins_nsl=n_bins_nsl,
@@ -214,14 +151,13 @@ workflow run_sims_and_compute_cms2_components_wf {
     two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used,
 
     compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
-    preemptible=preemptible
+    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
   }
 
 # ** Workflow outputs
   output {
 # *** Bookkeeping outputs
-    PopsInfo pops_info = sims_wf.simulated_hapsets_bundle.pops_info
+    PopsInfo pops_info_used = hapsets_bundle.pops_info
 # *** Simulation outputs
     #Array[File] neutral_sims_tar_gzs = sims_wf.neutral_sims_tar_gzs
     #Array[File] selection_sims_tar_gzs = sims_wf.selection_sims_tar_gzs

@@ -32,6 +32,38 @@ struct PopsInfo {
 
     Array[Pop] sel_pops  # for each sweep definition in paramFiles_selection input to
     # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
+  }
+
+struct SimulatedHapsetsDef {
+    File paramFile_demographic_model
+    File paramFile_neutral
+    Array[File] paramFiles_selection
+    File recombFile
+    String experimentId #= "default"
+    String experiment_description #= "an experiment"
+    String modelId # = "model_"+basename(paramFile_demographic_model, ".par")
+
+    Int nreps_neutral
+    Int nreps
+
+    Int maxAttempts #= 10000000
+    Int numRepsPerBlock #= 1
+    Int numCpusPerBlock #= numRepsPerBlock
+
+    String       memoryPerBlock #= "3 GB"
+}
+
+struct EmpiricalHapsetsDef {
+  String empirical_hapsets_bundle_id
+  File empirical_neutral_regions_bed
+  File empirical_selection_regions_bed
+}
+
+struct HapsetsBundle {
+    String hapsets_bundle_id
+    PopsInfo pops_info
+    Array[File]+ neutral_hapsets
+    Array[Array[Array[File]+]+] selection_hapsets
 }
 
 struct SweepInfo {

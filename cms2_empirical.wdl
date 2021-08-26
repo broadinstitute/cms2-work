@@ -2,38 +2,25 @@ version 1.0
 
 import "./structs.wdl"
 import "./tasks.wdl"
+import "./fetch_empirical_hapsets.wdl"
+import "./compute_cms2_components.wdl"
 
 workflow cms2_empirical {
   input {
-    File empirical_neut_regions_bed
-    File empirical_sel_regions_bed
+    EmpiricalHapsetsDef empirical_hapsets_def
   }
-  call tasks.construct_pops_info_for_1KG {
+
+  call fetch_empirical_hapsets.fetch_empirical_hapsets_wf {
     input:
-    empirical_regions_bed=empirical_sel_regions_bed
+    empirical_hapsets_def=empirical_hapsets_def
   }
-  PopsInfo pops_info_1KG = construct_pops_info_for_1KG.pops_info
-
-  call tasks.fetch_empirical_hapsets_from_1KG  as fetch_neut_regions {
+  call compute_cms2_components.compute_cms2_components_wf {
     input:
-    pops_info=pops_info_1KG,
-    empirical_regions_bed=empirical_neut_regions_bed
+    hapsets_bundle=fetch_empirical_hapsets_wf.hapsets_bundle
   }
-
-  scatter(sel_pop in pops_info.sel_pops) {
-    call tasks.fetch_empirical_hapsets_from_1KG  as fetch_sel_regions {
-      input:
-      pops_info=pops_info_1KG,
-      sel_pop_id=sel_pop.pop_id,
-      empirical_regions_bed=empirical_sel_regions_bed
-    }
-    Array[Array[File]+]+ sel_hapsets_tar_gzs = [fetch_sel_regions.empirical_hapsets_tar_gzs]
-  }
-
   output {
-    PopsInfo pops_info = pops_info_1KG
-    Array[File]+ neut_region_haps_tar_gzs = fetch_neut_regions.empirical_hapsets_tar_gzs
-    Array[Array[Array[File]+]+] empirical_sel_hapsets_tar_gzs = sel_hapsets_tar_gzs
+    PopsInfo pops_info = fetch_empirical_hapsets_wf.hapsets_bundle.pops_info
+    Array[File] all_hapsets_component_stats_h5_blocks = compute_cms2_components_wf.all_hapsets_component_stats_h5_blocks
   }
 }
 
