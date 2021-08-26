@@ -395,7 +395,7 @@ task fetch_empirical_hapsets_from_1KG {
     mkdir "${PWD}/hapsets"
     python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
-       "~{sel_pop_option}" \
+       ~{"--sel-pop" + sel_pop.pop_id} \
        --tmp-dir "${PWD}/hapsets"
     df -h
   >>>
