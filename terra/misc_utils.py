@@ -462,6 +462,10 @@ def string_to_file_name(string_value, file_system_path=None, length_margin=0):
     # remove leading or trailing periods (no hidden files (*NIX) or missing file extensions (NTFS))
     string_value = string_value.strip(".")
 
+    # ensure filename does not start with a dash (which programs can mistake for a flag instead of a filename)
+    if string_value.startswith('-'):
+        string_value = '_' + string_value[1:]
+
     # comply with file name length limits
     if file_system_path is not None:
         max_len = max(1, max_file_name_length(file_system_path) - length_margin)

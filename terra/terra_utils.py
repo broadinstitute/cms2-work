@@ -201,7 +201,12 @@ def do_list_submissions(args):
     #print('ENTITIES ARE', fapi.list_entity_types(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE).json())
     z = fapi.list_submissions(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE)
     #print('SUBMISSIONS ARE', z, z.json())
-    misc_utils.write_json_and_org(misc_utils.string_to_file_name(f'{args.tmp_dir}/submissions.json'), **{'result': list(z.json())})
+
+    def safe_fname(f):
+        return os.path.join(os.path.dirname(f),
+                            misc_utils.string_to_file_name(os.path.basename(f)))
+
+    misc_utils.write_json_and_org(safe_fname(f'{args.tmp_dir}/submissions.json'), **{'result': list(z.json())})
     tot_time = 0
     for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)):
         _log.info(f'looking at submission from {s["submissionDate"]}')
@@ -216,8 +221,8 @@ def do_list_submissions(args):
         submission_id = s['submissionId']
         y = fapi.get_submission(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=submission_id).json()
         _log.info('got submission')
-        misc_utils.write_json_and_org(misc_utils.string_to_file_name(f'{args.tmp_dir}/{submission_date}.{submission_idx}.{submission_id}'
-                                                                     f'.subm.json'), **y)
+        misc_utils.write_json_and_org(safe_fname(f'{args.tmp_dir}/{submission_date}.{submission_idx}.{submission_id}'
+                                                 f'.subm.json'), **y)
         if 'workflowId' not in y['workflows'][0]:
             _log.warning(f'workflow ID missing from submission!')
             continue
@@ -246,12 +251,12 @@ def do_list_submissions(args):
             tot_time += (time.time() - beg)
             _log.debug(f'saving workflow metadata')
             workflow_name = zz.get('workflowName', 'no_wf_name')
-            misc_utils.write_json_and_org(misc_utils.string_to_file_name(f'{args.tmp_dir}/{submission_date}.{submission_idx}.'
-                                                                         f'{submission_id}.{workflow_id}'
-                                                                         f'.{workflow_name}.mdata.json'), **zz)
+            misc_utils.write_json_and_org(safe_fname(f'{args.tmp_dir}/{submission_date}.{submission_idx}.'
+                                                     f'{submission_id}.{workflow_id}'
+                                                     f'.{workflow_name}.mdata.json'), **zz)
             if 'submittedFiles' in zz:
-                misc_utils.dump_file(fname=misc_utils.string_to_file_name(f'{args.tmp_dir}/{submission_date}.{submission_idx}.'
-                                                                          f'{submission_id}.{workflow_id}.workflow.wdl'),
+                misc_utils.dump_file(fname=safe_fname(f'{args.tmp_dir}/{submission_date}.{submission_idx}.'
+                                                      f'{submission_id}.{workflow_id}.workflow.wdl'),
                                      value=zz['submittedFiles']['workflow'])
 
             jsons = [zz]
