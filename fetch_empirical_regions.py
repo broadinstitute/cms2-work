@@ -608,8 +608,8 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
         'tpeds': { 
             pop: os.path.basename(tped_fname) for pop, tped_fname in zip(all_pops, tped_fnames)
         },
-        popIds: all_pops,
-        tpedFiles: [os.path.basename(tped_fname) for tped_fname in tped_fnames]
+        'popIds': all_pops,
+        'tpedFiles': [os.path.basename(tped_fname) for tped_fname in tped_fnames]
     }
     _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.replicaInfo.json')),
                 json_val=hapset_manifest)
