@@ -707,12 +707,12 @@ def fetch_empirical_regions(args):
                 if vcf_line.startswith('#'):
                     if region_lines:
                         for region_sel_pop in chrom2regions[chrom][region_key]:
-                            pops_to_use = ([region_sel_pop] + list(pop2outgroup_pops[region_sel_pop])) \
+                            pops_to_include = ([region_sel_pop] + list(pop2outgroup_pops[region_sel_pop])) \
                                 if region_sel_pop else all_pops
                             construct_hapset_for_one_empirical_region(
                                 region_key=region_key, region_lines=region_lines[1:],
                                 region_sel_pop=region_sel_pop,
-                                pops_to_use=pops_to_use,
+                                pops_to_include=pops_to_include,
                                 pop2vcfcols=pop2vcfcols,
                                 genmap=genmap,
                                 stats=stats,
