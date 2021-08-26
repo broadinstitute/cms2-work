@@ -371,7 +371,7 @@ task fetch_empirical_hapsets_from_1KG {
 # ** inputs
     pops_info: "(PopsInfo) information about 1KG pops, including the outgroups to compare with each pop"
     empirical_regions_bed: "(File) empirical regions to fetch.  Column 5 (score), if present, is interpreted as the name of the putatively selected population.  The same region may be listed multiple times to test for selection in multiple populations."
-    sel_pop: "(Pop?) if not given, assume empirical_regions_bed are neutral, else take only regions with selection in this pop"
+    sel_pop_id: "(String?) if not given, assume empirical_regions_bed are neutral, else take only regions with selection in this pop"
     # add: metadata to attach to all regions
     genetic_maps_tar_gz: "(File) genetic maps"
     superpop_to_representative_pop_json: "(File) map from superpop to the pop used to represent it in model-fitting simulations"
