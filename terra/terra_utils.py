@@ -222,9 +222,14 @@ def do_list_submissions(args):
         _log.info(f'{s=}')
         _log.info(f'getting submission')
         submission_id = s['submissionId']
+        method_configuration_name = s['methodConfigurationName']
+        if args.method_config and method_configuration_name != args.method_config:
+            _log.info(f'skipping submission since method config does not match {args.method_config=}')
+            continue
         y = fapi.get_submission(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=submission_id).json()
         _log.info('got submission')
-        misc_utils.write_json_and_org(safe_fname(f'{args.tmp_dir}/{submission_date}.{submission_idx}.{submission_id}'
+        misc_utils.write_json_and_org(safe_fname(f'{args.tmp_dir}/{method_configuration_name}.{submission_date}.{submission_idx}.'
+                                                 f'{submission_id}'
                                                  f'.subm.json'), **y)
         if 'workflowId' not in y['workflows'][0]:
             _log.warning(f'workflow ID missing from submission!')
@@ -254,11 +259,11 @@ def do_list_submissions(args):
             tot_time += (time.time() - beg)
             _log.debug(f'saving workflow metadata')
             workflow_name = zz.get('workflowName', 'no_wf_name')
-            misc_utils.write_json_and_org(safe_fname(f'{args.tmp_dir}/{submission_date}.{submission_idx}.'
+            misc_utils.write_json_and_org(safe_fname(f'{args.tmp_dir}/{method_configuration_name}.{submission_date}.{submission_idx}.'
                                                      f'{submission_id}.{workflow_id}'
                                                      f'.{workflow_name}.mdata.json'), **zz)
             if 'submittedFiles' in zz:
-                misc_utils.dump_file(fname=safe_fname(f'{args.tmp_dir}/{submission_date}.{submission_idx}.'
+                misc_utils.dump_file(fname=safe_fname(f'{args.tmp_dir}/{method_configuration_name}.{submission_date}.{submission_idx}.'
                                                       f'{submission_id}.{workflow_id}.workflow.wdl'),
                                      value=zz['submittedFiles']['workflow'])
 
@@ -316,7 +321,8 @@ def parse_args():
     #     print(args)
 
     @subcommand([argument('-s', '--submission-date', default=datetime.datetime.now().strftime('%Y-%m-%d'), help='submission date'),
-                 argument('--expand-subworkflows', action='store_true')])
+                 argument('--expand-subworkflows', action='store_true'),
+                 argument('--method-config', help='only look at submissions where method config matches this')])
     def list_submissions(args):
         do_list_submissions(args)
 

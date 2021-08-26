@@ -103,7 +103,8 @@ workflow compute_normalization_stats_wf {
 # **** Compute two-pop CMS2 components for neutral sims
    scatter(sel_pop_idx in range(n_pops)) {
      scatter(alt_pop_idx in range(n_pops)) {
-       if ((alt_pop_idx > sel_pop_idx) && pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx]) {
+       if ((alt_pop_idx > sel_pop_idx) &&
+           (pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx] || pops_info.pop_alts_used[alt_pop_idx][sel_pop_idx])) {
 	 scatter(hapsets_block in neutral_hapsets_in_block) {
 	   call tasks.compute_two_pop_cms2_components as compute_two_pop_cms2_components_for_neutral {
 	     input:
@@ -138,7 +139,8 @@ workflow compute_normalization_stats_wf {
 
   scatter(sel_pop_idx in range(n_pops)) {
     scatter(alt_pop_idx in range(n_pops)) {
-      if ((alt_pop_idx != sel_pop_idx) && pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx]) {
+      if ((alt_pop_idx != sel_pop_idx) && 
+          (pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx] || pops_info.pop_alts_used[alt_pop_idx][sel_pop_idx])) {
   	File norm_bins_xpehh_maybe = 
         select_first([
         compute_two_pop_bin_stats_for_normalization.norm_bins_xpehh[sel_pop_idx][alt_pop_idx],
