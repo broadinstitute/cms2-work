@@ -217,7 +217,7 @@ def do_list_submissions(args):
         y = fapi.get_submission(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=submission_id).json()
         _log.info('got submission')
         misc_utils.write_json_and_org(misc_utils.string_to_file_name(f'{args.tmp_dir}/{submission_date}.{submission_idx}.{submission_id}'
-                                                                     f'.subm.json', **y)
+                                                                     f'.subm.json'), **y)
         if 'workflowId' not in y['workflows'][0]:
             _log.warning(f'workflow ID missing from submission!')
             continue
