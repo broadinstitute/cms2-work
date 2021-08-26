@@ -718,7 +718,8 @@ def fetch_empirical_regions(args):
                                 pop2vcfcols=pop2vcfcols,
                                 genmap=genmap,
                                 stats=stats,
-                                tmp_dir=args.tmp_dir)
+                                tmp_dir=args.tmp_dir,
+                                out_fnames_prefix=args.out_fnames_prefix)
                     region_key = vcf_line.strip()[1:]
                     region_lines = []
                 region_lines.append(vcf_line)
