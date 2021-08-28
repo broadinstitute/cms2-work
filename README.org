@@ -12,7 +12,7 @@ Workflows to run population genetics simulations and compute component scores fo
   The docker image that is used for component score computation tasks, is specified by docker/cms2-docker-component-stats/Dockerfile .
   It is automatically constructed by Travis CI on pushes to the repo cms2-docker-component-stats, and pushed to 
   quay.io/ilya_broad/cms .  Currently, after updating that, you have to manually update the docker runtime attribute
-  in each task in tassk.wdl; this should be automated.
+  in each task in task.wdl; this should be automated.
 
   That docker image includes a customized version of selscan, which can save normalization stats computed from one set of
   data and then use them to normalize another set of data.   (We compute normalization stats for neutral sims/regions,
