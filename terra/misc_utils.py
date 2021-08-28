@@ -99,7 +99,7 @@ def is_str(obj):
 
 # * json_to_org
 
-def _json_to_org(val, org_file, depth=1, heading='root', title=None, json_file=None):
+def _json_to_org(val, org_file, depth=1, heading='root', title=None, json_file=None, startup=None):
     """Transform a parsed json structure to an Org mode outliner file (see https://orgmode.org/ ).
     """
     _log.debug(f'Loaded json, writing org to {org_file}...')
@@ -108,12 +108,21 @@ def _json_to_org(val, org_file, depth=1, heading='root', title=None, json_file=N
             out.write('#+TITLE: {}\n\n'.format(title))
         if json_file:
             out.write('json file: [[{}]]\n\n'.format(json_file))
+        if startup:
+            out.write(f'#+STARTUP: {startup}\n\n')
         def _recurse(val, heading, depth):
             def _header(s): out.write('*'*depth + ' ' + str(s) + '\n')
             def _line(s): out.write(' '*depth + str(s) + '\n')
+            if isinstance(val, list) and len(val) == 1:
+                _recurse(val[0], heading, depth)
+                return
+            if isinstance(val, collections.Mapping) and len(val) == 1:
+                item_key, item_val = list(val.items())[0]
+                _recurse(item_val, heading=item_key, depth=depth)
+                return
             out.write('*'*depth + ' ' + heading)
             if isinstance(val, list):
-                out.write(' - list of ' + str(len(val)) + '\n')
+                out.write(f' (list of {len(val)})\n')
                 if len(val):
                     for i, v in enumerate(val):
                         _recurse(v, heading=str(i), depth=depth+2)
@@ -123,26 +132,26 @@ def _json_to_org(val, org_file, depth=1, heading='root', title=None, json_file=N
             elif is_str(val) and os.path.isabs(val) and os.path.isdir(val):
                 out.write(' - [[file+emacs:{}][{}]]\n'.format(val, os.path.basename(val)))
             elif isinstance(val, collections.Mapping):
-                out.write(' - map of ' + str(len(val)) + '\n')
+                out.write(f' (map of {len(val)})\n')
                 if len(val):
                     for k, v in val.items():
-                        _recurse(v, heading='_'+k+'_', depth=depth+2)
+                        _recurse(v, heading=k, depth=depth+2)
             else:
-                out.write(' - ' + str(val) + '\n')
+                out.write(f': {val}\n')
         _recurse(val=val, heading=heading, depth=depth)
 # end: def _json_to_org(val, org_file, depth=1, heading='root')
 
-def json_to_org(json_fname, org_fname=None, maxSizeMb=500):
+def json_to_org(json_fname, org_fname=None, maxSizeMb=500, **kw):
     """Transform a parsed json structure to an Org mode outliner file (see https://orgmode.org/ ).
     """
     org_fname = org_fname or replace_ext(json_fname, '.org')
     _log.debug(f'converting {json_fname} to {org_fname}')
-    _json_to_org(val=json_loadf(json_fname, maxSizeMb=maxSizeMb), org_file=org_fname, json_file=json_fname)
+    _json_to_org(val=json_loadf(json_fname, maxSizeMb=maxSizeMb), org_file=org_fname, json_file=json_fname, **kw)
     _log.debug(f'converted {json_fname} to {org_fname}')
 
 def write_json_and_org(fname, **json_dict):
     dump_file(fname=fname, value=pretty_print_json(json_dict))
-    json_to_org(json_fname=fname)
+    json_to_org(json_fname=fname, startup='overview')
 
 def load_dict_sorted(d):
     return collections.OrderedDict(sorted(d.items()))
