@@ -419,29 +419,32 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
     min_hapset_id_size = 256
     
     pd.set_option('io.hdf.default_format','table')
-    with pd.HDFStore(inps['experimentId']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
+    with pd.HDFStore(inps['out_fnames_prefix']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
         for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
-            hapset_replica_info = _json_loadf(hapset_replica_info_json)['replicaInfo']
+            hapset_replica_info = _json_loadf(hapset_replica_info_json)
+            hapset_replica_info.update(hapset_id=hapset_id)
+            hapset_metadata_records.append(hapset_replica_info)
+
             hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
             hapset_id = hapset_compstats['hapset_id'].iat[0]
             hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
             #hapset_dfs.append(hapset_compstats)
             store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': min_hapset_id_size})
-            hapset_metadata_records.append({'hapset_id': hapset_id,
-                                            'is_sim': True,
-                                            'start_pos:': 0,
-                                            'model_id': hapset_replica_info['modelInfo']['modelId'],
-                                            'sel_pop': hapset_replica_info['modelInfo']['sweepInfo']['selPop'],
-                                            'sel_gen': hapset_replica_info['modelInfo']['sweepInfo']['selGen'],
-                                            'sel_beg_pop': hapset_replica_info['modelInfo']['sweepInfo']['selBegPop'],
-                                            'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
-                                            'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
-                                            'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
+            # hapset_metadata_records.append({'hapset_id': hapset_id,
+            #                                 'is_sim': True,
+            #                                 'start_pos:': 0,
+            #                                 'model_id': hapset_replica_info['modelInfo']['modelId'],
+            #                                 'sel_pop': hapset_replica_info['modelInfo']['sweepInfo']['selPop'],
+            #                                 'sel_gen': hapset_replica_info['modelInfo']['sweepInfo']['selGen'],
+            #                                 'sel_beg_pop': hapset_replica_info['modelInfo']['sweepInfo']['selBegPop'],
+            #                                 'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
+            #                                 'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
+            #                                 'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
         #all_hapset_dfs = pd.concat(hapset_dfs)
         #store.append('hapset_data', all_hapset_dfs)
     #print(all_hapset_dfs.columns)
     #all_hapset_dfs.set_index(['hapset_id', 'pos'], verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv.gz', na_rep='nan', sep='\t')
-        hapset_metadata = pd.DataFrame.from_records(hapset_metadata_records).set_index('hapset_id', verify_integrity=True)
+        hapset_metadata = pd.json_normalize(hapset_metadata_records, sep='_').set_index('hapset_id', verify_integrity=True)
         store.append('hapset_metadata', hapset_metadata)
         #hapsets_metadata.to_csv(inps['experimentId']+'.metadata.tsv.gz', na_rep='nan', sep='\t')
         
