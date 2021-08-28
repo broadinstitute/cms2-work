@@ -1,6 +1,6 @@
 version 1.0
 
-import "./structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210827-1136-finalize-empirical--10ccdc23d201b9011c1c42b9a46bcc4db2994b68/structs.wdl"
 
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
@@ -14,7 +14,7 @@ task compute_one_pop_cms2_components {
     Int preemptible
     ComputeResources compute_resources
   }
-  File script = "./remodel_components.py"
+  File script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210827-1136-finalize-empirical/10ccdc23d201b9011c1c42b9a46bcc4db2994b68/remodel_components.py"
 
   #String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop.pop_id
 
@@ -77,7 +77,7 @@ task compute_two_pop_cms2_components {
     Int preemptible
   }
 
-  File script = "./remodel_components.py"
+  File script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210827-1136-finalize-empirical/10ccdc23d201b9011c1c42b9a46bcc4db2994b68/remodel_components.py"
   #String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop.pop_id + "__altpop_" + alt_pop.pop_id
 
   #String xpehh_out_fname = out_basename + ".xpehh.out"
@@ -247,7 +247,7 @@ task normalize_and_collate_block {
   input {
     NormalizeAndCollateBlockInput inp
   }
-  File normalize_and_collate_script = "./norm_and_collate_block.py"
+  File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210827-1136-finalize-empirical/10ccdc23d201b9011c1c42b9a46bcc4db2994b68/norm_and_collate_block.py"
   #String replica_id_str = basename(inp.ihs_out, ".ihs.out")
   #String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
   command <<<
@@ -281,7 +281,7 @@ task collate_stats_and_metadata_for_sel_sims_block {
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
-    File collate_stats_and_metadata_for_sel_sims_block_script = "./collate_stats_and_metadata_for_sel_sims_block.py"
+    File collate_stats_and_metadata_for_sel_sims_block_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210827-1136-finalize-empirical/10ccdc23d201b9011c1c42b9a46bcc4db2994b68/collate_stats_and_metadata_for_sel_sims_block.py"
   }
   #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
   #Int disk_size_max_gb = 4096
@@ -346,7 +346,7 @@ task construct_pops_info_for_1KG {
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
     File empirical_regions_bed
   }
-  File construct_pops_info_for_1KG_script = "./construct_pops_info_for_1KG.py"
+  File construct_pops_info_for_1KG_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210827-1136-finalize-empirical/10ccdc23d201b9011c1c42b9a46bcc4db2994b68/construct_pops_info_for_1KG.py"
   String pops_info_fname = "pops_info.1KG.json"
   command <<<
     set -ex -o pipefail
@@ -392,7 +392,7 @@ task fetch_empirical_hapsets_from_1KG {
     File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
   }
-  File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
+  File fetch_empirical_regions_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210827-1136-finalize-empirical/10ccdc23d201b9011c1c42b9a46bcc4db2994b68/fetch_empirical_regions.py"
 
   command <<<
     set -ex -o pipefail
