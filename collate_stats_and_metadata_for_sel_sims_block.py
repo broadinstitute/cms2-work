@@ -26,6 +26,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import traceback
 
 import pandas as pd
 
@@ -162,6 +163,11 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--input-json', required=True, help='inputs passed as json')
+    parser.add_argument('--max-hapset-id-len', type=int, default=256, help='max length of hapset id')
+    parser.add_argument('--hapsets-component-stats-h5-fname', required=True,
+                        help='name of HDF5 file to which to save component stats and metadata')
+    parser.add_argument('--hapsets-metadata-tsv-gz-fname', required=True,
+                        help='name of tsv file to which to save hapset metadata')
 
     return parser.parse_args()
 
@@ -397,64 +403,40 @@ Layout:
 
 def collate_stats_and_metadata_for_all_sel_sims(args):
 
-    def descr_df(df, msg):
-        """Describe a DataFrame"""
-        return
-        print('===BEG=======================\n', msg)
-        print(df.describe(), '\n')
-        df.info(verbose=True, null_counts=True)
-        print('===END=======================\n', msg)
-        
-
     inps = _json_loadf(args.input_json)
 
-    def chk_idx(pd, name):
-        chk(pd.index.is_unique, f'Bad {name} index: has non-unique values')
-        chk(pd.index.is_monotonic_increasing, f'Bad {name} index: not monotonically increasing')
-        descr_df(pd, name)
-
-    #hapset_dfs = []
     hapset_metadata_records = []
 
-    min_hapset_id_size = 256
-    
     pd.set_option('io.hdf.default_format','table')
-    with pd.HDFStore(inps['out_fnames_prefix']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
+    h5_fname = args.hapsets_component_stats_h5_fname
+    h5_store_append_opts = dict(min_itemsize={'hapset_id': args.max_hapset_id_len})
+    with pd.HDFStore(h5_fname, mode='w', complevel=9, fletcher32=True) as store:
         for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
             hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
             hapset_id = hapset_compstats['hapset_id'].iat[0]
+            chk(len(hapset_id) < args.max_hapset_id_len, f'Hapset id too long: {hapset_id}')
             hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
             #hapset_dfs.append(hapset_compstats)
-            store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': min_hapset_id_size})
+            store.append('hapset_data', hapset_compstats, **h5_store_append_opts)
 
             hapset_replica_info = _json_loadf(hapset_replica_info_json)
             hapset_replica_info.update(hapset_id=hapset_id)
             hapset_metadata_records.append(hapset_replica_info)
+        # end: for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos'])
 
-            # hapset_metadata_records.append({'hapset_id': hapset_id,
-            #                                 'is_sim': True,
-            #                                 'start_pos:': 0,
-            #                                 'model_id': hapset_replica_info['modelInfo']['modelId'],
-            #                                 'sel_pop': hapset_replica_info['modelInfo']['sweepInfo']['selPop'],
-            #                                 'sel_gen': hapset_replica_info['modelInfo']['sweepInfo']['selGen'],
-            #                                 'sel_beg_pop': hapset_replica_info['modelInfo']['sweepInfo']['selBegPop'],
-            #                                 'sel_beg_gen': hapset_replica_info['modelInfo']['sweepInfo']['selBegGen'],
-            #                                 'sel_coeff': hapset_replica_info['modelInfo']['sweepInfo']['selCoeff'],
-            #                                 'sel_freq': hapset_replica_info['modelInfo']['sweepInfo']['selFreq']})
-        #all_hapset_dfs = pd.concat(hapset_dfs)
-        #store.append('hapset_data', all_hapset_dfs)
-    #print(all_hapset_dfs.columns)
-    #all_hapset_dfs.set_index(['hapset_id', 'pos'], verify_integrity=True).to_csv(inps['experimentId']+'.compstats.tsv.gz', na_rep='nan', sep='\t')
         hapset_metadata = pd.json_normalize(hapset_metadata_records, sep='_').set_index('hapset_id', verify_integrity=True)
-        store.append('hapset_metadata', hapset_metadata)
-        #hapsets_metadata.to_csv(inps['experimentId']+'.metadata.tsv.gz', na_rep='nan', sep='\t')
-        
-    #save_hapset_data_and_metadata_to_hdf5()
-    
-
-# end: def normalize_and_collate_scores(args)
+        try:
+            store.append('hapset_metadata', hapset_metadata, **h5_store_append_opts)
+        except Exception as e:
+            _log.warning(f'Could not save hapset metadata to h5: {e}')
+            traceback.print_exc()
+    # end: with pd.HDFStore(h5_fname, mode='w', complevel=9, fletcher32=True) as store
+            
+    metadata_fname = args.hapsets_metadata_tsv_gz_fname
+    hapsets_metadata.to_csv(metadata_fname, na_rep='nan', sep='\t')
+    execute(f'touch {h5_fname}')
+# end: def collate_stats_and_metadata_for_all_sel_sims(args)
 
 if __name__=='__main__':
   #compute_component_scores(parse_args())
   collate_stats_and_metadata_for_all_sel_sims(parse_args())
-

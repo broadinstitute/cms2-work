@@ -281,18 +281,24 @@ task collate_stats_and_metadata_for_sel_sims_block {
   }
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
-    File collate_stats_and_metadata_for_sel_sims_block_script = "./collate_stats_and_metadata_for_sel_sims_block.py"
   }
+  File collate_stats_and_metadata_for_sel_sims_block_script = "./collate_stats_and_metadata_for_sel_sims_block.py"
+  Int max_hapset_id_len = 256
+  String hapsets_component_stats_h5_fname = inp.out_fnames_prefix + ".all_component_stats.h5"
+  String hapsets_metadata_tsv_gz_fname = inp.out_fnames_prefix + ".hapsets_metadata.tsv.gz"
   #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
   #Int disk_size_max_gb = 4096
   #Int disk_size_capped_gb = if disk_size_gb < disk_size_max_gb then disk_size_gb else disk_size_max_gb
   command <<<
     set -ex -o pipefail
 
-    python3 "~{collate_stats_and_metadata_for_sel_sims_block_script}" --input-json "~{write_json(inp)}" 
+    python3 "~{collate_stats_and_metadata_for_sel_sims_block_script}" --input-json "~{write_json(inp)}" \
+       --max-hapset-id-len ~{max_hapset_id_len} --hapsets-component-stats-h5-fname "~{hapsets_component_stats_h5_fname}" \
+       --hapsets-metadata-tsv-gz-fname "~{hapsets_metadata_tsv_gz_fname}"
   >>>
   output {
-    File hapsets_component_stats_h5 = inp.out_fnames_prefix + ".all_component_stats.h5"
+    File hapsets_component_stats_h5 = hapsets_component_stats_h5_fname
+    File hapsets_metadata_tsv_gz = hapsets_metadata_tsv_gz_fname
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
