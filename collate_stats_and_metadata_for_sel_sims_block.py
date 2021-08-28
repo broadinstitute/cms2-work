@@ -421,15 +421,16 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
     pd.set_option('io.hdf.default_format','table')
     with pd.HDFStore(inps['out_fnames_prefix']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
         for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
-            hapset_replica_info = _json_loadf(hapset_replica_info_json)
-            hapset_replica_info.update(hapset_id=hapset_id)
-            hapset_metadata_records.append(hapset_replica_info)
-
             hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
             hapset_id = hapset_compstats['hapset_id'].iat[0]
             hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
             #hapset_dfs.append(hapset_compstats)
             store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': min_hapset_id_size})
+
+            hapset_replica_info = _json_loadf(hapset_replica_info_json)
+            hapset_replica_info.update(hapset_id=hapset_id)
+            hapset_metadata_records.append(hapset_replica_info)
+
             # hapset_metadata_records.append({'hapset_id': hapset_id,
             #                                 'is_sim': True,
             #                                 'start_pos:': 0,
