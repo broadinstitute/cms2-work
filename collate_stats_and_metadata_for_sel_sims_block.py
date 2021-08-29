@@ -425,7 +425,7 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
         # end: for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos'])
 
         hapsets_metadata = pd.json_normalize(hapset_metadata_records, sep='_').set_index('hapset_id',
-                                                                                         verify_integrity=True).convert_dtypes()
+                                                                                         verify_integrity=True).infer_objects()
         try:
             store.append('hapset_metadata', hapsets_metadata, **h5_store_append_opts)
         except Exception as e:

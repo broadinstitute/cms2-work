@@ -78,6 +78,7 @@ task compute_two_pop_cms2_components {
   }
 
   File script = "./remodel_components.py"
+  Int threads = 8
   #String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop.pop_id + "__altpop_" + alt_pop.pop_id
 
   #String xpehh_out_fname = out_basename + ".xpehh.out"
@@ -91,7 +92,7 @@ task compute_two_pop_cms2_components {
 
     python3 "~{script}" --hapsets "@~{write_lines(hapsets)}" \
         --sel-pop "~{sel_pop.pop_id}" --alt-pop "~{alt_pop.pop_id}" \
-        --threads "~{compute_resources.cpus}" --components xpehh fst delDAF --checkpoint-file checkpoint.tar
+        --threads "~{threads}" --components xpehh fst delDAF --checkpoint-file checkpoint.tar
   >>>
 
 # ** outputs
@@ -114,8 +115,10 @@ task compute_two_pop_cms2_components {
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: preemptible
-    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
-    cpu: select_first([compute_resources.cpus, 1])
+    #memory: select_first([compute_resources.mem_gb, 4]) + " GB"
+    memory: "8 GB"
+    #cpu: select_first([compute_resources.cpus, 1])
+    cpu: threads
     disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
     checkpointFile: "checkpoint.tar"
   }
