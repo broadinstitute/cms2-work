@@ -1,8 +1,8 @@
 version 1.0
 
 # * Structs
-import "./structs.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210827-1136-finalize-empirical--56d84fdfcde7a48d67cd2788947a165fdacebca1/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210827-1136-finalize-empirical--56d84fdfcde7a48d67cd2788947a165fdacebca1/tasks.wdl"
 
 # * task cosi2_run_one_sim_block 
 task cosi2_run_one_sim_block {
@@ -43,7 +43,7 @@ task cosi2_run_one_sim_block {
     String       memoryPerBlock = "3 GB"
     Int          preemptible = 3
   }
-  File         taskScript = "./runcosi.py"
+  File         taskScript = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210827-1136-finalize-empirical/56d84fdfcde7a48d67cd2788947a165fdacebca1/runcosi.py"
 
   String  cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
   String tpedPrefix = "tpeds__${simBlockId}"
@@ -87,7 +87,7 @@ task get_pops_info {
     Array[File] paramFiles_selection
 
   }
-  File get_pops_info_script = "./get_pops_info.py"
+  File get_pops_info_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210827-1136-finalize-empirical/56d84fdfcde7a48d67cd2788947a165fdacebca1/get_pops_info.py"
   String modelId = "model_"+basename(paramFile_demographic_model, ".par")
   String pops_info_fname = modelId + ".pops_info.json"
   command <<<
