@@ -429,8 +429,8 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
         # make sure columns are not of mixed object types
         for col, dtyp in zip(hapsets_metadata.columns,  hapsets_metadata.dtypes):
             if str(dtyp) == 'object':
-               value_types = set([ for idx, val in hapsets_metadata[col]])
-               if len(value_types) > 2:
+               value_types = set([val for idx, val in hapsets_metadata[col]])
+               if len(value_types) > 1:
                    _log.warning(f'COLUMN {col=} has value types {value_types=}')
                #hapsets_metadata[col] = hapsets_metadata[col].astype(str)
 
