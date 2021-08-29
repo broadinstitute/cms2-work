@@ -424,13 +424,18 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
             hapset_metadata_records.append(hapset_replica_info)
         # end: for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos'])
 
-        hapsets_metadata = pd.json_normalize(hapset_metadata_records, sep='_').set_index('hapset_id',
-                                                                                         verify_integrity=True)
+        hapsets_metadata = pd.json_normalize(hapset_metadata_records, sep='_')
 
         # make sure columns are not of mixed object types
         for col, dtyp in zip(hapsets_metadata.columns,  hapsets_metadata.dtypes):
             if str(dtyp) == 'object':
-               hapsets_metadata[col] = hapsets_metadata[col].astype(str)
+               value_types = set([ for idx, val in hapsets_metadata[col]])
+               if len(value_types) > 2:
+                   _log.warning(f'COLUMN {col=} has value types {value_types=}')
+               #hapsets_metadata[col] = hapsets_metadata[col].astype(str)
+
+        hapset_metadata = set_index('hapset_id', verify_integrity=True)
+
         try:
             store.append('hapset_metadata', hapsets_metadata, **h5_store_append_opts)
         except Exception as e:
