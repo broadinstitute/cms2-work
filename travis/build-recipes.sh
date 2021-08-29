@@ -7,8 +7,8 @@ set -eu -o pipefail -x
 # source ~/.config/bioconda/activate
 # bioconda-utils build --docker --mulled-test --packages selscan
 # cd ..
-ls -lR /tmp/miniconda/miniconda/conda-bld
-cp -prv /tmp/miniconda/miniconda/conda-bld .
+#ls -lR /tmp/miniconda/miniconda/conda-bld
+#cp -prv /tmp/miniconda/miniconda/conda-bld .
 
 docker login -u="${QUAY_IO_USER}" -p="${QUAY_IO_PW}" quay.io
 
