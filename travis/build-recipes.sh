@@ -12,7 +12,8 @@ set -eu -o pipefail -x
 
 docker login -u="${QUAY_IO_USER}" -p="${QUAY_IO_PW}" quay.io
 
-DOCKER_TAG="${TRAVIS_BRANCH}--${TRAVIS_COMMIT}"
+GIT_DESCRIBE=$(git describe --always --long --abbrev=40)
+DOCKER_TAG="${TRAVIS_BRANCH}--${GIT_DESCRIBE}"
 
 docker build -t quay.io/${QUAY_IO_USER}/cms:${DOCKER_TAG} .
 docker push quay.io/${QUAY_IO_USER}/cms:${DOCKER_TAG}
