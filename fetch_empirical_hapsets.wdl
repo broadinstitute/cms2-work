@@ -1,7 +1,7 @@
 version 1.0
 
-import "./structs.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210827-1136-finalize-empirical--7e97ee3ac788e46a97f48e01395bedb5d4cb5f2b/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210827-1136-finalize-empirical--7e97ee3ac788e46a97f48e01395bedb5d4cb5f2b/tasks.wdl"
 
 workflow fetch_empirical_hapsets_wf {
   input {
