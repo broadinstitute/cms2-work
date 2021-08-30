@@ -409,7 +409,7 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
 
     pd.set_option('io.hdf.default_format','table')
     h5_fname = args.hapsets_component_stats_h5_fname
-    h5_store_append_opts = dict(min_itemsize={'hapset_id': args.max_hapset_id_len})
+
     with pd.HDFStore(h5_fname, mode='w', complevel=9, fletcher32=True) as store:
         for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
             hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
@@ -417,7 +417,7 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
             chk(len(hapset_id) < args.max_hapset_id_len, f'Hapset id too long: {hapset_id}')
             hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
             #hapset_dfs.append(hapset_compstats)
-            store.append('hapset_data', hapset_compstats, **h5_store_append_opts)
+            store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': args.max_hapset_id_len})
 
             hapset_replica_info = _json_loadf(hapset_replica_info_json)
             hapset_replica_info.update(hapset_id=hapset_id)
@@ -429,15 +429,17 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
         # make sure columns are not of mixed object types
         for col, dtyp in zip(hapsets_metadata.columns,  hapsets_metadata.dtypes):
             if str(dtyp) == 'object':
-               value_types = set([val for idx, val in hapsets_metadata[col]])
-               if len(value_types) > 1:
-                   _log.warning(f'COLUMN {col=} has value types {value_types=}')
-               #hapsets_metadata[col] = hapsets_metadata[col].astype(str)
+               value_types = set([type(val) for idx, val in hapsets_metadata[col].iteritems()])
+               _log.warning(f'COLUMN {col=} has value types {value_types=}')
+               hapsets_metadata[col] = hapsets_metadata[col].astype(str)
+               value_types = set([type(val) for idx, val in hapsets_metadata[col].iteritems()])
+               _log.warning(f'COLUMN {col=} now has value types {value_types=}')
 
-        hapset_metadata = set_index('hapset_id', verify_integrity=True)
+        hapsets_metadata = hapsets_metadata.set_index('hapset_id', verify_integrity=True)
 
         try:
-            store.append('hapset_metadata', hapsets_metadata, **h5_store_append_opts)
+            store.put('hapset_metadata', hapsets_metadata.infer_objects(), dropna=False,
+                      min_itemsize={'index': args.max_hapset_id_len})
         except Exception as e:
             _log.warning(f'Could not save hapset metadata to h5: {e}')
             traceback.print_exc()
@@ -445,7 +447,6 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
             
     metadata_fname = args.hapsets_metadata_tsv_gz_fname
     hapsets_metadata.to_csv(metadata_fname, na_rep='nan', sep='\t')
-    execute(f'touch {h5_fname}')
 # end: def collate_stats_and_metadata_for_all_sel_sims(args)
 
 if __name__=='__main__':
