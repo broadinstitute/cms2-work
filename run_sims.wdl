@@ -45,6 +45,7 @@ task cosi2_run_one_sim_block {
   }
   File         taskScript = "./runcosi.py"
 
+  # cosi2_docker: currently defined by misc/cms2-work-archive/dockstore-tool-cosi2/Dockerfile
   String  cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
   String tpedPrefix = "tpeds__${simBlockId}"
 
