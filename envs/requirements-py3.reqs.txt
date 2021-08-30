@@ -1,0 +1,4 @@
+#filechunkio
+#snakemake
+google-cloud-storage
+#pysftp

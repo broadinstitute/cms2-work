@@ -158,7 +158,7 @@ def run_one_replica(replicaNum, args, paramFile):
             for line in paramFileHandle:
                 if line.startswith('pop_define'):
                     pop_define, pop_id, pop_name = line.strip().split()
-                    pop_ids.append(int(pop_id))
+                    pop_ids.append(pop_id)
                     pop_names.append(pop_name)
         return pop_ids, pop_names
 
@@ -189,7 +189,7 @@ def run_one_replica(replicaNum, args, paramFile):
         result = copy.deepcopy(no_sweep)
         try:
             simNum, selPop, selGen, selBegPop, selBegGen, selCoeff, selFreq = map(float, slurp_file(sweepInfoFile).strip().split())
-            result = dict(selPop=int(selPop), selGen=selGen, selBegPop=int(selBegPop),
+            result = dict(selPop=str(int(selPop)), selGen=selGen, selBegPop=str(int(selBegPop)),
                           selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
         except Exception as e:
             _log.warning(f'Could not load sweep info file {sweepInfoFile}: {e}')
@@ -208,7 +208,7 @@ def run_one_replica(replicaNum, args, paramFile):
                                       popIds=popIds, popNames=popNames,
                                       sweepInfo=copy.deepcopy(no_sweep)))
     try:
-        _run(cosi2_cmd, timeout=args.repTimeoutSeconds)
+        _run(cosi2_cmd, timeout=args.repAttemptTimeoutSeconds)
         # TODO: parse param file for list of pops, and check that we get all the files.
         sweepInfo = _load_sweep_info()
         replicaInfo['modelInfo'].update(sweepInfo=sweepInfo)
@@ -237,6 +237,23 @@ def run_one_replica(replicaNum, args, paramFile):
     return replicaInfo
 # end: def run_one_replica(replicaNum, args, paramFile)
 
+# * run_one_replica_with_retries
+def run_one_replica_with_retries(replicaNum, args, paramFile):
+    rep_beg_time = time.time()
+    attempt_num = 0
+    while True:
+        attempt_num += 1
+        _log.debug(f'run_one_replica: {args.blockNum} {replicaNum=} {attempt_num=}')
+        replicaInfo = run_one_replica(replicaNum, args, paramFile)
+        if replicaInfo['succeeded']:
+            replicaInfo['n_attempts'] = attempt_num
+            replicaInfo.update(durationSeconds=round(time.time()-rep_beg_time, 2))
+            return replicaInfo
+        else:
+            if time.time() - rep_beg_time > args.repTimeoutSeconds:
+                raise RuntimeError(f'{args.repTimeoutSeconds=} exceeded')
+            time.sleep(1)
+
 # * main
 
 def parse_args():
@@ -252,6 +269,7 @@ def parse_args():
     parser.add_argument('--numRepsPerBlock', type=int, required=True, help='number of replicas in the block')
     parser.add_argument('--maxAttempts', type=int, default=10000000,
                         help='max # of times to try simulating forward frequency trajectory before giving up')
+    parser.add_argument('--repAttemptTimeoutSeconds', type=int, required=True, help='max time per replica attempt')
     parser.add_argument('--repTimeoutSeconds', type=int, required=True, help='max time per replica')
 
     parser.add_argument('--tpedPrefix', required=True, help='prefix for tpeds')
@@ -284,7 +302,7 @@ def do_main():
         executor = exit_stack.enter_context(concurrent.futures.ThreadPoolExecutor(max_workers=min(args.numRepsPerBlock,
                                                                                                   available_cpu_count())))
         paramFileCombined=constructParamFileCombined(paramFileCommon=args.paramFileCommon, paramFileVarying=args.paramFile)
-        replicaInfos = list(executor.map(functools.partial(run_one_replica, args=args, paramFile=paramFileCombined),
+        replicaInfos = list(executor.map(functools.partial(run_one_replica_with_retries, args=args, paramFile=paramFileCombined),
                                          range(args.numRepsPerBlock)))
 
     if args.outJson:

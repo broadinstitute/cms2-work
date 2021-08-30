@@ -1,0 +1,7 @@
+version: 1.2
+workflows:
+  - name: cms2_main
+    subclass: WDL
+    primaryDescriptorPath: /cms2_main.wdl
+    testParameterFiles:
+      - test.02.wdl.json

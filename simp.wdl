@@ -15,6 +15,8 @@ task example {
   #Boolean test_bool = ([pfx_val] == [pfx_val, pfx_val])
   Boolean test_bool2 = (pops1.val == pops2.val)
   command <<<
+    set -ex -o pipefail
+
     echo "fname is ~{out_fname}"
     echo "hi there" > "~{out_fname}"
     echo '{"val": {"Left": 1, "Right": 2}}' > npair.json

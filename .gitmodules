@@ -1,14 +1,14 @@
 [submodule "fiss"]
 	path = terra/fiss
 	url = ../fiss.git
-	branch = is-fix-proj-list-output
 [submodule "cromwell-client"]
 	path = cromwell-client
 	url = ../cromwell-client.git
 	branch = is-run-cromwell-directly
 [submodule "cms2-work"]
-	path = cms2-work
+	path = misc/cms2-work-archive
 	url = ../cms2-work.git
+	branch = cms2-work-archive
 [submodule "docker/cms2-docker-component-stats"]
 	path = docker/cms2-docker-component-stats
 	url = ../cms2-docker-component-stats

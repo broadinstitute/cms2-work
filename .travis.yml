@@ -13,22 +13,15 @@ services:
 env:
 #  - LANGUAGE=cwl
   global:
+    - PYTHONIOENCODING=UTF8
     - LANGUAGE=wdl
     # GH_TOKEN
-    - secure: "R1YJ8rUhLtu6pTuvIhKKCVLrxlBocdD4Ckdxgw0DbjqXkQT6WIWhCwrd8PFlubuEmjiQz2IoxdEDlosEceQveoLR66SnJq9iLuaxq9jI7cFfr/bqGUgCEyWiSk97V2YH3LFYf8RiUrfTPL1YfoucWplqZL4kYWOPnl8dZI51apWuJzgZggyIfXTdQvllZYaB7u431zEj5AMJ9LD/SEZJUcI/FgM1BczobHby8reYtgUmP4Oaz0kN6hOwp4urh7TIu+vtCXBBamIOq6wZvvFRd6RxMEfN0c44oWTcwbh5QPPErq6iWLfBDim/LctC2d67U8NbmcfqoEs01qGYNFR6o8U7+8Rpx78vGLtr3d8yAZ0mgwlEtulAIT0DS+h2sRBDgxZTN8PoKvgCEGA35GysvcaPy7gcKU72CPGAUDo/QlnFtVtt2ruJ5YIURgF+v+Mbu6wc0iXkN0LFziQ9xWgfGmyqtSvvppQiDIDso0YXkSRn1cIGFWBZHKGRBdlfzCOtsTS6LTqvTKih1CMZySYhvs0y/5cM9LqCxZ886xbMYKS6ieW3FaK40dYtW3kKDTWJTZOo645Z0EmAaKGfav3lm+u8SJzbcnMH2oUZxE35dZL38sQ6fLvTtZRMAUdiUq0hVhit4fNY4eXD5lhIVPUQSekk8i5rNSwV/MGprDVHjVo="
-#  - LANGUAGE=nfl
+    - secure: "TZgdT3wn1oJ8TJhlTBI1kZ65/MxHRViHiQj9sqDZuGJrp3D86Kb7LZsa6VxQz4GIeqAWZASBKJLD7K5x52VEzJpW80VkrTN7gh4DpCb/VaG2ymNiF9P1TP0AEVeXzdyaQ2ZyaKTDaDTwSA3yRHGSiJSlm2bPfKYT87O+d1YtvShfKmMecBN7U6ph8hqch9y79KAmGjsquX/VN61F+TIhMzu8OrQ6j1Hcu3MX/wWLA71vXO6QrwIHS1mz2nQfCkQVGJQ2gymlE2ppop17j9aIdcBn2K5gpW737bWMMh5Ki5ckWvoSFkxySryZ+ylkfmPOPWBE/FZc0kX4qJ3GCTE5PkEgosbRF723u82xaYLplQQClQwLhfmwhzS8+4AXol20tjDaXma5koV+C3HJq3icvZytBfnJoSi6KDLgXbl/pxddJ4+XR7NDpbB64NT28RMmAwFyTYSzFiacFtRMusE8BtLNosWrjfCdmKm03fOMpK00y4mLiQGBApRJ4gfadDiYdVnYNnfrjryLdc/pMPdF1RBXuBBObG6XxwrwE4nRpTbOJO8Ee/szt8f1TbXR/sHdeDn/Yi/71XlqJdG/vmRmU/5Ew9MX+BkiYK/+cCzLz++G2GvIP1gox2IykKz/9t+rk77i/KIcAdJjAg3Bq3vtkuXSPd2GWRf22hND9tOw0EQ="
 
 branches:
   except:
     - /.*-staging$/
     - /^staging-.*/
-
-# notifications:
-#   slack: 
-#     on_success: never
-#     on_failure: always
-#     rooms:
-#       - oicr:S9k4EowgQv9AnbCfEZHSzCsg
 
 stages:
   - main
@@ -45,25 +38,13 @@ jobs:
       stage: main
       python: "3.8"
       before_install:
-        - openssl aes-256-cbc -K $encrypted_833b0d9c0b92_key -iv $encrypted_833b0d9c0b92_iv -in terra/gcloud-config.tar.gz.enc -out terra/gcloud-config.tar.gz -d
-        - sudo apt-get update
+        - openssl aes-256-cbc -K $encrypted_cd0220f97c1a_key -iv $encrypted_cd0220f97c1a_iv -in terra/gcloud-config.tar.gz.enc -out terra/gcloud-config.tar.gz -d
+        - sudo apt-get update || true
         - sudo apt-get -y install openjdk-8-jre-headless
       install:
-#        - pip3 -q install miniwdl
-        - pip3 -q install firecloud
+        - pip3 -q install firecloud PyYAML
       script:
         - set -e
         - ./travis/test-wdl.sh
         - tar -xzf terra/gcloud-config.tar.gz -C $HOME
-        - python3 travis/deploy-to-terra.py
-
-#language: java
-#jdk: 
-#  - openjdk11
-
-#before_install:
-#  - docker build -t quay.io/ilya_broad/dockstore-tool-cosi2 .
-#  - pyenv global 3.6
-
-#install: 
-#  - bash install.sh
+        - ./terra/terra_utils.py deploy_to_terra
