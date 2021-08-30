@@ -125,11 +125,7 @@ struct NormalizeAndCollateBlockInput {
     File norm_bins_delihh
     Array[File]+ norm_bins_xpehh
 
-    Int n_bins_ihs
-    Int n_bins_nsl
-    Int n_bins_ihh12
-    Int n_bins_delihh
-    Int n_bins_xpehh
+    ComponentComputationParams component_computation_params
 
     Pop one_pop_components_sel_pop_used
     Array[Pop]+ two_pop_components_sel_pop_used
