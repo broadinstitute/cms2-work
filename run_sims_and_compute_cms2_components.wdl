@@ -121,30 +121,11 @@ workflow run_sims_and_compute_cms2_components_wf {
     #Array[File] region_haps_tar_gzs
     #Array[File] neutral_region_haps_tar_gzs
 
-    Int n_bins_ihs = 20
-    Int n_bins_nsl = 20
-    Int n_bins_delihh = 20
+    #Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
 
-    Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
+    ComponentComputationParams component_computation_params
 
     Int hapset_block_size = 2
-    
-    Int threads = 1
-    Int mem_base_gb = 0
-    Int mem_per_thread_gb = 1
-    Int local_disk_gb = 50
-
-    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
-    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
-
   }
 
 
@@ -181,15 +162,8 @@ workflow run_sims_and_compute_cms2_components_wf {
     pops_info=sims_wf.simulated_hapsets_bundle.pops_info,
     neutral_hapsets=sims_wf.simulated_hapsets_bundle.neutral_hapsets,
 
-    n_bins_ihs=n_bins_ihs,
-    n_bins_nsl=n_bins_nsl,
-    n_bins_delihh=n_bins_delihh,
-
-    hapset_block_size=hapset_block_size,
-
-    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
-    preemptible=preemptible
+    component_computation_params=component_computation_params,
+    hapset_block_size=hapset_block_size
   }
 
 # ** Component stats for selection sims
@@ -199,9 +173,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     selection_sims=sims_wf.simulated_hapsets_bundle.selection_hapsets,
     pops_info=sims_wf.simulated_hapsets_bundle.pops_info,
 
-    n_bins_ihs=n_bins_ihs,
-    n_bins_nsl=n_bins_nsl,
-    n_bins_delihh=n_bins_delihh,
+    component_computation_params=component_computation_params,
 
     norm_bins_ihs=compute_normalization_stats_wf.norm_bins_ihs,
     norm_bins_nsl=compute_normalization_stats_wf.norm_bins_nsl,
@@ -211,11 +183,7 @@ workflow run_sims_and_compute_cms2_components_wf {
 
     one_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.one_pop_bin_stats_sel_pop_used,
     two_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_sel_pop_used,
-    two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used,
-
-    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
-    preemptible=preemptible
+    two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used
   }
 
 # ** Workflow outputs

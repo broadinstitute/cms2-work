@@ -34,6 +34,12 @@ struct PopsInfo {
     # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
   }
 
+struct ComponentComputationParams {
+    Int n_bins_ihs
+    Int n_bins_nsl
+    Int n_bins_delihh
+}
+
 struct SimulatedHapsetsDef {
     File paramFile_demographic_model
     File paramFile_neutral

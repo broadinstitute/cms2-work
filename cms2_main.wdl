@@ -59,20 +59,13 @@ workflow cms2_main {
 
     Int hapset_block_size = 2
 
-    Int n_bins = 20
-
-    Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
-
-    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
+    ComponentComputationParams component_computation_params = object {
+      n_bins_ihs: 20,
+      n_bins_nsl: 20,
+      n_bins_delihh: 20
     }
-    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
+
+    #Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
   }
 
   call run_sims_and_compute_cms2_components.run_sims_and_compute_cms2_components_wf as main_call {
@@ -84,20 +77,15 @@ workflow cms2_main {
     nreps_neutral=nreps_neutral,
     nreps=nreps,
 
-    n_bins_ihs=n_bins,
-    n_bins_nsl=n_bins,
-    n_bins_delihh=n_bins,
+    component_computation_params=component_computation_params,
 
     numRepsPerBlock=numRepsPerBlock,
     numCpusPerBlock=numCpusPerBlock,
     memoryPerBlock=memoryPerBlock,
 
-    include_components=include_components,
+    #include_components=include_components,
 
-    hapset_block_size=hapset_block_size,
-
-    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
+    hapset_block_size=hapset_block_size
   }
 
 # ** Workflow outputs

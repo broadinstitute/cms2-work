@@ -6,13 +6,9 @@ workflow component_stats_for_sel_sims_wf {
   input {
     String out_fnames_prefix
     Array[Array[Array[File]+]+] selection_sims
-    #File compute_components_script = "./remodel_components.py"
-    #File normalize_and_collate_script = "./norm_and_collate.py"
     PopsInfo pops_info
 
-    Int n_bins_ihs = 20
-    Int n_bins_nsl = 20
-    Int n_bins_delihh = 20
+    ComponentComputationParams component_computation_params
 
     Array[File]+ norm_bins_ihs
     Array[File]+ norm_bins_nsl
@@ -23,45 +19,16 @@ workflow component_stats_for_sel_sims_wf {
     Array[Pop]+ one_pop_bin_stats_sel_pop_used
     Array[Array[Pop]+]+ two_pop_bin_stats_sel_pop_used
     Array[Array[Pop]+]+ two_pop_bin_stats_alt_pop_used
-
-    Int threads = 1
-    Int mem_base_gb = 0
-    Int mem_per_thread_gb = 1
-    Int local_disk_gb = 50
-    String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    Int preemptible = 3
-
-    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
-    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
   }
-
-  Int n_bins_ihh12 = 1
-  Int n_bins_xpehh = 1
 
   scatter(sel_scen_idx in range(length(selection_sims))) {
     Pop sel_pop = pops_info.sel_pops[sel_scen_idx]
     Int sel_pop_idx = pops_info.pop_id_to_idx[sel_pop.pop_id]
     scatter(sel_blk_idx in range(length(selection_sims[sel_scen_idx]))) {
-    # if (sel_sim.left.succeeded  &&  (sel_sim.left.modelInfo.sweepInfo.selPop == sel_pop)) {
-    #   ReplicaInfo sel_sim_replicaInfo = sel_sim.left
-    #   Pop sel_pop = object { pop_id: sel_sim_replicaInfo.modelInfo.sweepInfo.selPop }
-    #   File sel_sim_region_haps_tar_gz = sel_sim.right
-    #   String sel_sim_replica_id_str = modelId + "__selpop_" + sel_pop.pop_id + "__rep_" + sel_sim_replicaInfo.replicaId.replicaNumGlobal
       call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
-	hapsets=selection_sims[sel_scen_idx][sel_blk_idx],
-
-	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
-	preemptible=preemptible
+	hapsets=selection_sims[sel_scen_idx][sel_blk_idx]
       }
       scatter(alt_pop_idx in range(length(pops_info.pop_ids))) {
 	if ((alt_pop_idx != sel_pop_idx)  &&  pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx]) {
@@ -69,10 +36,7 @@ workflow component_stats_for_sel_sims_wf {
 	    input:
 	    sel_pop=sel_pop,
 	    alt_pop=pops_info.pops[alt_pop_idx],
-	    hapsets=selection_sims[sel_scen_idx][sel_blk_idx],
-
-	    compute_resources=compute_resources_for_compute_two_pop_cms2_components,
-	    preemptible=preemptible
+	    hapsets=selection_sims[sel_scen_idx][sel_blk_idx]
 	  }
 	}
       }  # for each comparison pop
@@ -80,10 +44,7 @@ workflow component_stats_for_sel_sims_wf {
       call tasks.normalize_and_collate_block {
 	input:
 	  inp = object {  # struct NormalizeAndCollateBlockInput
-	    #replica_info: sel_sim_replicaInfo,
-	    #replica_id_str: sel_sim_replica_id_str,
 	    pop_ids: pops_info.pop_ids,
-	    #pop_pairs: pops_info.pop_pairs,
 	    sel_pop: sel_pop,
 
 	    replica_info: compute_one_pop_cms2_components_for_selection.replicaInfos,
@@ -101,11 +62,9 @@ workflow component_stats_for_sel_sims_wf {
 	    two_pop_components_sel_pop_used: select_all(compute_two_pop_cms2_components_for_selection.sel_pop_used),
 	    two_pop_components_alt_pop_used: select_all(compute_two_pop_cms2_components_for_selection.alt_pop_used),
 
-	    n_bins_ihs: n_bins_ihs,
-	    n_bins_nsl: n_bins_nsl,
-	    n_bins_ihh12: n_bins_ihh12,
-	    n_bins_delihh: n_bins_delihh,
-	    n_bins_xpehh: n_bins_xpehh,
+	    n_bins_ihs: component_computation_params.n_bins_ihs,
+	    n_bins_nsl: component_computation_params.n_bins_nsl,
+	    n_bins_delihh: component_computation_params.n_bins_delihh,
 
 	    norm_bins_ihs: norm_bins_ihs[sel_pop_idx],
 	    norm_bins_nsl: norm_bins_nsl[sel_pop_idx],

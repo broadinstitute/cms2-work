@@ -19,39 +19,15 @@ workflow compute_normalization_stats_wf {
     
   }
 
-
   input {
     String out_fnames_prefix
     PopsInfo pops_info
     Array[File]+ neutral_hapsets
 
-    Int n_bins_ihs = 20
-    Int n_bins_nsl = 20
-    Int n_bins_delihh = 20
+    ComponentComputationParams component_computation_params
 
     Int hapset_block_size = 2
-
-    Int threads = 1
-    Int mem_base_gb = 0
-    Int mem_per_thread_gb = 1
-    Int local_disk_gb = 50
-
-    Int preemptible = 3
-
-    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
-    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
   }  # end: input
-
-  Int n_bins_ihh12 = 1
-  Int n_bins_xpehh = 1
 
   Array[Pop]+ pops = pops_info.pops
   Int n_pops = length(pops)
@@ -69,10 +45,7 @@ workflow compute_normalization_stats_wf {
       call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
 	input:
 	sel_pop=sel_pop,
-	hapsets=hapsets_block,
-
-	compute_resources=compute_resources_for_compute_one_pop_cms2_components,
-	preemptible=preemptible
+	hapsets=hapsets_block
       }
     }
 
@@ -87,16 +60,9 @@ workflow compute_normalization_stats_wf {
       ihh12_out=flatten(compute_one_pop_cms2_components_for_neutral.ihh12),
       delihh_out=flatten(compute_one_pop_cms2_components_for_neutral.delihh),
 
-      n_bins_ihs=n_bins_ihs,
-      n_bins_nsl=n_bins_nsl,
-      n_bins_ihh12=n_bins_ihh12,
-      n_bins_delihh=n_bins_delihh,
-
-      threads=1,
-      mem_base_gb=64,
-      mem_per_thread_gb=0,
-      local_disk_gb=local_disk_gb,
-      preemptible=preemptible
+      n_bins_ihs=component_computation_params.n_bins_ihs,
+      n_bins_nsl=component_computation_params.n_bins_nsl,
+      n_bins_delihh=component_computation_params.n_bins_delihh
     }  # end: call tasks.compute_one_pop_bin_stats_for_normalization
   }  # end: scatter(sel_pop in pops)
 
@@ -110,10 +76,7 @@ workflow compute_normalization_stats_wf {
 	     input:
 	     sel_pop=pops[sel_pop_idx],
 	     alt_pop=pops[alt_pop_idx],
-	     hapsets=hapsets_block,
-	     
-	     compute_resources=compute_resources_for_compute_two_pop_cms2_components,
-	     preemptible=preemptible
+	     hapsets=hapsets_block
 	   }
          }
 
@@ -124,14 +87,6 @@ workflow compute_normalization_stats_wf {
 	   alt_pop=pops[alt_pop_idx],
 
 	   xpehh_out=flatten(compute_two_pop_cms2_components_for_neutral.xpehh),
-
-	   n_bins_xpehh=n_bins_xpehh,
-
-	   threads=1,
-	   mem_base_gb=64,
-	   mem_per_thread_gb=0,
-	   local_disk_gb=local_disk_gb,
-	   preemptible=preemptible
 	 }
        }
      }
@@ -149,12 +104,12 @@ workflow compute_normalization_stats_wf {
   	Pop norm_bins_xpehh_sel_pop_used_maybe = 
         select_first([
         compute_two_pop_bin_stats_for_normalization.sel_pop_used[sel_pop_idx][alt_pop_idx],
-        compute_two_pop_bin_stats_for_normalization.alt_pop_used[alt_pop_idx][sel_pop_idx]
+        compute_two_pop_bin_stats_for_normalization.flip_pops_sel_pop_used[alt_pop_idx][sel_pop_idx]
         ])
   	Pop norm_bins_xpehh_alt_pop_used_maybe = 
         select_first([
         compute_two_pop_bin_stats_for_normalization.alt_pop_used[sel_pop_idx][alt_pop_idx],
-        compute_two_pop_bin_stats_for_normalization.sel_pop_used[alt_pop_idx][sel_pop_idx]
+        compute_two_pop_bin_stats_for_normalization.flip_pops_alt_pop_used[alt_pop_idx][sel_pop_idx]
         ])
       }
     }

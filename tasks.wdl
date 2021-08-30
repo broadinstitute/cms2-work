@@ -10,25 +10,14 @@ task compute_one_pop_cms2_components {
   input {
     Array[File]+ hapsets
     Pop sel_pop
-
-    Int preemptible
-    ComputeResources compute_resources
   }
-  File script = "./remodel_components.py"
-
-  #String out_basename = basename(region_haps_tar_gz, ".tar.gz") + "__selpop_" + sel_pop.pop_id
-
-  # String ihs_out_fname = out_basename + ".ihs.out"
-  # String nsl_out_fname = out_basename + ".nsl.out"
-  # String ihh12_out_fname = out_basename + ".ihh12.out"
-  # String delihh_out_fname = out_basename + ".delihh.out"
-  # String derFreq_out_fname = out_basename + ".derFreq.tsv"
+  File script = "./compute_cms2_components.py"
 
   command <<<
     set -ex -o pipefail
 
     python3 "~{script}" --hapsets @~{write_lines(hapsets)} \
-      --sel-pop ~{sel_pop.pop_id} --threads ~{compute_resources.cpus} --components ihs nsl ihh12 delihh derFreq \
+      --sel-pop ~{sel_pop.pop_id} --components ihs nsl ihh12 delihh derFreq \
       --checkpoint-file "checkpoint.tar"
   >>>
 
@@ -51,10 +40,10 @@ task compute_one_pop_cms2_components {
 
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: select_first([compute_resources.mem_gb, 4]) + " GB"
-    cpu: select_first([compute_resources.cpus, 1])
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
+    preemptible: 3
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 50 HDD"
     checkpointFile: "checkpoint.tar"
   }
 }
@@ -66,25 +55,12 @@ task compute_two_pop_cms2_components {
   }
 # ** inputs
   input {
-#    ReplicaInfo replicaInfo
     Array[File]+ hapsets
     Pop sel_pop
     Pop alt_pop
-
-    #File? xpehh_bins
-
-    ComputeResources compute_resources
-    Int preemptible
   }
 
-  File script = "./remodel_components.py"
-  Int threads = 8
-  #String out_basename = basename(region_haps_tar_gz) + "__selpop_" + sel_pop.pop_id + "__altpop_" + alt_pop.pop_id
-
-  #String xpehh_out_fname = out_basename + ".xpehh.out"
-  #String xpehh_log_fname = out_basename + ".xpehh.log"
-
-  #String fst_and_delDAF_out_fname = out_basename + ".fst_and_delDAF.tsv"
+  File script = "./compute_cms2_components.py"
 
 # ** command
   command <<<
@@ -92,7 +68,7 @@ task compute_two_pop_cms2_components {
 
     python3 "~{script}" --hapsets "@~{write_lines(hapsets)}" \
         --sel-pop "~{sel_pop.pop_id}" --alt-pop "~{alt_pop.pop_id}" \
-        --threads "~{threads}" --components xpehh fst delDAF --checkpoint-file checkpoint.tar
+        --components xpehh fst delDAF --checkpoint-file checkpoint.tar
   >>>
 
 # ** outputs
@@ -114,12 +90,10 @@ task compute_two_pop_cms2_components {
 # ** runtime
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    #memory: select_first([compute_resources.mem_gb, 4]) + " GB"
+    preemptible: 3
     memory: "8 GB"
-    #cpu: select_first([compute_resources.cpus, 1])
-    cpu: threads
-    disks: "local-disk " + select_first([compute_resources.local_storage_gb, 50]) + " HDD"
+    cpu: 8
+    disks: "local-disk 50 HDD"
     checkpointFile: "checkpoint.tar"
   }
 }
@@ -140,15 +114,9 @@ task compute_one_pop_bin_stats_for_normalization {
 
     Int n_bins_ihs
     Int n_bins_nsl
-    Int n_bins_ihh12
     Int n_bins_delihh
-
-    Int threads
-    Int mem_base_gb
-    Int mem_per_thread_gb
-    Int local_disk_gb
-    Int preemptible
   }
+  Int n_bins_ihh12 = 1
 
   command <<<
     set -ex -o pipefail
@@ -177,10 +145,10 @@ task compute_one_pop_bin_stats_for_normalization {
 
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
-    cpu: threads
-    disks: "local-disk " + local_disk_gb + " HDD"
+    preemptible: 2
+    memory: "8 GB"
+    cpu: 1
+    disks: "local-disk 50 HDD"
   }
 }
 
@@ -194,14 +162,8 @@ task compute_two_pop_bin_stats_for_normalization {
     Pop sel_pop
     Pop alt_pop
     Array[File]+ xpehh_out
-    Int n_bins_xpehh
-
-    Int threads
-    Int mem_base_gb
-    Int mem_per_thread_gb
-    Int local_disk_gb
-    Int preemptible
   }
+  Int n_bins_xpehh = 1
 
   String norm_bins_xpehh_fname = "${out_fnames_prefix}__selpop_${sel_pop.pop_id}__altpop_${alt_pop.pop_id}.norm_bins_xpehh.dat"
   String norm_bins_xpehh_log_fname = "${out_fnames_prefix}__selpop_${sel_pop.pop_id}__altpop_${alt_pop.pop_id}.norm_bins_xpehh.dat"
@@ -230,14 +192,17 @@ task compute_two_pop_bin_stats_for_normalization {
 
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
+
+    Pop flip_pops_sel_pop_used = alt_pop
+    Pop flip_pops_alt_pop_used = sel_pop
   }
 
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    preemptible: preemptible
-    memory: (mem_base_gb  +  threads * mem_per_thread_gb) + " GB"
-    cpu: threads
-    disks: "local-disk " + local_disk_gb + " HDD"
+    preemptible: 2
+    memory: "8 GB"
+    cpu: 1
+    disks: "local-disk 50 HDD"
   }
 }
 
@@ -251,8 +216,6 @@ task normalize_and_collate_block {
     NormalizeAndCollateBlockInput inp
   }
   File normalize_and_collate_script = "./norm_and_collate_block.py"
-  #String replica_id_str = basename(inp.ihs_out, ".ihs.out")
-  #String normed_collated_stats_fname = replica_id_str + ".normed_and_collated.tsv"
   command <<<
     set -ex -o pipefail
 
@@ -289,9 +252,6 @@ task collate_stats_and_metadata_for_sel_sims_block {
   Int max_hapset_id_len = 256
   String hapsets_component_stats_h5_fname = inp.out_fnames_prefix + ".all_component_stats.h5"
   String hapsets_metadata_tsv_gz_fname = inp.out_fnames_prefix + ".hapsets_metadata.tsv.gz"
-  #Int disk_size_gb = 2*size(inp.sel_normed_and_collated) + size(inp.replica_infos)
-  #Int disk_size_max_gb = 4096
-  #Int disk_size_capped_gb = if disk_size_gb < disk_size_max_gb then disk_size_gb else disk_size_max_gb
   command <<<
     set -ex -o pipefail
 
