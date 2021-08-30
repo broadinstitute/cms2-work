@@ -1,7 +1,7 @@
 version 1.0
 
-import "./structs.wdl"
-import "./run_sims_and_compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210830-1022-validate-empirical-and-clean-up--8c2d62fc3d11f380a636683c7581e6509296491f/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210830-1022-validate-empirical-and-clean-up--8c2d62fc3d11f380a636683c7581e6509296491f/run_sims_and_compute_cms2_components.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow cms2_main {

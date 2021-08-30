@@ -68,9 +68,9 @@ version 1.0
 # Computation of CMS2 component scores
 #
 
-import "./tasks.wdl"
-import "./compute_normalization_stats.wdl"
-import "./component_stats_for_sel_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210830-1022-validate-empirical-and-clean-up--8c2d62fc3d11f380a636683c7581e6509296491f/tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210830-1022-validate-empirical-and-clean-up--8c2d62fc3d11f380a636683c7581e6509296491f/compute_normalization_stats.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210830-1022-validate-empirical-and-clean-up--8c2d62fc3d11f380a636683c7581e6509296491f/component_stats_for_sel_sims.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow compute_cms2_components_wf {
