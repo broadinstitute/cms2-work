@@ -107,10 +107,7 @@ task compute_one_pop_bin_stats_for_normalization {
   input {
     String out_fnames_prefix
     Pop sel_pop
-    Array[File]+ ihs_out
-    Array[File]+ delihh_out
-    Array[File]+ nsl_out
-    Array[File]+ ihh12_out
+    Array[OnePopComponentsRaw]+ one_pop_components_raw
 
     Int n_bins_ihs
     Int n_bins_nsl
@@ -132,15 +129,19 @@ task compute_one_pop_bin_stats_for_normalization {
   >>>
 
   output {
-    File norm_bins_ihs = out_fnames_prefix + ".norm_bins_ihs.dat"
-    File norm_bins_nsl = out_fnames_prefix + ".norm_bins_nsl.dat"
-    File norm_bins_ihh12 = out_fnames_prefix + ".norm_bins_ihh12.dat"
-    File norm_bins_delihh = out_fnames_prefix + ".norm_bins_delihh.dat"
-    File norm_bins_ihs_log = out_fnames_prefix + ".norm_bins_ihs.log"
-    File norm_bins_nsl_log = out_fnames_prefix + ".norm_bins_nsl.log"
-    File norm_bins_ihh12_log = out_fnames_prefix + ".norm_bins_ihh12.log"
-    File norm_bins_delihh_log = out_fnames_prefix + ".norm_bins_delihh.log"
-    Pop sel_pop_used = sel_pop
+    OnePopBinStats one_pop_bin_stats = object {
+      sel_pop: sel_pop,
+      
+      norm_bins_ihs: out_fnames_prefix + ".norm_bins_ihs.dat",
+      norm_bins_nsl: out_fnames_prefix + ".norm_bins_nsl.dat",
+      norm_bins_ihh12: out_fnames_prefix + ".norm_bins_ihh12.dat",
+      norm_bins_delihh: out_fnames_prefix + ".norm_bins_delihh.dat",
+
+      norm_bins_ihs_log: out_fnames_prefix + ".norm_bins_ihs.log",
+      norm_bins_nsl_log: out_fnames_prefix + ".norm_bins_nsl.log",
+      norm_bins_ihh12_log: out_fnames_prefix + ".norm_bins_ihh12.log",
+      norm_bins_delihh_log: out_fnames_prefix + ".norm_bins_delihh.log"
+    }  
   }
 
   runtime {
@@ -184,17 +185,18 @@ task compute_two_pop_bin_stats_for_normalization {
   >>>
 
   output {
-    File norm_bins_xpehh = norm_bins_xpehh_fname
-    File norm_bins_xpehh_log = norm_bins_xpehh_log_fname
-    
-    File norm_bins_flip_pops_xpehh = norm_bins_flip_pops_xpehh_fname
-    File norm_bins_flip_pops_xpehh_log = norm_bins_flip_pops_xpehh_log_fname
-
-    Pop sel_pop_used = sel_pop
-    Pop alt_pop_used = alt_pop
-
-    Pop flip_pops_sel_pop_used = alt_pop
-    Pop flip_pops_alt_pop_used = sel_pop
+    TwoPopBinStats two_pop_bin_stats = object {
+      sel_pop: sel_pop,
+      alt_pop: alt_pop,
+      norm_bins_xpehh: norm_bins_xpehh_fname,
+      norm_bins_xpehh_log: norm_bins_xpehh_log_fname
+    }  
+    TwoPopBinStats two_pop_bin_stats_flipped = object {
+      sel_pop: alt_pop,
+      alt_pop: sel_pop,
+      norm_bins_xpehh: norm_bins_flip_pops_xpehh_fname,
+      norm_bins_xpehh_log: norm_bins_flip_pops_xpehh_log_fname
+    }  
   }
 
   runtime {

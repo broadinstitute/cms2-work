@@ -128,11 +128,10 @@ workflow compute_cms2_components_wf {
     norm_bins_nsl=compute_normalization_stats_wf.norm_bins_nsl,
     norm_bins_ihh12=compute_normalization_stats_wf.norm_bins_ihh12,
     norm_bins_delihh=compute_normalization_stats_wf.norm_bins_delihh,
-    norm_bins_xpehh=compute_normalization_stats_wf.norm_bins_xpehh,
 
     one_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.one_pop_bin_stats_sel_pop_used,
-    two_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_sel_pop_used,
-    two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used,
+
+    two_pop_in_stats=compute_normalization_stats_wf.two_pop_bin_stats,
   }
 
 # ** Workflow outputs

@@ -10,15 +10,10 @@ workflow component_stats_for_sel_sims_wf {
 
     ComponentComputationParams component_computation_params
 
-    Array[File]+ norm_bins_ihs
-    Array[File]+ norm_bins_nsl
-    Array[File]+ norm_bins_ihh12
-    Array[File]+ norm_bins_delihh
-    Array[Array[File]+]+ norm_bins_xpehh
+    Array[OnePopBinStats]+ one_pop_ibn_stats
+    Array[TwoPopBinStats]+ two_pop_bin_stats
 
     Array[Pop]+ one_pop_bin_stats_sel_pop_used
-    Array[Array[Pop]+]+ two_pop_bin_stats_sel_pop_used
-    Array[Array[Pop]+]+ two_pop_bin_stats_alt_pop_used
   }
 
   scatter(sel_scen_idx in range(length(selection_sims))) {
@@ -69,11 +64,11 @@ workflow component_stats_for_sel_sims_wf {
 	    norm_bins_ihh12: norm_bins_ihh12[sel_pop_idx],
 	    norm_bins_delihh: norm_bins_delihh[sel_pop_idx],
 
-	    norm_bins_xpehh: norm_bins_xpehh[sel_pop_idx],
+	    one_pop_bin_stats: 
 
-	    norm_one_pop_components_sel_pop_used: one_pop_bin_stats_sel_pop_used[sel_pop_idx],
-	    norm_two_pop_components_sel_pop_used: two_pop_bin_stats_sel_pop_used[sel_pop_idx],
-	    norm_two_pop_components_alt_pop_used: two_pop_bin_stats_alt_pop_used[sel_pop_idx]
+	    two_pop_bin_stats: two_pop_bin_stats[sel_pop_idx],
+
+	    norm_one_pop_components_sel_pop_used: one_pop_bin_stats_sel_pop_used[sel_pop_idx]
 	  }
        } # call tasks.normalize_and_collate_block
 

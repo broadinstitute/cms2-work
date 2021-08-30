@@ -420,7 +420,7 @@ def normalize_and_collate_scores(args):
     chk_idx(collated, 'collated after ihh12_normed')
 
     for other_pop_idx, (xpehh_out, norm_bins_xpehh, xpehh_sel_pop_used, xpehh_alt_pop_used, norm_sel_pop_used, norm_alt_pop_used) \
-        in enumerate(zip(inps["xpehh_out"], inps["norm_bins_xpehh"],
+        in enumerate(zip(inps["xpehh_out"], inps["two_pop_bins_stats"],
                          inps["two_pop_components_sel_pop_used"],
                          inps["two_pop_components_alt_pop_used"],
                          inps["norm_two_pop_components_sel_pop_used"],

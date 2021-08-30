@@ -40,6 +40,35 @@ struct ComponentComputationParams {
     Int n_bins_delihh
 }
 
+struct OnePopComponentsRaw {
+  Pop sel_pop
+  File ihs_raw
+  File delihh_raw
+  File nsl_raw
+  File ihh12_raw
+}  
+
+struct OnePopBinStats {
+  Pop sel_pop
+
+  File norm_bins_ihs
+  File norm_bins_nsl
+  File norm_bins_ihh12
+  File norm_bins_delihh
+
+  File? norm_bins_ihs_log
+  File? norm_bins_nsl_log
+  File? norm_bins_ihh12_log
+  File? norm_bins_delihh_log
+}  
+
+struct TwoPopBinStats {
+  Pop sel_pop
+  Pop alt_pop
+  File norm_bins_xpehh
+  File norm_bins_xpehh_log
+}  
+
 struct SimulatedHapsetsDef {
     File paramFile_demographic_model
     File paramFile_neutral
@@ -123,7 +152,8 @@ struct NormalizeAndCollateBlockInput {
     File norm_bins_nsl
     File norm_bins_ihh12
     File norm_bins_delihh
-    Array[File]+ norm_bins_xpehh
+
+    Array[TwoPopBinStats]+ two_pops_bin_stats
 
     ComponentComputationParams component_computation_params
 
@@ -132,8 +162,6 @@ struct NormalizeAndCollateBlockInput {
     Array[Pop]+ two_pop_components_alt_pop_used
 
     Pop norm_one_pop_components_sel_pop_used
-    Array[Pop]+ norm_two_pop_components_sel_pop_used
-    Array[Pop]+ norm_two_pop_components_alt_pop_used
 }
 
 
