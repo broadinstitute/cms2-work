@@ -62,7 +62,7 @@ workflow component_stats_for_sel_sims_wf {
 	    two_pop_components_sel_pop_used: select_all(compute_two_pop_cms2_components_for_selection.sel_pop_used),
 	    two_pop_components_alt_pop_used: select_all(compute_two_pop_cms2_components_for_selection.alt_pop_used),
 
-	    component_computation_parms: component_computation_params,
+	    component_computation_params: component_computation_params,
 
 	    norm_bins_ihs: norm_bins_ihs[sel_pop_idx],
 	    norm_bins_nsl: norm_bins_nsl[sel_pop_idx],
