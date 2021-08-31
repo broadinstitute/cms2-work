@@ -1,6 +1,6 @@
 version 1.0
 
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210830-1022-validate-empirical-and-clean-up--e935d443df96a656d6a8a5bfe8523ca609c70e6b/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
