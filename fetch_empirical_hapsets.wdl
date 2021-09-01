@@ -4,6 +4,11 @@ import "./structs.wdl"
 import "./tasks.wdl"
 
 workflow fetch_empirical_hapsets_wf {
+  meta {
+    description: "Constructs hapsets from specified regions of empirical data (currently 1000 Genomes)"
+    email: "ilya_shl@alum.mit.edu"
+  }
+
   input {
     EmpiricalHapsetsDef empirical_hapsets_def
   }

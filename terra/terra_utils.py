@@ -129,6 +129,10 @@ def do_deploy_to_terra(args):
         config_template = z.json()
 
         TERRA_CONFIG_NAME += f'_cfg_{snapshot_id}' 
+
+        if 'TRAVIS_COMMIT_MESSAGE' in os.environ:
+            TERRA_CONFIG_NAME += ('_' + re.sub(r'([^A-Za-z0-9])', '_', os.environ['TRAVIS_COMMIT_MESSAGE'))[:128])
+        
         config_json = copy.copy(config_template)
         config_json['methodConfigVersion'] = snapshot_id
         config_json['namespace'] = SEL_NAMESPACE   # configuration namespace

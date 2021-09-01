@@ -361,13 +361,13 @@ task fetch_empirical_hapsets_from_1KG {
     File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
   }
-  File fetch_empirical_regions_script = "./fetch_empirical_regions.py"
+  File fetch_empirical_hapsets_script = "./fetch_empirical_hapsets.py"
 
   command <<<
     set -ex -o pipefail
 
     mkdir "${PWD}/hapsets"
-    python3 "~{fetch_empirical_regions_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
+    python3 "~{fetch_empirical_hapsets_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
        --out-fnames-prefix "~{out_fnames_prefix}" \
        ~{"--sel-pop " + sel_pop_id} \
