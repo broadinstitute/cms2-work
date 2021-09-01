@@ -1,6 +1,6 @@
 version 1.0
 
-import "./structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210830-1022-validate-empirical-and-clean-up--d9d01f3cdde3431d363222e312b216b315ad5e19/structs.wdl"
 
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
@@ -11,7 +11,7 @@ task compute_one_pop_cms2_components {
     Array[File]+ hapsets
     Pop sel_pop
   }
-  File script = "./compute_cms2_components.py"
+  File script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210830-1022-validate-empirical-and-clean-up/d9d01f3cdde3431d363222e312b216b315ad5e19/compute_cms2_components.py"
 
   command <<<
     set -ex -o pipefail
@@ -60,7 +60,7 @@ task compute_two_pop_cms2_components {
     Pop alt_pop
   }
 
-  File script = "./compute_cms2_components.py"
+  File script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210830-1022-validate-empirical-and-clean-up/d9d01f3cdde3431d363222e312b216b315ad5e19/compute_cms2_components.py"
 
 # ** command
   command <<<
@@ -215,7 +215,7 @@ task normalize_and_collate_block {
   input {
     NormalizeAndCollateBlockInput inp
   }
-  File normalize_and_collate_script = "./norm_and_collate_block.py"
+  File normalize_and_collate_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210830-1022-validate-empirical-and-clean-up/d9d01f3cdde3431d363222e312b216b315ad5e19/norm_and_collate_block.py"
   command <<<
     set -ex -o pipefail
 
@@ -248,7 +248,7 @@ task collate_stats_and_metadata_for_sel_sims_block {
   input {
     collate_stats_and_metadata_for_all_sel_sims_input inp
   }
-  File collate_stats_and_metadata_for_sel_sims_block_script = "./collate_stats_and_metadata_for_sel_sims_block.py"
+  File collate_stats_and_metadata_for_sel_sims_block_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210830-1022-validate-empirical-and-clean-up/d9d01f3cdde3431d363222e312b216b315ad5e19/collate_stats_and_metadata_for_sel_sims_block.py"
   Int max_hapset_id_len = 256
   String hapsets_component_stats_h5_fname = inp.out_fnames_prefix + ".all_component_stats.h5"
   String hapsets_metadata_tsv_gz_fname = inp.out_fnames_prefix + ".hapsets_metadata.tsv.gz"
@@ -315,7 +315,7 @@ task construct_pops_info_for_1KG {
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
     File empirical_regions_bed
   }
-  File construct_pops_info_for_1KG_script = "./construct_pops_info_for_1KG.py"
+  File construct_pops_info_for_1KG_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210830-1022-validate-empirical-and-clean-up/d9d01f3cdde3431d363222e312b216b315ad5e19/construct_pops_info_for_1KG.py"
   String pops_info_fname = "pops_info.1KG.json"
   command <<<
     set -ex -o pipefail
@@ -361,7 +361,7 @@ task fetch_empirical_hapsets_from_1KG {
     File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
     File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
   }
-  File fetch_empirical_hapsets_script = "./fetch_empirical_hapsets.py"
+  File fetch_empirical_hapsets_script = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/cms2-work/is-210830-1022-validate-empirical-and-clean-up/d9d01f3cdde3431d363222e312b216b315ad5e19/fetch_empirical_hapsets.py"
 
   command <<<
     set -ex -o pipefail
