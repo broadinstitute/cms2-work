@@ -1,0 +1,9 @@
+#+TITLE: Resources used for CMS2
+
+* known selection regions
+
+  pophumanscanCoordinates.tab
+
+  wget https://pophumanscan.uab.cat/data/files/pophumanscanCoordinates.tab
+
+
