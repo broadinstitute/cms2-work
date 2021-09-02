@@ -13,4 +13,7 @@
 	branch = cms2-work-archive
 [submodule "docker/cms2-docker-component-stats"]
 	path = docker/cms2-docker-component-stats
-	url = ../cms2-docker-component-stats
+	#url = ../cms2-docker-component-stats
+	url = '../cms2-work.git
+	branch = submodule--cms2-docker-component-stats--master
+
