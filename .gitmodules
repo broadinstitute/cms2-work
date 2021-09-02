@@ -2,13 +2,13 @@
 	path = terra/fiss
 	url = ../fiss.git
 	shallow = true
-[submodule "cromwell-client"]
-	path = cromwell-client
-	#url = ../cromwell-client.git
-	#branch = is-run-cromwell-directly
-	url = ../cms-work.git
-	branch = submodule--cromwell-client--is-run-cromwell-directly
-	shallow = true
+# [submodule "cromwell-client"]
+# 	path = cromwell-client
+# 	#url = ../cromwell-client.git
+# 	#branch = is-run-cromwell-directly
+# 	url = ../cms-work.git
+# 	branch = submodule--cromwell-client--is-run-cromwell-directly
+# 	shallow = true
 [submodule "cms2-work-archive"]
 	path = misc/cms2-work-archive
 	url = ../cms2-work.git
