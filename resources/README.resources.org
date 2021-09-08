@@ -1,6 +1,8 @@
 #+TITLE: Resources used for CMS2
 
 * known selection regions
+  
+  See https://academic.oup.com/nar/article/47/D1/D1080/5134333
 
   pophumanscanCoordinates.tab
 
