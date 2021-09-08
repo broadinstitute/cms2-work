@@ -4,6 +4,7 @@ bcftools
 blast
 bbmap
 #bmtagger
+bedops
 bokeh
 boto3
 bwa
@@ -42,6 +43,7 @@ parallel
 #picard
 pigz
 #prinseq
+pytables
 python-dateutil
 pytz
 ruby
@@ -50,6 +52,8 @@ samtools
 #spades
 #sqlitedict
 #tbl2asn
+snakemake
+tar
 tzlocal
 #trimmomatic
 #trinity
@@ -68,5 +72,7 @@ matplotlib
 #pluggy
 pysam
 pybedtools
+pyliftover
 PyYAML
+ucsc-liftover
 yattag

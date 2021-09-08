@@ -1,0 +1,119 @@
+#!/bin/bash
+
+#
+# Script: update-vngs-conda-env
+#
+# Create conda envs containing viral-ngs requirements and interactive tools, one per python version supported by viral-ngs.
+#
+
+set -e -o pipefail -x
+
+. "/ilya/miniconda3/etc/profile.d/conda.sh"
+#NEXT_ENV_NUM="105"
+#NEXT_ENV_NUM=$(conda env list | grep -E '^master_env_v..._py38' | awk '{print $1;}' | sort | tail -1 | cut -c 13-15 | awk '{printf("%03d", $1+1);}')
+CUR_ENV_NUM=$(cat ~/cur_master_env.txt | cut -c 13-15)
+echo "CUR_ENV_NUM=${CUR_ENV_NUM}"
+NEXT_ENV_NUM=$(echo "${CUR_ENV_NUM}" | awk '{printf("%03d", $1+1);}')
+echo "NEXT_ENV_NUM=${NEXT_ENV_NUM}"
+CONDA_ENV_BASE_NAME=master_env_v${NEXT_ENV_NUM}
+echo NEXT CONDA ENV IS $CONDA_ENV_BASE_NAME
+
+STARTING_DIR=$(pwd)
+
+# way to get the absolute path to this script that should
+# work regardless of whether or not this script has been sourced
+# Find original directory of bash script, resovling symlinks
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in/246128#246128
+function absolute_path() {
+    local SOURCE="$1"
+    while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+        DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            SOURCE="$(readlink "$SOURCE")"
+        else
+            SOURCE="$(readlink -f "$SOURCE")"
+        fi
+        [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+    done
+    echo "$SOURCE"
+}
+SOURCE="${BASH_SOURCE[0]}"
+SCRIPT=$(absolute_path "$SOURCE")
+SCRIPT_DIRNAME="$(dirname "$SOURCE")"
+SCRIPTPATH="$(cd -P "$(echo $SCRIPT_DIRNAME)" &> /dev/null && pwd)"
+SCRIPT="$SCRIPTPATH/$(basename "$SCRIPT")"
+
+#CONDA_CHANNEL_STRING="--override-channels -c /data/tmp/newermc3/miniconda/conda-bld -c broad-viral -c conda-forge -c bioconda -c defaults"
+CONDA_CHANNEL_STRING="--override-channels -c broad-viral -c conda-forge -c bioconda -c defaults -c notestaff"
+
+CONDA_CMD_COMMON="conda create $CONDA_CHANNEL_STRING -y --file ${SCRIPT_DIRNAME}/envs/requirements-conda.reqs.txt --file ${SCRIPT_DIRNAME}/envs/requirements-conda-tests.reqs.txt --file ${SCRIPT_DIRNAME}/envs/requirements-interactive.txt "
+#CONDA_CMD_COMMON="conda create $CONDA_CHANNEL_STRING -y --file requirements-conda.txt --file requirements-conda-tests.txt "
+
+
+for PYVER in 3.8
+do
+  cd $STARTING_DIR
+  PY_MAJ="${PYVER%.*}"
+  PY_MIN="${PYVER##*.}"
+
+  PY_SFX=${PY_MAJ}${PY_MIN}
+  ENV_NAME=${CONDA_ENV_BASE_NAME}_py${PY_SFX}
+  $CONDA_CMD_COMMON --file ${SCRIPT_DIRNAME}/envs/requirements-py${PY_MAJ}.reqs.txt python=${PYVER} -n ${ENV_NAME}
+
+  conda activate $ENV_NAME
+
+  conda install -y -c notestaff_tmp ${CONDA_CHANNEL_STRING} gnupg
+
+  pushd $SCRIPT_DIRNAME/envs
+  conda env export > ${ENV_NAME}.yml
+  conda list --explicit > ${ENV_NAME}.txt
+  git add ${ENV_NAME}.yml
+  git add ${ENV_NAME}.txt
+  popd
+
+  # Install GATK jar
+
+  set -x -eu -o pipefail
+  RESOURCES_DIR_TMP=$(absolute_path "$SCRIPT_DIRNAME/../resources")
+  RESOURCES_DIR=$(realpath "$RESOURCES_DIR_TMP")
+  GATK_JAR_DIR="${RESOURCES_DIR}/gatk/gatk-3.8"
+  GATK_JAR_PATH="${GATK_JAR_DIR}/GenomeAnalysisTK.jar"
+  pushd $GATK_JAR_DIR  
+  ls -l
+  #git annex --verbose --debug get GenomeAnalysisTK.jar
+  #echo "git annex returned $?"
+  popd
+  gatk-register $GATK_JAR_PATH || gatk3-register $GATK_JAR_PATH || echo "Warning: gatk-register failed"
+
+  # Install Novoalign license
+
+  NOVOALIGN_LIC_PATH="${RESOURCES_DIR}/novoalign/novoalign.lic"
+  mydir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename $0).XXXXXXXXXXXX")
+  cp $NOVOALIGN_LIC_PATH $mydir/novoalign.lic
+  novoalign-license-register $mydir/novoalign.lic || echo "Warning: novoalign-license-register failed"
+  rm -rf $mydir
+
+  # Install shims for packages that get installed into their own envs
+
+  SCRIPTS_DIR_TMP=$(absolute_path "$SCRIPT_DIRNAME/../scripts")
+  SCRIPTS_DIR=$(realpath "$SCRIPTS_DIR_TMP")
+  ENV_BIN_DIR=$(dirname `which python3`)
+
+  for SHIM in cromwell womtool emacs emacsclient lighttpd
+  do
+      rm -f $ENV_BIN_DIR/$SHIM
+      cp $SCRIPTS_DIR/shims/$SHIM $ENV_BIN_DIR/$SHIM
+  done
+	      
+  set +x
+  set +u
+  conda deactivate
+done
+
+
+cd $STARTING_DIR
+conda env list
+conda env list | grep "${CONDA_ENV_BASE_NAME}_py38"
+
+echo "${CONDA_ENV_BASE_NAME}_py38" > ~/cur_master_env.txt
+
