@@ -184,6 +184,7 @@ def parse_args():
     parser.add_argument('--nre-params', required=True, help='inputs as json')
 
     parser.add_argument('--neutral-regions-tsv', required=True, help='output file for nre results')
+    parser.add_argument('--neutral-regions-bed', required=True, help='output bed file for nre results')
     parser.add_argument('--nre-submitted-form-html', help='the form submitted to the NRE is saved here')
 
     return parser.parse_args()
@@ -274,6 +275,15 @@ def wait_for_nre_results(driver, args):
             results_url = f'http://nre.cb.bscb.cornell.edu//nre/user/{analysis_id}/results_Hard.tsv'
             _log.info(f'Fetching results: {results_url=} {args.neutral_regions_tsv=}')
             urllib.request.urlretrieve(results_url, args.neutral_regions_tsv)
+
+            with open(args.neutral_regions_tsv) as nre_results_tsv, open(args.neutral_regions_bed, 'w') as nre_results_bed:
+                for line_num, line in enumerate(nre_results_tsv):
+                    if line_num == 0:
+                        chk(line.startswith('chrom'), 'unexpected start line')
+                        continue
+                    fields = line.strip().split()
+                    chk(fields[0].startswith('chr'), 'chrom line does not start with chr')
+                    nre_results_bed.write('\t'.join([fields[0][3:], fields[1], fields[2]]) + '\n')
             return
         else:
             _log.info(f'Waiting for NRE results: {driver.title=} {args=}')

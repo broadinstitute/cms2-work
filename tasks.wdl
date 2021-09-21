@@ -406,16 +406,20 @@ task call_neutral_region_explorer {
   }
   File fetch_neutral_regions_nre_script = "./fetch_neutral_regions_nre.py"
   String neutral_regions_tsv_fname = out_fnames_prefix + ".neutral_regions.tsv"
+  String neutral_regions_bed_fname = out_fnames_prefix + ".neutral_regions.bed"
   String nre_submitted_form_html_fname = out_fnames_prefix + ".submitted_form.html"
 
   command <<<
     set -ex -o pipefail
 
     python3 "~{fetch_neutral_regions_nre_script}" --nre-params "~{write_json(nre_params)}" \
-       --nre-results-tsv "~{neutral_regions_tsv_fname}" --nre-submitted-form-html "~{nre_submitted_form_html_fname}"
+       --nre-results-tsv "~{neutral_regions_tsv_fname}" \
+       --nre-results-bed "~{neutral_regions_bed_fname}" \
+       --nre-submitted-form-html "~{nre_submitted_form_html_fname}" \
   >>>
   output {
     File neutral_regions_tsv = neutral_regions_tsv_fname
+    File neutral_regions_bed = neutral_regions_bed_fname
     File nre_submitted_form_html = nre_submitted_form_html_fname
   }
   runtime {
