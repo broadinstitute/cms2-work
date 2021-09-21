@@ -193,6 +193,10 @@ def submit_neutral_region_explorer_job(args):
 
     inps = _json_loadf(args.nre_params)
 
+    null_inps = [inp for inp, val in inps.items() if val is None]
+    for null_inp in null_inps:
+        del inps[null_inp]
+
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
 
@@ -217,7 +221,7 @@ def submit_neutral_region_explorer_job(args):
     }
     
     for param_name, checkbox_name in param_name_to_checkbox_name.items():
-        if param_name in inps and inps[param_name] is not None:
+        if param_name in inps:
             checkbox = driver.find_element_by_name(checkbox_name)
             if checkbox.is_selected() != inps[param_name]:
                 _log.info(f'toggling: {param_name=} {checkbox_name=}')
@@ -253,10 +257,10 @@ def submit_neutral_region_explorer_job(args):
     }
 
     for param_name, input_name in param_name2input_name.items():
-        if param_name in inps and inps[param_name] is not None:
+        if param_name in inps:
             driver.find_element_by_name(input_name).send_keys(str(inps[param_name]))
 
-    if 'distance_unit' in inps and inps['distance_unit'] is not None:
+    if 'distance_unit' in inps:
         chk(inps['distance_unit'] in ('cM', 'bp'), 'invalid distance_unit value')
         for e in driver.find_elements_by_name('cMbp'):
             if inps['distance_unit'] == 'cM'  and  e.getattribute('value') == 'cM':
@@ -266,7 +270,7 @@ def submit_neutral_region_explorer_job(args):
                 e.click()
                 break
 
-    if 'regions_to_exclude_bed' in inps and inps['regions_to_exclude_bed'] is not None:
+    if 'regions_to_exclude_bed' in inps:
         driver.find_element_by_id('hardf').send_keys(inps['regions_to_exclude_bed'])
 
     current_url = driver.current_url
