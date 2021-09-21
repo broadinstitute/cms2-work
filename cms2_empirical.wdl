@@ -7,7 +7,7 @@ import "./compute_cms2_components.wdl"
 
 workflow cms2_empirical {
   input {
-    NeutralRegionsExplorerParams nre_params
+    NeutralRegionExplorerParams nre_params
     EmpiricalHapsetsDef empirical_hapsets_def
   }
 
