@@ -413,8 +413,8 @@ task call_neutral_region_explorer {
     set -ex -o pipefail
 
     python3 "~{fetch_neutral_regions_nre_script}" --nre-params "~{write_json(nre_params)}" \
-       --nre-results-tsv "~{neutral_regions_tsv_fname}" \
-       --nre-results-bed "~{neutral_regions_bed_fname}" \
+       --neutral-regions-tsv "~{neutral_regions_tsv_fname}" \
+       --neutral-regions-bed "~{neutral_regions_bed_fname}" \
        --nre-submitted-form-html "~{nre_submitted_form_html_fname}" \
   >>>
   output {

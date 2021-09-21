@@ -72,6 +72,13 @@ struct NeutralRegionExplorerParams {
   Boolean? repeat_masker
   Boolean? phast_conserved_plac_mammal
 
+  String? chromosomes
+  String? human_diversity
+  Int? minimum_region_size
+  Int? minimum_distance_to_nearest_gene
+  Int? maximum_distance_to_nearest_gene
+  String? distance_unit
+
   File? regions_to_exclude_bed
 }
 

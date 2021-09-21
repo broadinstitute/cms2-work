@@ -231,6 +231,41 @@ def submit_neutral_region_explorer_job(args):
             if e.get_attribute('type') == 'submit':
                 return e
 
+    driver.find_element_by_name('chromosomes').send_keys(inps.get('chromosomes', '1-22'))
+    
+    if 'human_diversity' in inps:
+        chk(inps['human_diversity'] in ('CEU', 'YRI', 'CHB'), 'invalid human_diversity value')
+        for e in driver.find_elements_by_name('popu'):
+            if inps['human_diversity'] == 'CEU'  and  e.getattribute('value') == 'ceu_filt':
+                e.click()
+                break
+            if inps['human_diversity'] == 'YRI'  and  e.getattribute('value') == 'yri_filt':
+                e.click()
+                break
+            if inps['human_diversity'] == 'CHBJPT'  and  e.getattribute('value') == 'chbjpt_filt':
+                e.click()
+                break
+
+    param_name2input_name = {
+        'minimum_region_size': 'min_reg_sz',
+        'minimum_distance_to_nearest_gene': 'd2g_min',
+        'maximum_distance_to_nearest_gene': 'd2g_max'
+    }
+
+    for param_name, input_name in param_name2input_name.items():
+        if param_name in inps:
+            driver.find_element_by_name(input_name).send_keys(str(inps[param_name]))
+
+    if 'distance_unit' in inps:
+        chk(inps['distance_unit'] in ('cM', 'bp'), 'invalid distance_unit value')
+        for e in driver.find_elements_by_name('cMbp'):
+            if inps['distance_unit'] == 'cM'  and  e.getattribute('value') == 'cM':
+                e.click()
+                break
+            if inps['distance_unit'] == 'bp'  and  e.getattribute('value') == 'bp':
+                e.click()
+                break
+
     if 'regions_to_exclude_bed' in inps:
         driver.find_element_by_id('hardf').send_keys(inps['regions_to_exclude_bed'])
 
