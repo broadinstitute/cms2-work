@@ -11,7 +11,7 @@ workflow cms2_empirical {
     EmpiricalHapsetsDef empirical_hapsets_def
   }
 
-  call call_neutral_region_explorer {
+  call tasks.call_neutral_region_explorer {
     input:
     nre_params=nre_params
   }  
