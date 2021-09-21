@@ -181,14 +181,16 @@ def parse_args():
     parser.add_argument('--nre-timeout-seconds', type=float, default=7200)
     parser.add_argument('--nre-poll-frequency-seconds', type=float, default=30)
 
-    parser.add_argument('--input-json', required=True, help='inputs as json')
+    parser.add_argument('--nre-params', required=True, help='inputs as json')
+
     parser.add_argument('--out-nre-results-tsv', required=True, help='output file for nre results')
+    parser.add_argument('--out-nre-submitted-form-html', help='the form submitted to the NRE is saved here')
 
     return parser.parse_args()
 
 def submit_neutral_region_explorer_job(args):
 
-    inps = _json_loadf(args.input_json)
+    inps = _json_loadf(args.nre_params)
 
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
@@ -228,7 +230,13 @@ def submit_neutral_region_explorer_job(args):
             if e.get_attribute('type') == 'submit':
                 return e
 
+    if 'regions_to_exclude_bed' in inps:
+        driver.find_element_by_id('hardf').send_keys(inps['regions_to_exclude_bed'])
+
     current_url = driver.current_url
+
+    if args.out_nre_submitted_form_html:
+        dump_file(fname=args.out_nre_submitted_form_html, value=driver.page_source)
 
     find_submit_button().click()
     #time.sleep(2)

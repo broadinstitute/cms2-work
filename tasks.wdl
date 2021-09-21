@@ -391,3 +391,54 @@ task fetch_empirical_hapsets_from_1KG {
 #     description: "Construct a .bed file representing neutral empirical regions based on Gazave 2014 paper."
 #   }
 # }
+
+struct NeutralRegionExplorerParams {
+  Boolean? known_genes
+  Boolean? gene_bounds
+  Boolean? spliced_ESTs
+  Boolean? segmental_duplications
+  Boolean? CNVs
+  Boolean? self_chain
+  Boolean? reduced_repeat_masker
+  Boolean? simple_repeats
+  Boolean? repeat_masker
+  Boolean? phast_conserved_plac_mammal
+
+  File? regions_to_exclude_bed
+}
+
+task call_neutral_region_explorer {
+  meta {
+    description: "Calls Neutral Region Explorer webserver"
+  }
+  parameter_meta {
+# ** inputs
+# ** outputs
+  }
+  input {
+    NeutralRegionExplorerParams nre_params
+    String out_fnames_prefix = "nre"
+  }
+  File fetch_neutral_regions_nre_script = "./fetch_neutral_regions_nre.py"
+  String out_nre_results_fname = out_fnames_prefix + ".neutral_regions.tsv"
+  String out_nre_submitted_form_html_fname = out_fnames_prefix + ".submitted_form.html"
+
+  command <<<
+    set -ex -o pipefail
+
+    python3 "~{fetch_neutral_regions_nre_script}" --nre-params "~{write_json(nre_params)}" \
+       --out-nre-results-tsv "~{out_nre_results_fname}" --out-nre-submitted-form-html "~{out_nre_submitted_form_fname}"
+  >>>
+  output {
+    File neutral_regions_tsv = out_neutral_regions_tsv
+    File nre_submitted_form_html = out_nre_submitted_form_fname
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms:webdriver-0.1"  # selscan=1.3.0a09 with tabix
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}
+
