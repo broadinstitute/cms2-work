@@ -18,3 +18,12 @@ RUN export PATH=$PATH:/home/seluser/.local/bin
 RUN export DEBIAN_FRONTEND=noninteractive && export DEBCONF_NONINTERACTIVE_SEEN=true && apt-get -y install chromium-browser chromium-chromedriver
 RUN apt-get -y install python3-selenium python3-pip
 RUN pip3 install chromedriver-binary-auto
+
+# switch back to the ubuntu user so this tool (and the files written) are not owned by root
+RUN groupadd -r -g 1000 ubuntu && useradd -r -g ubuntu -u 1000 -m ubuntu
+USER ubuntu
+
+# by default /bin/bash is executed
+# set up entrypoint
+CMD ["/bin/bash"]
+
