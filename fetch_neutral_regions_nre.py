@@ -226,7 +226,8 @@ def submit_neutral_region_explorer_job(args):
             if checkbox.is_selected() != inps[param_name]:
                 _log.info(f'toggling: {param_name=} {checkbox_name=}')
                 checkbox.click()
-            chk(checkbox.is_selected() == inps[param_name], f'failed to set checkbox state: {param_name=} {checkbox_name=}')
+                time.sleep(2)
+                chk(checkbox.is_selected() == inps[param_name], f'failed to set checkbox state: {param_name=} {checkbox_name=}')
     
     def find_submit_button():
         for e in driver.find_elements_by_tag_name('input'):
@@ -242,12 +243,15 @@ def submit_neutral_region_explorer_job(args):
         for e in driver.find_elements_by_name('popu'):
             if inps['human_diversity'] == 'CEU'  and  e.getattribute('value') == 'ceu_filt':
                 e.click()
+                time.sleep(2)
                 break
             if inps['human_diversity'] == 'YRI'  and  e.getattribute('value') == 'yri_filt':
                 e.click()
+                time.sleep(2)
                 break
             if inps['human_diversity'] == 'CHBJPT'  and  e.getattribute('value') == 'chbjpt_filt':
                 e.click()
+                time.sleep(2)
                 break
 
     param_name2input_name = {
@@ -265,9 +269,11 @@ def submit_neutral_region_explorer_job(args):
         for e in driver.find_elements_by_name('cMbp'):
             if inps['distance_unit'] == 'cM'  and  e.getattribute('value') == 'cM':
                 e.click()
+                time.sleep(2)
                 break
             if inps['distance_unit'] == 'bp'  and  e.getattribute('value') == 'bp':
                 e.click()
+                time.sleep(2)
                 break
 
     if 'regions_to_exclude_bed' in inps:
@@ -279,7 +285,8 @@ def submit_neutral_region_explorer_job(args):
         dump_file(fname=args.nre_submitted_form_html, value=driver.page_source)
 
     find_submit_button().click()
-    #time.sleep(2)
+    time.sleep(2)
+
     #driver.refresh()
     # some work on current page, code omitted
 
