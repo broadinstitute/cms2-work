@@ -183,8 +183,8 @@ def parse_args():
 
     parser.add_argument('--nre-params', required=True, help='inputs as json')
 
-    parser.add_argument('--out-nre-results-tsv', required=True, help='output file for nre results')
-    parser.add_argument('--out-nre-submitted-form-html', help='the form submitted to the NRE is saved here')
+    parser.add_argument('--neutral-regions-tsv', required=True, help='output file for nre results')
+    parser.add_argument('--nre-submitted-form-html', help='the form submitted to the NRE is saved here')
 
     return parser.parse_args()
 
@@ -235,8 +235,8 @@ def submit_neutral_region_explorer_job(args):
 
     current_url = driver.current_url
 
-    if args.out_nre_submitted_form_html:
-        dump_file(fname=args.out_nre_submitted_form_html, value=driver.page_source)
+    if args.nre_submitted_form_html:
+        dump_file(fname=args.nre_submitted_form_html, value=driver.page_source)
 
     find_submit_button().click()
     #time.sleep(2)
@@ -272,8 +272,8 @@ def wait_for_nre_results(driver, args):
         if 'NRE: Results' in driver.title:
             analysis_id = driver.current_url.split('=')[1]
             results_url = f'http://nre.cb.bscb.cornell.edu//nre/user/{analysis_id}/results_Hard.tsv'
-            _log.info(f'Fetching results: {results_url=} {args.out_nre_results_tsv=}')
-            urllib.request.urlretrieve(results_url, args.out_nre_results_tsv)
+            _log.info(f'Fetching results: {results_url=} {args.neutral_regions_tsv=}')
+            urllib.request.urlretrieve(results_url, args.neutral_regions_tsv)
             return
         else:
             _log.info(f'Waiting for NRE results: {driver.title=} {args=}')

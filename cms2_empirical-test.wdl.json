@@ -1,4 +1,7 @@
 {
+    "cms2_empirical.nre_params": {
+	"regions_to_exclude_bed": "resources/known_sel_regions.pophumanscan.210901.hg19.bed"
+    },
     "cms2_empirical.empirical_hapsets_def" : {
 	"empirical_hapsets_bundle_id": "g1k",
 	"empirical_neutral_regions_bed": "test/pos_con_sorted.hg19.bed",

@@ -59,6 +59,22 @@ struct SimulatedHapsetsDef {
     String       memoryPerBlock #= "3 GB"
 }
 
+
+struct NeutralRegionExplorerParams {
+  Boolean? known_genes
+  Boolean? gene_bounds
+  Boolean? spliced_ESTs
+  Boolean? segmental_duplications
+  Boolean? CNVs
+  Boolean? self_chain
+  Boolean? reduced_repeat_masker
+  Boolean? simple_repeats
+  Boolean? repeat_masker
+  Boolean? phast_conserved_plac_mammal
+
+  File? regions_to_exclude_bed
+}
+
 struct EmpiricalHapsetsDef {
   String empirical_hapsets_bundle_id
   File empirical_neutral_regions_bed
