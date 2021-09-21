@@ -1,7 +1,7 @@
 version 1.0
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210914-1648-add-nre-wdl--152f0aee42e991e6170045fbfa4460de9b92e7f2/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210914-1648-add-nre-wdl--152f0aee42e991e6170045fbfa4460de9b92e7f2/tasks.wdl"
 
 # * workflow compute_normalization_stats_wf
 workflow compute_normalization_stats_wf {

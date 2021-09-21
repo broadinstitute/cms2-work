@@ -1,6 +1,6 @@
 version 1.0
 
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-210914-1648-add-nre-wdl--152f0aee42e991e6170045fbfa4460de9b92e7f2/tasks.wdl"
 
 workflow component_stats_for_sel_sims_wf {
   input {
