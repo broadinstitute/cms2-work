@@ -9,6 +9,7 @@ workflow wdl_assert_wf {
     Array[Boolean] error = select_first([])
   }
   output {
+    Boolean assert_result = cond
     String checked_cond_msg = msg
   }
 }
