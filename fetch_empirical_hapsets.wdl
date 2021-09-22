@@ -2,6 +2,7 @@ version 1.0
 
 import "./structs.wdl"
 import "./tasks.wdl"
+import "./wdl_assert.wdl"
 
 workflow fetch_empirical_hapsets_wf {
   meta {
@@ -12,6 +13,18 @@ workflow fetch_empirical_hapsets_wf {
   input {
     EmpiricalHapsetsDef empirical_hapsets_def
   }
+
+  if (defined(empirical_hapsets_def.nre_params)) {
+    call tasks.call_neutral_region_explorer {
+      input:
+      nre_params=select_first([empirical_hapsets_def.nre_params])
+    }
+  }
+  call wdl_assert.wdl_assert_wf as check_neutral_regions_spec {
+    input:
+    cond=(defined(empirical_hapsets_def.nre_params) != defined(empirical_hapsets_def.empirical_neutral_regions_bed)),
+    msg="exactly one of nre_params or empirical_neutral_regions_bed must be specified"
+  }
   call tasks.construct_pops_info_for_1KG {
     input:
     empirical_regions_bed=empirical_hapsets_def.empirical_selection_regions_bed
@@ -21,7 +34,8 @@ workflow fetch_empirical_hapsets_wf {
   call tasks.fetch_empirical_hapsets_from_1KG  as fetch_neutral_regions {
     input:
     pops_info=pops_info_1KG,
-    empirical_regions_bed=empirical_hapsets_def.empirical_neutral_regions_bed,
+    empirical_regions_bed=select_first([call_neutral_region_explorer.neutral_regions_bed,
+                                         empirical_hapsets_def.empirical_neutral_regions_bed]),
     out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id
   }
 

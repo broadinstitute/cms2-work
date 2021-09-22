@@ -84,7 +84,8 @@ struct NeutralRegionExplorerParams {
 
 struct EmpiricalHapsetsDef {
   String empirical_hapsets_bundle_id
-  File empirical_neutral_regions_bed
+  NeutralRegionExplorerParams? nre_params
+  File? empirical_neutral_regions_bed
   File empirical_selection_regions_bed
 }
 

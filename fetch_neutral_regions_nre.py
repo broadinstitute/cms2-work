@@ -186,6 +186,8 @@ def parse_args():
     parser.add_argument('--neutral-regions-tsv', required=True, help='output file for nre results')
     parser.add_argument('--neutral-regions-bed', required=True, help='output bed file for nre results')
     parser.add_argument('--nre-submitted-form-html', help='the form submitted to the NRE is saved here')
+    parser.add_argument('--nre-results-html', help='the results web page')
+    parser.add_argument('--nre-results-url', help='the results URL')
 
     return parser.parse_args()
 
@@ -317,6 +319,12 @@ def wait_for_nre_results(driver, args):
         time.sleep(args.nre_poll_frequency_seconds)
         driver.refresh()
         if 'NRE: Results' in driver.title:
+
+            if args.nre_results_url:
+                dump_file(fname=args.nre_results_url, value=driver.current_url)
+            if args.nre_results_html:
+                dump_file(fname=args.nre_results_html, value=driver.page_source)
+
             analysis_id = driver.current_url.split('=')[1]
             results_url = f'http://nre.cb.bscb.cornell.edu//nre/user/{analysis_id}/results_Hard.tsv'
             _log.info(f'Fetching results: {results_url=} {args.neutral_regions_tsv=}')
@@ -330,6 +338,7 @@ def wait_for_nre_results(driver, args):
                     fields = line.strip().split()
                     chk(fields[0].startswith('chr'), 'chrom line does not start with chr')
                     nre_results_bed.write('\t'.join([fields[0][3:], fields[1], fields[2]]) + '\n')
+                    
             return
         else:
             _log.info(f'Waiting for NRE results: {driver.title=} {args=}')

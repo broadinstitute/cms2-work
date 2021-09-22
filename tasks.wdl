@@ -408,6 +408,8 @@ task call_neutral_region_explorer {
   String neutral_regions_tsv_fname = out_fnames_prefix + ".neutral_regions.tsv"
   String neutral_regions_bed_fname = out_fnames_prefix + ".neutral_regions.bed"
   String nre_submitted_form_html_fname = out_fnames_prefix + ".submitted_form.html"
+  String nre_results_html_fname = out_fnames_prefix + ".nre_results.html"
+  String nre_results_url_fname = out_fnames_prefix + ".nre_results.url.txt"
 
   command <<<
     set -ex -o pipefail
@@ -416,11 +418,16 @@ task call_neutral_region_explorer {
        --neutral-regions-tsv "~{neutral_regions_tsv_fname}" \
        --neutral-regions-bed "~{neutral_regions_bed_fname}" \
        --nre-submitted-form-html "~{nre_submitted_form_html_fname}" \
+       --nre-results-html "~{nre_results_html_fname}" \
+       --nre-results-url "~{nre_results_url_fname}"
+    
   >>>
   output {
     File neutral_regions_tsv = neutral_regions_tsv_fname
     File neutral_regions_bed = neutral_regions_bed_fname
     File nre_submitted_form_html = nre_submitted_form_html_fname
+    File nre_results_html = nre_results_html_fname
+    String nre_results_url = read_string(nre_results_url_fname)
   }
   runtime {
     docker: "quay.io/ilya_broad/cms:webdriver-0.1"  # selscan=1.3.0a09 with tabix
