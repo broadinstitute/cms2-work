@@ -241,15 +241,15 @@ def submit_neutral_region_explorer_job(args):
     if 'human_diversity' in inps:
         chk(inps['human_diversity'] in ('CEU', 'YRI', 'CHB'), 'invalid human_diversity value')
         for e in driver.find_elements_by_name('popu'):
-            if inps['human_diversity'] == 'CEU'  and  e.getattribute('value') == 'ceu_filt':
+            if inps['human_diversity'] == 'CEU'  and  e.get_attribute('value') == 'ceu_filt':
                 e.click()
                 time.sleep(2)
                 break
-            if inps['human_diversity'] == 'YRI'  and  e.getattribute('value') == 'yri_filt':
+            if inps['human_diversity'] == 'YRI'  and  e.get_attribute('value') == 'yri_filt':
                 e.click()
                 time.sleep(2)
                 break
-            if inps['human_diversity'] == 'CHBJPT'  and  e.getattribute('value') == 'chbjpt_filt':
+            if inps['human_diversity'] == 'CHBJPT'  and  e.get_attribute('value') == 'chbjpt_filt':
                 e.click()
                 time.sleep(2)
                 break
@@ -267,11 +267,11 @@ def submit_neutral_region_explorer_job(args):
     if 'distance_unit' in inps:
         chk(inps['distance_unit'] in ('cM', 'bp'), 'invalid distance_unit value')
         for e in driver.find_elements_by_name('cMbp'):
-            if inps['distance_unit'] == 'cM'  and  e.getattribute('value') == 'cM':
+            if inps['distance_unit'] == 'cM'  and  e.get_attribute('value') == 'cM':
                 e.click()
                 time.sleep(2)
                 break
-            if inps['distance_unit'] == 'bp'  and  e.getattribute('value') == 'bp':
+            if inps['distance_unit'] == 'bp'  and  e.get_attribute('value') == 'bp':
                 e.click()
                 time.sleep(2)
                 break
