@@ -141,7 +141,7 @@ def do_deploy_to_terra(args):
         config_json.pop('rootEntityType', None)
 
         wdl_inputs = dict(misc_utils.json_loadf(root_workflow_def['test_data']))
-        terra_inputs = { k: json.dumps(v, sort_keys=True) for k, v in wdl_input.items() }
+        terra_inputs = { k: json.dumps(v, sort_keys=True) for k, v in wdl_inputs.items() }
         config_json['inputs'].update(terra_inputs)
 
         _log_json('AFTER UPDATING METHODCONFIGVERSION config_json is', config_json)
