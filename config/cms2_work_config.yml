@@ -26,7 +26,7 @@ terra:
     cms2_empirical:
       skip: False
       wdl: cms2_empirical.wdl
-      synopsis: fetch empirical data
+      synopsis: fetch and analyze empirical data
       method_name: cosi2_test_01  # arbitrary until figure out how to create new methods in Terra workspace
       config_name: cms2-empirical
       test_data: test.cms2_empirical.wdl.json

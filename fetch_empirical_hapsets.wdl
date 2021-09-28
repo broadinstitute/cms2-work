@@ -57,7 +57,6 @@ workflow fetch_empirical_hapsets_wf {
       neutral_hapsets: fetch_neutral_regions.empirical_hapsets,
       selection_hapsets: selection_hapsets_for_sel_pop
     }
-    Boolean assert_results = [check_neutral_region_spec.assert_result]
+    Array[Boolean]+ assert_results = [check_neutral_regions_spec.assert_result]
   }
 }
-
