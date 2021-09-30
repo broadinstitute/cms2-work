@@ -186,6 +186,7 @@ def parse_args():
     parser.add_argument('--neutral-regions-tsv', required=True, help='output file for nre results')
     parser.add_argument('--neutral-regions-bed', required=True, help='output bed file for nre results')
     parser.add_argument('--nre-submitted-form-html', help='the form submitted to the NRE is saved here')
+    parser.add_argument('--nre-submitted-values-json', help='the submitted values')
     parser.add_argument('--nre-results-html', help='the results web page')
     parser.add_argument('--nre-results-url', help='the results URL')
 
@@ -208,6 +209,7 @@ def submit_neutral_region_explorer_job(args):
     #print(driver.title)
 
     driver.get(args.nre_url)
+    driver.maximize_window()
 
     param_name_to_checkbox_name = {
         'known_genes': 'knownGene',
@@ -223,13 +225,15 @@ def submit_neutral_region_explorer_job(args):
     }
     
     for param_name, checkbox_name in param_name_to_checkbox_name.items():
+        checkbox = driver.find_element_by_name(checkbox_name)
         if param_name in inps:
-            checkbox = driver.find_element_by_name(checkbox_name)
             if checkbox.is_selected() != inps[param_name]:
                 _log.info(f'toggling: {param_name=} {checkbox_name=}')
                 checkbox.click()
                 time.sleep(2)
                 chk(checkbox.is_selected() == inps[param_name], f'failed to set checkbox state: {param_name=} {checkbox_name=}')
+
+        _log.info(f'{param_name=} {checkbox_name=} {checkbox.is_selected()=}')
     
     def find_submit_button():
         for e in driver.find_elements_by_tag_name('input'):
@@ -238,25 +242,32 @@ def submit_neutral_region_explorer_job(args):
             if e.get_attribute('type') == 'submit':
                 return e
 
-    driver.find_element_by_name('chromosomes').send_keys(inps.get('chromosomes', '1-22'))
-    
-    if 'human_diversity' in inps:
-        chk(inps['human_diversity'] in ('CEU', 'YRI', 'CHB'), 'invalid human_diversity value')
-        for e in driver.find_elements_by_name('popu'):
-            if inps['human_diversity'] == 'CEU'  and  e.get_attribute('value') == 'ceu_filt':
-                e.click()
-                time.sleep(2)
-                break
-            if inps['human_diversity'] == 'YRI'  and  e.get_attribute('value') == 'yri_filt':
-                e.click()
-                time.sleep(2)
-                break
-            if inps['human_diversity'] == 'CHBJPT'  and  e.get_attribute('value') == 'chbjpt_filt':
-                e.click()
-                time.sleep(2)
-                break
+    radio_buttons = {
+        'human_diversity': ('popu', {'CEU': 'ceu_filt', 'YRI': 'yri_filt', 'CHBJPT': 'chbjpt_filt'}),
+        'distance_unit': ('cMbp', {'cM': 'cM', 'bp': 'bp'})
+    }
+    for param_name, (radio_button_name, inp2value) in radio_buttons.items():
+        if param_name in inps:
+            chk(inps[param_name] in inp2value, f'invalid {param_name} value: {inps[param_name]}')
+            found_radio_button = False
+            for e in driver.find_elements_by_name(radio_button_name):
+                found_radio_button = False
+                for inp, val in inp2value.items():
+                    if inps[param_name] == inp   and  e.get_attribute('value') == val:
+                        found_radio_button = True
+                        e.click()
+                        time.sleep(2)
+                        break
+                if found_radio_button:
+                    break
+            # end: for e in driver.find_elements_by_name(radiobox_name)
+            chk(found_radio_button, f'Did not find radio button for {param_name}')
+        # end: if param_name in inps
+    # end: for param_name, (radiobox_name, inp2value) in radio_boxes.items()
 
     param_name2input_name = {
+        'chromosomes': 'chromosomes',
+        #'regions_to_exclude_bed': 'hardf',
         'minimum_region_size': 'min_reg_sz',
         'minimum_distance_to_nearest_gene': 'd2g_min',
         'maximum_distance_to_nearest_gene': 'd2g_max'
@@ -264,27 +275,43 @@ def submit_neutral_region_explorer_job(args):
 
     for param_name, input_name in param_name2input_name.items():
         if param_name in inps:
+            driver.find_element_by_name(input_name).clear()
             driver.find_element_by_name(input_name).send_keys(str(inps[param_name]))
 
-    if 'distance_unit' in inps:
-        chk(inps['distance_unit'] in ('cM', 'bp'), 'invalid distance_unit value')
-        for e in driver.find_elements_by_name('cMbp'):
-            if inps['distance_unit'] == 'cM'  and  e.get_attribute('value') == 'cM':
-                e.click()
-                time.sleep(2)
-                break
-            if inps['distance_unit'] == 'bp'  and  e.get_attribute('value') == 'bp':
-                e.click()
-                time.sleep(2)
-                break
-
-    if 'regions_to_exclude_bed' in inps:
-        driver.find_element_by_id('hardf').send_keys(inps['regions_to_exclude_bed'])
+    driver.find_element_by_id('hardf').send_keys(inps['regions_to_exclude_bed'])
 
     current_url = driver.current_url
 
     if args.nre_submitted_form_html:
         dump_file(fname=args.nre_submitted_form_html, value=driver.page_source)
+
+    if args.nre_submitted_values_json:
+        submitted_values = {}
+        for param_name, checkbox_name in param_name_to_checkbox_name.items():
+            submitted_values[param_name] = driver.find_element_by_name(checkbox_name).is_selected()
+        for param_name, input_name in param_name2input_name.items():
+            submitted_values[param_name] = driver.find_element_by_name(input_name).get_attribute('value')
+
+        submitted_values['regions_to_exclude_bed'] = driver.find_element_by_id('hardf').get_attribute('value')
+
+        for param_name, (radio_button_name, inp2value) in radio_buttons.items():
+            found_radio_button = False
+            for e in driver.find_elements_by_name(radio_button_name):
+                found_radio_button = False
+                for inp, val in inp2value.items():
+                    if e.get_attribute('value') == val:
+                        found_radio_button = True
+                        submitted_values[param_name + '_' + inp] = e.is_selected()
+                        break
+                if found_radio_button:
+                    break
+            # end: for e in driver.find_elements_by_name(radiobox_name)
+            chk(found_radio_button, f'Did not find radio button for {param_name}')
+        # end: for param_name, (radiobox_name, inp2value) in radio_boxes.items()
+
+        _write_json(fname=args.nre_submitted_values_json, json_val=submitted_values)
+
+    #sys.exit(1)
 
     find_submit_button().click()
     time.sleep(2)
@@ -326,7 +353,7 @@ def wait_for_nre_results(driver, args):
                 dump_file(fname=args.nre_results_html, value=driver.page_source)
 
             analysis_id = driver.current_url.split('=')[1]
-            results_url = f'http://nre.cb.bscb.cornell.edu//nre/user/{analysis_id}/results_Hard.tsv'
+            results_url = f'http://nre.cb.bscb.cornell.edu/nre/user/{analysis_id}/results_Hard.tsv'
             _log.info(f'Fetching results: {results_url=} {args.neutral_regions_tsv=}')
             urllib.request.urlretrieve(results_url, args.neutral_regions_tsv)
 

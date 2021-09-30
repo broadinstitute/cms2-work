@@ -430,7 +430,7 @@ task call_neutral_region_explorer {
     String nre_results_url = read_string(nre_results_url_fname)
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms:webdriver-0.1"  # selscan=1.3.0a09 with tabix
+    docker: "quay.io/ilya_broad/cms:webdriver-6dba18313775d137217c8a45c4bdd53d6b4e4441"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
