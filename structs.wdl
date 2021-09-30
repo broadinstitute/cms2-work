@@ -61,25 +61,26 @@ struct SimulatedHapsetsDef {
 
 
 struct NeutralRegionExplorerParams {
-  Boolean? known_genes
-  Boolean? gene_bounds
-  Boolean? spliced_ESTs
-  Boolean? segmental_duplications
-  Boolean? CNVs
-  Boolean? self_chain
-  Boolean? reduced_repeat_masker
-  Boolean? simple_repeats
-  Boolean? repeat_masker
-  Boolean? phast_conserved_plac_mammal
+  Boolean known_genes
+  Boolean gene_bounds
+  Boolean spliced_ESTs
+  Boolean segmental_duplications
+  Boolean CNVs
+  Boolean self_chain
+  Boolean reduced_repeat_masker
+  Boolean simple_repeats
+  Boolean repeat_masker
+  Boolean phast_conserved_plac_mammal
 
-  String? chromosomes
-  String? human_diversity
-  Int? minimum_region_size
-  Int? minimum_distance_to_nearest_gene
-  Int? maximum_distance_to_nearest_gene
-  String? distance_unit
+  String chromosomes
+  String human_diversity
+  Int minimum_region_size
+  Int minimum_distance_to_nearest_gene
+  Int maximum_distance_to_nearest_gene
+  String distance_unit
 
-  File? regions_to_exclude_bed
+  Array[File] regions_to_exclude_bed
+  Array[File] gene_regions_bed
 }
 
 struct EmpiricalHapsetsDef {

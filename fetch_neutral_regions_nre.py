@@ -174,6 +174,11 @@ def chk(cond, msg='condition failed'):
     if not cond:
         raise RuntimeError(f'Error: {msg}') 
 
+def reverse_dict(d):
+    result = {v: k for k, v in d.items()}
+    chk(len(result) == len(d), f'reverse_dict: non-unique values in dict {d}')
+    return result
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -242,15 +247,15 @@ def submit_neutral_region_explorer_job(args):
             if e.get_attribute('type') == 'submit':
                 return e
 
-    radio_buttons = {
+    radio_buttons_groups = {
         'human_diversity': ('popu', {'CEU': 'ceu_filt', 'YRI': 'yri_filt', 'CHBJPT': 'chbjpt_filt'}),
         'distance_unit': ('cMbp', {'cM': 'cM', 'bp': 'bp'})
     }
-    for param_name, (radio_button_name, inp2value) in radio_buttons.items():
+    for param_name, (radio_button_group_name, inp2value) in radio_button_groups.items():
         if param_name in inps:
             chk(inps[param_name] in inp2value, f'invalid {param_name} value: {inps[param_name]}')
             found_radio_button = False
-            for e in driver.find_elements_by_name(radio_button_name):
+            for e in driver.find_elements_by_name(radio_button_group_name):
                 found_radio_button = False
                 for inp, val in inp2value.items():
                     if inps[param_name] == inp   and  e.get_attribute('value') == val:
@@ -263,14 +268,15 @@ def submit_neutral_region_explorer_job(args):
             # end: for e in driver.find_elements_by_name(radiobox_name)
             chk(found_radio_button, f'Did not find radio button for {param_name}')
         # end: if param_name in inps
-    # end: for param_name, (radiobox_name, inp2value) in radio_boxes.items()
+    # end: for param_name, (radio_button_group_name, inp2value) in radio_boxes.items()
 
     param_name2input_name = {
         'chromosomes': 'chromosomes',
-        #'regions_to_exclude_bed': 'hardf',
         'minimum_region_size': 'min_reg_sz',
         'minimum_distance_to_nearest_gene': 'd2g_min',
-        'maximum_distance_to_nearest_gene': 'd2g_max'
+        'maximum_distance_to_nearest_gene': 'd2g_max',
+        'recomb_rate_min': 'r_min',
+        'recomb_rate_max': 'r_max'
     }
 
     for param_name, input_name in param_name2input_name.items():
@@ -278,7 +284,15 @@ def submit_neutral_region_explorer_job(args):
             driver.find_element_by_name(input_name).clear()
             driver.find_element_by_name(input_name).send_keys(str(inps[param_name]))
 
-    driver.find_element_by_id('hardf').send_keys(inps['regions_to_exclude_bed'])
+    param_name_to_input_id = {
+        'regions_to_exclude_bed': 'hardf',
+        'gene_regions_bed': 'usrGenes'
+    }
+    
+    for param_name, input_id in param_name_to_input_id.items():
+        if param_name in inps:
+            for f in inps[param_name]:
+                driver.find_element_by_id(input_id).send_keys(str(inps[param_name]))
 
     current_url = driver.current_url
 
@@ -291,23 +305,14 @@ def submit_neutral_region_explorer_job(args):
             submitted_values[param_name] = driver.find_element_by_name(checkbox_name).is_selected()
         for param_name, input_name in param_name2input_name.items():
             submitted_values[param_name] = driver.find_element_by_name(input_name).get_attribute('value')
+        for param_name, input_id in param_name_to_input_id.items():
+            submitted_values[param_name] = driver.find_element_by_id(input_id).get_attribute('value')
 
-        submitted_values['regions_to_exclude_bed'] = driver.find_element_by_id('hardf').get_attribute('value')
-
-        for param_name, (radio_button_name, inp2value) in radio_buttons.items():
-            found_radio_button = False
-            for e in driver.find_elements_by_name(radio_button_name):
-                found_radio_button = False
-                for inp, val in inp2value.items():
-                    if e.get_attribute('value') == val:
-                        found_radio_button = True
-                        submitted_values[param_name + '_' + inp] = e.is_selected()
-                        break
-                if found_radio_button:
-                    break
-            # end: for e in driver.find_elements_by_name(radiobox_name)
-            chk(found_radio_button, f'Did not find radio button for {param_name}')
-        # end: for param_name, (radiobox_name, inp2value) in radio_boxes.items()
+        for param_name, (radio_button_group_name, inp2value) in radio_button_groups.items():
+            selected_radio_button_value = [e.get_attribute('value') for e in driver.find_elements_by_name(radio_button_group_name) \
+                                           if e.is_selected()][0]
+            submitted_values[param_name] = reverse_dict(inp2value)[selected_radio_button_value]
+        # end: for param_name, (radio_button_group_name, inp2value) in radio_boxes.items()
 
         _write_json(fname=args.nre_submitted_values_json, json_val=submitted_values)
 
