@@ -7,7 +7,7 @@ import subprocess
 
 import misc_utils
 
-def quay_tag_exists(quay_tag, quay_repo='ilya_broad/cms', quay_token='6W2IQJ716UB18S5PZP3MJI9AM67XK8ISNJLGVCCIN7DD9HN7LUP9613M8WDO83I9'):
+def quay_tag_exists(quay_tag, quay_repo='ilya_broad/cms', quay_token=os.environ['QUAY_CMS_TOKEN']):
     curl_cmd = f'curl -H "Authorization: Bearer {quay_token}" -X GET "https://quay.io/api/v1/repository/{quay_repo}/tag/{quay_tag}/images?owned=true"'
     curl_out = subprocess.check_output(curl_cmd, shell=True).decode()
     curl_parsed = json.loads(curl_out.strip())
