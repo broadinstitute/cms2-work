@@ -59,7 +59,12 @@ struct SimulatedHapsetsDef {
     String       memoryPerBlock #= "3 GB"
 }
 
-
+#
+# struct NeutralRegionExplorerParams
+#
+# Parameters passed to Neutral Region Explorer
+# ( http://nre.cb.bscb.cornell.edu/nre/run.html )
+#
 struct NeutralRegionExplorerParams {
   Boolean known_genes
   Boolean gene_bounds

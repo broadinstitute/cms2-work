@@ -210,6 +210,9 @@ def submit_neutral_region_explorer_job(args):
 
     driver = webdriver.Chrome(options=options)
 
+    driver.implicitly_wait(30)
+    driver.set_page_load_timeout(30)
+
     #driver.get('http://www.google.com')
     #print(driver.title)
 
