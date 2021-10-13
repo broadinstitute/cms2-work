@@ -109,11 +109,10 @@ workflow run_sims_and_compute_cms2_components_wf {
     Int maxAttempts = 10000000
     Int numRepsPerBlock = 1
     Int numCpusPerBlock = numRepsPerBlock
-    Int repTimeoutSeconds = 600
+    Int repAttemptTimeoutSeconds = 600
+    Int repTimeoutSeconds = 3600
     String       memoryPerBlock = "3 GB"
-    String       cosi2_docker = "quay.io/ilya_broad/dockstore-tool-cosi2@sha256:11df3a646c563c39b6cbf71490ec5cd90c1025006102e301e62b9d0794061e6a"
     Int preemptible = 3
-    File taskScript_simulation = "./runcosi.py"
 
     #
     # Component score computation params
@@ -122,46 +121,13 @@ workflow run_sims_and_compute_cms2_components_wf {
     #Array[File] region_haps_tar_gzs
     #Array[File] neutral_region_haps_tar_gzs
 
-    File compute_components_script = "./remodel_components.py"
+    #Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
 
-    Int n_bins_ihs = 20
-    Int n_bins_nsl = 20
-    Int n_bins_delihh = 20
-
-    Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
+    ComponentComputationParams component_computation_params
 
     Int hapset_block_size = 2
-    
-    Int threads = 1
-    Int mem_base_gb = 0
-    Int mem_per_thread_gb = 1
-    Int local_disk_gb = 50
-    File get_pops_info_script = "./get_pops_info.py"
-    File normalize_and_collate_script = "./norm_and_collate.py"
-    String docker = "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-
-    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
-    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
-
   }
 
-# ** Bookkeeping calls
-# *** call create_tar_gz as save_input_files
-  call tasks.create_tar_gz as save_input_files {
-    input:
-       files = flatten([[paramFile_demographic_model, paramFile_neutral, recombFile, taskScript_simulation, compute_components_script,
-                         get_pops_info_script, normalize_and_collate_script],
-                        paramFiles_selection]),
-       out_basename = modelId
-  }
 
   ####################################################
   # Run neutral sims
@@ -183,48 +149,31 @@ workflow run_sims_and_compute_cms2_components_wf {
     numRepsPerBlock=numRepsPerBlock,
     numCpusPerBlock=numCpusPerBlock,
     repTimeoutSeconds=repTimeoutSeconds,
+    repAttemptTimeoutSeconds=repAttemptTimeoutSeconds,
     memoryPerBlock=memoryPerBlock,
-    cosi2_docker=cosi2_docker,
-    preemptible=preemptible,
-    taskScript_simulation=taskScript_simulation,
-    threads=threads,
-    mem_base_gb=mem_base_gb,
-    mem_per_thread_gb=mem_per_thread_gb,
-    local_disk_gb=local_disk_gb,
-    get_pops_info_script=get_pops_info_script
+    preemptible=preemptible
   }
 
 # ** Compute normalization stats
 # *** Compute one-pop CMS2 components for neutral sims
   call compute_normalization_stats.compute_normalization_stats_wf {
     input:
-    modelId=modelId,
-    pops_info=sims_wf.pops_info,
-    neut_sim_region_haps_tar_gzs=sims_wf.neut_sim_region_haps_tar_gzs,
+    out_fnames_prefix=modelId,
+    pops_info=sims_wf.simulated_hapsets_bundle.pops_info,
+    neutral_hapsets=sims_wf.simulated_hapsets_bundle.neutral_hapsets,
 
-    n_bins_ihs=n_bins_ihs,
-    n_bins_nsl=n_bins_nsl,
-    n_bins_delihh=n_bins_delihh,
-
-    hapset_block_size=hapset_block_size,
-
-    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
-    docker=docker,
-    preemptible=preemptible
+    component_computation_params=component_computation_params,
+    hapset_block_size=hapset_block_size
   }
 
 # ** Component stats for selection sims
   call component_stats_for_sel_sims.component_stats_for_sel_sims_wf {
     input:
-    experimentId=experimentId,
-    modelId=modelId,
-    selection_sims = sims_wf.selection_sims_tar_gzs,
-    pops_info = sims_wf.pops_info,
+    out_fnames_prefix=sims_wf.simulated_hapsets_bundle.hapsets_bundle_id,
+    selection_sims=sims_wf.simulated_hapsets_bundle.selection_hapsets,
+    pops_info=sims_wf.simulated_hapsets_bundle.pops_info,
 
-    n_bins_ihs=n_bins_ihs,
-    n_bins_nsl=n_bins_nsl,
-    n_bins_delihh=n_bins_delihh,
+    component_computation_params=component_computation_params,
 
     norm_bins_ihs=compute_normalization_stats_wf.norm_bins_ihs,
     norm_bins_nsl=compute_normalization_stats_wf.norm_bins_nsl,
@@ -232,17 +181,15 @@ workflow run_sims_and_compute_cms2_components_wf {
     norm_bins_delihh=compute_normalization_stats_wf.norm_bins_delihh,
     norm_bins_xpehh=compute_normalization_stats_wf.norm_bins_xpehh,
 
-    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components,
-    docker=docker,
-    preemptible=preemptible
+    one_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.one_pop_bin_stats_sel_pop_used,
+    two_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_sel_pop_used,
+    two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used
   }
 
 # ** Workflow outputs
   output {
 # *** Bookkeeping outputs
-    File saved_input_files = save_input_files.out_tar_gz
-    PopsInfo pops_info = sims_wf.pops_info
+    PopsInfo pops_info = sims_wf.simulated_hapsets_bundle.pops_info
 # *** Simulation outputs
     #Array[File] neutral_sims_tar_gzs = sims_wf.neutral_sims_tar_gzs
     #Array[File] selection_sims_tar_gzs = sims_wf.selection_sims_tar_gzs
@@ -253,6 +200,7 @@ workflow run_sims_and_compute_cms2_components_wf {
     #Array[File?] sel_normed_and_collated = component_stats_for_sel_sims_wf.sel_normed_and_collated
     #Array[File?] sel_sim_region_haps_tar_gzs = component_stats_for_sel_sims_wf.sel_sim_region_haps_tar_gzs
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
-    File all_hapsets_component_stats_h5 = component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5
+    Array[File] all_hapsets_component_stats_h5_blocks = 
+    component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5_blocks
   }
 }

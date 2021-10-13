@@ -1,0 +1,6 @@
+{
+    "chromosomes": "22",
+    "known_genes": false,
+    "gene_bounds": false,
+    "regions_to_exclude_bed": "/data/ilya-work/proj/dockstore-tool-cms2/misc/test-region-exclude.bed"
+}

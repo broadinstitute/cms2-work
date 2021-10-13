@@ -415,6 +415,8 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
 
     #hapset_dfs = []
     hapset_metadata_records = []
+
+    min_hapset_id_size = 256
     
     pd.set_option('io.hdf.default_format','table')
     with pd.HDFStore(inps['experimentId']+'.all_component_stats.h5', mode='w', complevel=9, fletcher32=True) as store:
@@ -424,7 +426,7 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
             hapset_id = hapset_compstats['hapset_id'].iat[0]
             hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
             #hapset_dfs.append(hapset_compstats)
-            store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': 64})
+            store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': min_hapset_id_size})
             hapset_metadata_records.append({'hapset_id': hapset_id,
                                             'is_sim': True,
                                             'start_pos:': 0,

@@ -29,7 +29,6 @@ workflow cms2_main {
     numRepsPerBlock: "(Int) Run this many simulations per block.  A block of simulations is run in a single task."
     numCpusPerBlock: "(Int) Allocate this many CPUs to each task running the simulations."
     memoryPerBlock: "(String) Memory spec for each task running a block of simulation replicas."
-    repTimeoutSeconds: "(Int) Time out (and fail) a simulation replica for a given random seed after this many seconds."
 
 # *** Component stats computation params
     n_bins: "Number of frequency bins for normalizing iHS, nSL and delIHH component statistics."
@@ -55,25 +54,18 @@ workflow cms2_main {
     Int maxAttempts = 10000000
     Int numRepsPerBlock = 1
     Int numCpusPerBlock = numRepsPerBlock
-    Int repTimeoutSeconds = 600
+
     String       memoryPerBlock = "3 GB"
 
     Int hapset_block_size = 2
 
-    Int n_bins = 20
-
-    Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
-
-    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
+    ComponentComputationParams component_computation_params = object {
+      n_bins_ihs: 20,
+      n_bins_nsl: 20,
+      n_bins_delihh: 20
     }
-    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
+
+    #Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
   }
 
   call run_sims_and_compute_cms2_components.run_sims_and_compute_cms2_components_wf as main_call {
@@ -85,20 +77,15 @@ workflow cms2_main {
     nreps_neutral=nreps_neutral,
     nreps=nreps,
 
-    n_bins_ihs=n_bins,
-    n_bins_nsl=n_bins,
-    n_bins_delihh=n_bins,
+    component_computation_params=component_computation_params,
 
     numRepsPerBlock=numRepsPerBlock,
     numCpusPerBlock=numCpusPerBlock,
     memoryPerBlock=memoryPerBlock,
 
-    include_components=include_components,
+    #include_components=include_components,
 
-    hapset_block_size=hapset_block_size,
-
-    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
+    hapset_block_size=hapset_block_size
   }
 
 # ** Workflow outputs
@@ -114,7 +101,7 @@ workflow cms2_main {
     #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
 # *** Component scores
     #Array[File?] sel_normed_and_collated = main_call.sel_normed_and_collated
-    File all_hapsets_component_stats_h5 = main_call.all_hapsets_component_stats_h5
+    Array[File] all_hapsets_component_stats_h5_blocks = main_call.all_hapsets_component_stats_h5_blocks
 
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }

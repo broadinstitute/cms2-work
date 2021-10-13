@@ -60,6 +60,8 @@ def do_get_pop_ids(args):
     #pops_info['pop_name2id'] = dict(zip(pop_names, pop_ids))
     pops_info['pop_id_to_idx'] = {pop_id: i for i, pop_id in enumerate(pop_ids)}
     pops_info['pop_alts'] = {pop_id: [alt_pop_id for alt_pop_id in pop_ids if alt_pop_id != pop_id] for pop_id in pop_ids}
+
+    pops_info['pop_alts_used'] = [[pop_id_2 in pops_info['pop_alts'][pop_id_1] for pop_id_2 in pop_ids] for pop_id_1 in pop_ids]
     
     # with open('pop_ids.txt', 'w') as out:
     #   out.write('\n'.join(pop_ids))
@@ -68,9 +70,9 @@ def do_get_pop_ids(args):
     # _write_json('pop_id_to_idx.json', {pop_id: i for i, pop_id in enumerate(pop_ids)})
 
 
-    pops_info['pop_pairs'] = [{"Left": pop_ids[i], "Right": pop_ids[j]}
-                              for i in range(len(pop_ids))
-                              for j in range(i+1, len(pop_ids))]
+    # pops_info['pop_pairs'] = [{"Left": pop_ids[i], "Right": pop_ids[j]}
+    #                           for i in range(len(pop_ids))
+    #                           for j in range(i+1, len(pop_ids))]
 
     sel_pops = []
     for sweep_def in (args.sweep_defs or []):
@@ -79,12 +81,12 @@ def do_get_pop_ids(args):
         for line in f:
           m = re.search(r'^\s*pop_event\s+sweep_mult(?:_standing)?\s+"[^"]*"\s+(?P<sel_pop_id>\d+)\s+', line) # "
           if m:
-            sel_pops_here.append(m.group('sel_pop_id'))
+            sel_pops_here.append({'pop_id': m.group('sel_pop_id')})
       if len(sel_pops_here) != 1:
         raise RuntimeError(f"Could not find sole sweep in {sweep_def}")
       sel_pops.extend(sel_pops_here)
 
-      pops_info['sel_pop_ids'] = sel_pops
+      pops_info['sel_pops'] = sel_pops
 
     _write_json(fname=args.out_pops_info, json_val=dict(pops_info=pops_info))
 

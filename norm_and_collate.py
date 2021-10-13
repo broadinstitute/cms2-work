@@ -336,6 +336,9 @@ def normalize_and_collate_scores(args):
 
     inps = _json_loadf(args.input_json)
 
+    chk(inps["sel_pop"] == inps["one_pop_components_sel_pop_used"], 'sel_pop mismatch')
+    
+
     def make_local(inp):
         """Creates a symlink to the input file *inp* in the current directory,
         and returns the symlink.   Necessary because the program 'norm' (part of selscan)
@@ -416,7 +419,15 @@ def normalize_and_collate_scores(args):
     collated = collated.join(ihh12_normed, how='outer')
     chk_idx(collated, 'collated after ihh12_normed')
 
-    for other_pop_idx, (xpehh_out, norm_bins_xpehh) in enumerate(zip(inps["xpehh_out"], inps["norm_bins_xpehh"])):
+    for other_pop_idx, (xpehh_out, norm_bins_xpehh, xpehh_sel_pop_used, xpehh_alt_pop_used, norm_sel_pop_used, norm_alt_pop_used) \
+        in enumerate(zip(inps["xpehh_out"], inps["norm_bins_xpehh"],
+                         inps["two_pop_components_sel_pop_used"],
+                         inps["two_pop_components_alt_pop_used"],
+                         inps["norm_two_pop_components_sel_pop_used"],
+                         inps["norm_two_pop_components_alt_pop_used"])):
+        chk(xpehh_sel_pop_used == inps["sel_pop"], f'sel pop mismatch: xpehh')
+        chk(xpehh_sel_pop_used == norm_sel_pop_used, f'xpehh norm sel pop mismatch: {xpehh_sel_pop_used=} {norm_sel_pop_used=}')
+        chk(xpehh_alt_pop_used == norm_alt_pop_used, f'xpehh norm alt pop mismatch: {xpehh_alt_pop_used=} {norm_alt_pop_used=}')
         execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
                 f'--log {xpehh_out}.norm.log ')
         xpehh_normed = pd.read_table(xpehh_out+".norm", index_col='pos',
@@ -426,8 +437,8 @@ def normalize_and_collate_scores(args):
         chk_idx(collated, f'collated after xpehh_normed_{other_pop_idx}')
 
     for other_pop_idx, fst_and_delDAF_out in enumerate(inps["fst_and_delDAF_out"]):
-        execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
-                f'--log {xpehh_out}.norm.log ')
+        #execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
+        #        f'--log {xpehh_out}.norm.log ')
         fst_and_delDAF_tsv = \
             pd.read_table(fst_and_delDAF_out, index_col='physPos',
                           low_memory=False).rename_axis('pos').add_suffix(f'_{other_pop_idx}')\

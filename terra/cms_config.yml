@@ -1,0 +1,14 @@
+#
+# Locations of various files etc
+#
+data:
+  genetic_maps:
+    spence19:
+      genmaps_tar_gz: gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz
+      descr: |
+        Genetic maps from 
+        "Inference and analysis of population-specific fine-scale recombination maps across 26 diverse human populations"
+        (Jeffrey P. Spence and Yun S. Song, Science Advances, 23 Oct 2019, Vol. 5, no. 10)
+      doi: 10.1126/sciadv.aaw9206
+      uri: https://advances.sciencemag.org/content/5/10/eaaw9206.full
+
