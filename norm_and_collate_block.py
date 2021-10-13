@@ -317,11 +317,11 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
 
     collated = derFreq if collated is None else collated.join(derFreq, how='outer')
 
-    execute(f'norm --ihs --bins {inps["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} '
+    execute(f'norm --ihs --bins {inps["component_computation_params"]["n_bins_ihs"]} --load-bins {inps["norm_bins_ihs"]} '
             f'--files {inps["ihs_out"]} '
-            f'--log {inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm.log ')
+            f'--log {inps["ihs_out"]}.{inps["component_computation_params"]["n_bins_ihs"]}bins.norm.log ')
 
-    ihs_normed = pd.read_table(f'{inps["ihs_out"]}.{inps["n_bins_ihs"]}bins.norm',
+    ihs_normed = pd.read_table(f'{inps["ihs_out"]}.{inps["component_computation_params"]["n_bins_ihs"]}bins.norm',
                                names='id pos p1 ihh1 ihh2 ihs ihsnormed ihs_outside_cutoff'.split(),
                                index_col='pos',
                                low_memory=False).add_prefix('ihs_')
@@ -329,11 +329,11 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
 
     collated = collated.join(ihs_normed, how='outer')
 
-    execute(f'norm --ihs --bins {inps["n_bins_delihh"]} --load-bins {inps["norm_bins_delihh"]} '
+    execute(f'norm --ihs --bins {inps["component_computation_params"]["n_bins_delihh"]} --load-bins {inps["norm_bins_delihh"]} '
             f'--files {inps["delihh_out"]} '
-            f'--log {inps["delihh_out"]}.{inps["n_bins_delihh"]}bins.norm.log ')
+            f'--log {inps["delihh_out"]}.{inps["component_computation_params"]["n_bins_delihh"]}bins.norm.log ')
 
-    delihh_normed = pd.read_table(f'{inps["delihh_out"]}.{inps["n_bins_delihh"]}bins.norm',
+    delihh_normed = pd.read_table(f'{inps["delihh_out"]}.{inps["component_computation_params"]["n_bins_delihh"]}bins.norm',
                                   names='id pos p1 ihh1 ihh2 delihh delihhnormed delihh_outside_cutoff'.split(),
                                   index_col='pos',
                                   low_memory=False).add_prefix('delihh_')
@@ -341,11 +341,11 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
 
     collated = collated.join(delihh_normed, how='outer')
 
-    execute(f'norm --nsl --bins {inps["n_bins_nsl"]} --load-bins {inps["norm_bins_nsl"]} '
+    execute(f'norm --nsl --bins {inps["component_computation_params"]["n_bins_nsl"]} --load-bins {inps["norm_bins_nsl"]} '
             f'--files {inps["nsl_out"]} '
-            f'--log {inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm.log ')
+            f'--log {inps["nsl_out"]}.{inps["component_computation_params"]["n_bins_nsl"]}bins.norm.log ')
 
-    nsl_normed = pd.read_table(f'{inps["nsl_out"]}.{inps["n_bins_nsl"]}bins.norm',
+    nsl_normed = pd.read_table(f'{inps["nsl_out"]}.{inps["component_computation_params"]["n_bins_nsl"]}bins.norm',
                                names='id pos p1 ihh1_nsl ihh2_nsl nsl nslnormed nsl_outside_cutoff'.split(),
                                index_col='pos',
                                low_memory=False).add_prefix('nsl_')
@@ -353,7 +353,7 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
     collated = collated.join(nsl_normed, how='outer')
     chk_idx(collated, 'collated after nsl_normed')
 
-    execute(f'norm --ihh12 --bins {inps["n_bins_ihh12"]} --load-bins {inps["norm_bins_ihh12"]} '
+    execute(f'norm --ihh12 --bins 1 --load-bins {inps["norm_bins_ihh12"]} '
             f'--files {inps["ihh12_out"]} '
             f'--log {inps["ihh12_out"]}.norm.log ')
 
@@ -364,7 +364,7 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
     chk_idx(collated, 'collated after ihh12_normed')
 
     for other_pop_idx, (xpehh_out, norm_bins_xpehh) in enumerate(zip(inps["xpehh_out"], inps["norm_bins_xpehh"])):
-        execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
+        execute(f'norm --xpehh --bins 1 --load-bins {norm_bins_xpehh} --files {xpehh_out} '
                 f'--log {xpehh_out}.norm.log ')
         xpehh_normed = pd.read_table(xpehh_out+".norm", index_col='pos',
                                      low_memory=False).add_suffix(f'_{other_pop_idx}').add_prefix('xpop_')
@@ -373,7 +373,7 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
         chk_idx(collated, f'collated after xpehh_normed_{other_pop_idx}')
 
     for other_pop_idx, fst_and_delDAF_out in enumerate(inps["fst_and_delDAF_out"]):
-        execute(f'norm --xpehh --bins {inps["n_bins_xpehh"]} --load-bins {norm_bins_xpehh} --files {xpehh_out} '
+        execute(f'norm --xpehh --bins 1 --load-bins {norm_bins_xpehh} --files {xpehh_out} '
                 f'--log {xpehh_out}.norm.log ')
         fst_and_delDAF_tsv = \
             pd.read_table(fst_and_delDAF_out, index_col='physPos',
@@ -414,11 +414,7 @@ def normalize_and_collate_scores(args):
                       norm_bins_ihh12=inps['norm_bins_ihh12'],
                       norm_bins_delihh=inps['norm_bins_delihh'],
                       norm_bins_xpehh=inps['norm_bins_xpehh'],
-                      n_bins_ihs=inps['n_bins_ihs'],
-                      n_bins_nsl=inps['n_bins_nsl'],
-                      n_bins_ihh12=inps['n_bins_ihh12'],
-                      n_bins_delihh=inps['n_bins_delihh'],
-                      n_bins_xpehh=inps['n_bins_xpehh'])
+                      component_computation_params=inps['component_computation_params'])
         _log.info(f'calling normalize_and_collate_scores_orig {i}: {inps_i}')
         normalize_and_collate_scores_orig(inps_i, i)
 

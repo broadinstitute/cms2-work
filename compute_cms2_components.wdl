@@ -91,24 +91,15 @@ workflow compute_cms2_components_wf {
 
     HapsetsBundle hapsets_bundle
 
-    Int n_bins_ihs = 20
-    Int n_bins_nsl = 20
-    Int n_bins_delihh = 20
+    ComponentComputationParams component_computation_params = object {
+      n_bins_ihs: 20,
+      n_bins_nsl: 20,
+      n_bins_delihh: 20
+    }
 
-    Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
+    #Map[String,Boolean] include_components = {"ihs": true, "ihh12": true, "nsl": true, "delihh": true, "xpehh": true, "fst": true, "delDAF": true, "derFreq": true}
 
     Int hapset_block_size = 2
-    
-    ComputeResources compute_resources_for_compute_one_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
-    ComputeResources compute_resources_for_compute_two_pop_cms2_components = object {
-      mem_gb: 4,
-      cpus: 1,
-      local_storage_gb: 50
-    }
   }
 
 # ** Compute normalization stats
@@ -119,14 +110,9 @@ workflow compute_cms2_components_wf {
     pops_info=hapsets_bundle.pops_info,
     neutral_hapsets=hapsets_bundle.neutral_hapsets,
 
-    n_bins_ihs=n_bins_ihs,
-    n_bins_nsl=n_bins_nsl,
-    n_bins_delihh=n_bins_delihh,
+    component_computation_params=component_computation_params,
 
     hapset_block_size=hapset_block_size,
-
-    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
   }
 
 # ** Component stats for selection sims
@@ -136,9 +122,7 @@ workflow compute_cms2_components_wf {
     selection_sims=hapsets_bundle.selection_hapsets,
     pops_info=hapsets_bundle.pops_info,
 
-    n_bins_ihs=n_bins_ihs,
-    n_bins_nsl=n_bins_nsl,
-    n_bins_delihh=n_bins_delihh,
+    component_computation_params=component_computation_params,
 
     norm_bins_ihs=compute_normalization_stats_wf.norm_bins_ihs,
     norm_bins_nsl=compute_normalization_stats_wf.norm_bins_nsl,
@@ -149,26 +133,11 @@ workflow compute_cms2_components_wf {
     one_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.one_pop_bin_stats_sel_pop_used,
     two_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_sel_pop_used,
     two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used,
-
-    compute_resources_for_compute_one_pop_cms2_components=compute_resources_for_compute_one_pop_cms2_components,
-    compute_resources_for_compute_two_pop_cms2_components=compute_resources_for_compute_two_pop_cms2_components
   }
 
 # ** Workflow outputs
   output {
-# *** Bookkeeping outputs
     PopsInfo pops_info_used = hapsets_bundle.pops_info
-# *** Simulation outputs
-    #Array[File] neutral_sims_tar_gzs = sims_wf.neutral_sims_tar_gzs
-    #Array[File] selection_sims_tar_gzs = sims_wf.selection_sims_tar_gzs
-    #Array[ReplicaInfo] neutral_sims_replica_infos = flatten(run_neutral_sims.replicaInfos)
-    #Array[ReplicaInfo] selection_sims_replica_infos = flatten(run_selection_sims.replicaInfos)
-    #Int n_neutral_sims_succeeded = length(select_all(compute_cms2_components_for_neutral.ihs[0]))
-# *** Component scores
-    #Array[File?] sel_normed_and_collated = component_stats_for_sel_sims_wf.sel_normed_and_collated
-    #Array[File?] sel_sim_region_haps_tar_gzs = component_stats_for_sel_sims_wf.sel_sim_region_haps_tar_gzs
-    #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
-    Array[File] all_hapsets_component_stats_h5_blocks = 
-    component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5_blocks
+    Array[File] all_hapsets_component_stats_h5_blocks = component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5_blocks
   }
 }

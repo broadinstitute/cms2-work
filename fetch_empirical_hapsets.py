@@ -585,8 +585,10 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
                 continue
             if not has_ancestral:
                 stats['no_ancestral_gts'] += 1
+                continue
             if not has_derived:
                 stats['no_derived_gts'] += 1
+                continue
 
             for pop, tped, pop_gts in zip(all_pops, tpeds, pops_genotypes):
                 cm_pos = genmap(chrom=chrom, pos=pos, pop=pop)

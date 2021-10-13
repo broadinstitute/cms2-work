@@ -34,6 +34,12 @@ struct PopsInfo {
     # workflow run_sims_and_compute_cms2_components, the pop id of the pop in which selection is defined.
   }
 
+struct ComponentComputationParams {
+    Int n_bins_ihs
+    Int n_bins_nsl
+    Int n_bins_delihh
+}
+
 struct SimulatedHapsetsDef {
     File paramFile_demographic_model
     File paramFile_neutral
@@ -53,9 +59,39 @@ struct SimulatedHapsetsDef {
     String       memoryPerBlock #= "3 GB"
 }
 
+#
+# struct NeutralRegionExplorerParams
+#
+# Parameters passed to Neutral Region Explorer
+# ( http://nre.cb.bscb.cornell.edu/nre/run.html )
+#
+struct NeutralRegionExplorerParams {
+  Boolean known_genes
+  Boolean gene_bounds
+  Boolean spliced_ESTs
+  Boolean segmental_duplications
+  Boolean CNVs
+  Boolean self_chain
+  Boolean reduced_repeat_masker
+  Boolean simple_repeats
+  Boolean repeat_masker
+  Boolean phast_conserved_plac_mammal
+
+  String chromosomes
+  String human_diversity
+  Int minimum_region_size
+  Int minimum_distance_to_nearest_gene
+  Int maximum_distance_to_nearest_gene
+  String distance_unit
+
+  Array[File] regions_to_exclude_bed
+  Array[File] gene_regions_bed
+}
+
 struct EmpiricalHapsetsDef {
   String empirical_hapsets_bundle_id
-  File empirical_neutral_regions_bed
+  NeutralRegionExplorerParams? nre_params
+  File? empirical_neutral_regions_bed
   File empirical_selection_regions_bed
 }
 
@@ -119,11 +155,7 @@ struct NormalizeAndCollateBlockInput {
     File norm_bins_delihh
     Array[File]+ norm_bins_xpehh
 
-    Int n_bins_ihs
-    Int n_bins_nsl
-    Int n_bins_ihh12
-    Int n_bins_delihh
-    Int n_bins_xpehh
+    ComponentComputationParams component_computation_params
 
     Pop one_pop_components_sel_pop_used
     Array[Pop]+ two_pop_components_sel_pop_used
