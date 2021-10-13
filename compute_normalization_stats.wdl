@@ -1,7 +1,7 @@
 version 1.0
 
-import "./run_sims.wdl"
-import "./tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-origin-notestaff-master--db0e049951596a57ef6304b3effe6a26385f7722/run_sims.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-origin-notestaff-master--db0e049951596a57ef6304b3effe6a26385f7722/tasks.wdl"
 
 # * workflow compute_normalization_stats_wf
 workflow compute_normalization_stats_wf {

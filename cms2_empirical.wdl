@@ -1,9 +1,9 @@
 version 1.0
 
-import "./structs.wdl"
-import "./tasks.wdl"
-import "./fetch_empirical_hapsets.wdl"
-import "./compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-origin-notestaff-master--db0e049951596a57ef6304b3effe6a26385f7722/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-origin-notestaff-master--db0e049951596a57ef6304b3effe6a26385f7722/tasks.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-origin-notestaff-master--db0e049951596a57ef6304b3effe6a26385f7722/fetch_empirical_hapsets.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-origin-notestaff-master--db0e049951596a57ef6304b3effe6a26385f7722/compute_cms2_components.wdl"
 
 workflow cms2_empirical {
   input {
