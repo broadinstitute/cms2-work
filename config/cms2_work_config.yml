@@ -30,3 +30,11 @@ terra:
       method_name: cosi2_test_01  # arbitrary until figure out how to create new methods in Terra workspace
       config_name: cms2-empirical
       test_data: test.cms2_empirical.wdl.json
+
+    cms2_test_fetch:
+      skip: False
+      wdl: cms2_test_fetch.wdl
+      synopsis: test fetching of files
+      method_name: cosi2_test_01  # arbitrary until figure out how to create new methods in Terra workspace
+      config_name: cms2_test_fetch
+      test_data: cms2_test_fetch.wdl.json

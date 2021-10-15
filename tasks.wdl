@@ -438,3 +438,25 @@ task call_neutral_region_explorer {
   }
 }
 
+task fetch_file_from_url {
+  input {
+    String url
+    String out_fname = basename(url)
+  }
+  
+  command <<<
+    set -ex -o pipefail
+
+    wget -O "~{out_fname}" "~{url}"
+  >>>
+  output {
+    File file = out_fname
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms:common-tools-67c27fe434bbc6bc48272f6121d905a2ef0ca258"
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}
