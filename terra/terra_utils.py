@@ -96,7 +96,7 @@ def customize_wdls_for_git_commit():
         for docker_dir, docker_tag in docker_dir_to_docker_tag.items():
             git_hash_re = '[0-9a-f]{40}'
             wdl_repl = re.sub(f'docker: "quay.io/ilya_broad/cms:{docker_dir}-{git_hash_re}"',
-                              f'docker: "quay.io/ilya_broad/cms:{docker_dir}-{docker_tag}"',
+                              f'docker: "quay.io/ilya_broad/cms:{docker_tag}"',
                               wdl_repl, flags=re.MULTILINE)
         
         if wdl_repl != wdl:
