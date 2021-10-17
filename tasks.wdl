@@ -439,18 +439,46 @@ task call_neutral_region_explorer {
 }
 
 task fetch_file_from_url {
+  meta {
+    description: "Downloads a file from a given URL.  Using an output of this ask as inputs, instead of using URLs directly, can improve reproducibility in case the contents of a URL changes or the URL becomes inaccessible, since call caching would save a copy of the file."
+  }
+  parameter_meta {
+    urL: "(String) the URL from which to download a file"
+  }  
   input {
     String url
     String out_fname = basename(url)
+
+    String sha256 = ""
+
+    Map[String,String] file_metadata = {}
+
+    Int timeout_seconds = 300
+    Int retries = 20
+    String wget_flags = " -O " + out_fname + " T " + timeout_seconds + " -t " + retries + " -S "
   }
+  String out_lastmod_fname = out_fname + ".lastmod.txt"
   
   command <<<
     set -ex -o pipefail
 
-    wget -O "~{out_fname}" "~{url}"
+    wget ~{wget_flags} "~{url}"
+
+    if [ ! -z "~{sha256}" ]
+    then
+        echo "~{sha256} ~{out_fname}" > "{out_fname}.sha256"
+        sha256sum -c "{out_fname.sha256}"
+    fi
+
+    # save last-modified 
+    stat '%Y' "~{out_fname}" > "~{out_lastmod_fname}"
   >>>
   output {
     File file = out_fname
+    String url_used = url
+    String lastmod = read_string(out_lastmod_fname)
+    Int file_size = round(size(file))
+    Map[String,String] out_file_metadata = file_metadata
   }
   runtime {
     docker: "quay.io/ilya_broad/cms:common-tools-67c27fe434bbc6bc48272f6121d905a2ef0ca258"

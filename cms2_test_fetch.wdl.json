@@ -1,3 +1,4 @@
 {
-    "cms2_test_fetch.url" : "https://pophumanscan.uab.cat/data/files/pophumanscanCoordinates.tab"
+    "cms2_test_fetch.url" : "http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/README_populations.md",
+    "cms2_test_fetch.sha256" : "76b29098a04cf4145d87eef0cbf21da0495a7b4541aa19cf76b6a4ff17c90d22"
 }
