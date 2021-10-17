@@ -51,8 +51,8 @@ urlretrieve(
     filename='.circleci/common.sh')
 
 # TODO: this mimics the override in the "common" job in .circleci/config.yaml
-with open('.circleci/common.sh', 'w') as fout:
-    fout.write("MINICONDA_VER=py37_4.8.3\nBIOCONDA_UTILS_TAG=master\n")
+#with open('.circleci/common.sh', 'w') as fout:
+#    fout.write("MINICONDA_VER=py37_4.8.3\nBIOCONDA_UTILS_TAG=master\n")
 
 local_config_path = os.path.expanduser('~/.config/bioconda/activate')
 
