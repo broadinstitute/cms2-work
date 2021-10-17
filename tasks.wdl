@@ -443,42 +443,55 @@ task fetch_file_from_url {
     description: "Downloads a file from a given URL.  Using an output of this ask as inputs, instead of using URLs directly, can improve reproducibility in case the contents of a URL changes or the URL becomes inaccessible, since call caching would save a copy of the file."
   }
   parameter_meta {
+# ** inputs
     url: "(String) the URL from which to download a file"
+    out_fname: "(String?) name of output file (defaults to basename(url))"
+    sha256: "(String?) if given, fail unless the sha256 checksum of the downloaded file matches this value"
+    file_metadata: "(Map[String,String]) arbitrary metadata (such as description) to associate with this file"
+    wget_flags: "(String) wget options to use for downloading, such as timeout and number of retries"
+# ** outputs
+    file: "(File) the downloaded file"
+    url_used: "(String) url from which the file was fetched"
+    file_lastmod: "(File) the last-modified time of the file on the server (human-readable)"
+    file_size: "(Int) size of the downloaded file in bytes"
+    out_file_metadata: "(Map[String,String]) any metadata specified as input, copied to the output"
+    wget_cmd_used: "(String) the full wget command used to download the file"
   }  
   input {
     String url
-    String out_fname = basename(url)
+    String? out_fname
 
-    String sha256 = ""
+    String? sha256
 
     Map[String,String] file_metadata = {}
-
-    Int timeout_seconds = 300
-    Int retries = 20
-    String wget_flags = " -O " + out_fname + " -T " + timeout_seconds + " -t " + retries + " -S "
+    String wget_flags = " -T 300 -t 20 -S "
   }
-  String out_lastmod_fname = out_fname + ".lastmod.txt"
+  String out_fname_here = select_first([out_fname, basename(url), "unknown_filename"])
+  String out_lastmod_fname = out_fname_here + ".lastmod.txt"
+  String wget_cmd_here = "wget -O " + out_fname_here + " " + wget_flags + " " + url
+  String sha256_here = select_first([sha256, ""])
   
   command <<<
     set -ex -o pipefail
 
-    wget ~{wget_flags} "~{url}"
+    ~{wget_cmd_here}
 
-    if [ ! -z "~{sha256}" ]
+    if [ ! -z "~{sha256_here}" ]
     then
-        echo "~{sha256} ~{out_fname}" > "{out_fname}.sha256"
-        sha256sum -c "{out_fname.sha256}"
+        echo "~{sha256_here} ~{out_fname_here}" > "{out_fname_here}.sha256"
+        sha256sum -c "~{out_fname_here}.sha256"
     fi
 
     # save last-modified 
-    stat '%Y' "~{out_fname}" > "~{out_lastmod_fname}"
+    stat '%Y' "~{out_fname_here}" > "~{out_lastmod_fname}"
   >>>
   output {
-    File file = out_fname
+    File file = out_fname_here
     String url_used = url
-    String lastmod = read_string(out_lastmod_fname)
+    String file_lastmod = read_string(out_lastmod_fname)
     Int file_size = round(size(file))
     Map[String,String] out_file_metadata = file_metadata
+    String wget_cmd_used = wget_cmd_here
   }
   runtime {
     docker: "quay.io/ilya_broad/cms:common-tools-67c27fe434bbc6bc48272f6121d905a2ef0ca258"
