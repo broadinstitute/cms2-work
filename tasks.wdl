@@ -443,7 +443,7 @@ task fetch_file_from_url {
     description: "Downloads a file from a given URL.  Using an output of this ask as inputs, instead of using URLs directly, can improve reproducibility in case the contents of a URL changes or the URL becomes inaccessible, since call caching would save a copy of the file."
   }
   parameter_meta {
-    urL: "(String) the URL from which to download a file"
+    url: "(String) the URL from which to download a file"
   }  
   input {
     String url
