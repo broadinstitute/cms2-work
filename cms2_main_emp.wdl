@@ -1,7 +1,7 @@
 version 1.0
 
-import "./structs.wdl"
-import "./run_sims_and_compute_cms2_components.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-211013-1315-add-isafe--e1c1f9f04ec33e7f5e7a3fb055311574e0f4b66c/structs.wdl"
+import "https://raw.githubusercontent.com/notestaff/cms2-staging/staging-is-211013-1315-add-isafe--e1c1f9f04ec33e7f5e7a3fb055311574e0f4b66c/run_sims_and_compute_cms2_components.wdl"
 
 # * workflow cms2_main_emp
 workflow cms2_main_emp {
