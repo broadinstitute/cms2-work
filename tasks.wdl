@@ -478,7 +478,7 @@ task fetch_file_from_url {
 
     if [ ! -z "~{sha256_here}" ]
     then
-        echo "~{sha256_here} ~{out_fname_here}" > "{out_fname_here}.sha256"
+        echo "~{sha256_here} ~{out_fname_here}" > "~{out_fname_here}.sha256"
         sha256sum -c "~{out_fname_here}.sha256"
     fi
 
