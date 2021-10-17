@@ -455,7 +455,7 @@ task fetch_file_from_url {
 
     Int timeout_seconds = 300
     Int retries = 20
-    String wget_flags = " -O " + out_fname + " T " + timeout_seconds + " -t " + retries + " -S "
+    String wget_flags = " -O " + out_fname + " -T " + timeout_seconds + " -t " + retries + " -S "
   }
   String out_lastmod_fname = out_fname + ".lastmod.txt"
   
