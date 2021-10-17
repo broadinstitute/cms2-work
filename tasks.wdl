@@ -483,7 +483,7 @@ task fetch_file_from_url {
     fi
 
     # save last-modified 
-    stat '%Y' "~{out_fname_here}" > "~{out_lastmod_fname}"
+    stat -c '%Y' "~{out_fname_here}" > "~{out_lastmod_fname}"
   >>>
   output {
     File file = out_fname_here
