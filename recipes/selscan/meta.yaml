@@ -1,28 +1,28 @@
-{% set version = "1.2.0a" %}
-{% set sha256 = "f0e6c5cb98b427b9ba14289302fb7ce6b9c064e324883f08a11af0492d6f860a" %}
+{% set version = "1.3.0a09" %}
+{% set sha256 = "b1bdb311043575b7f7825e67d490bfeb97c7f2a098bad3a51ae2ed9c8edd0f30" %}
 
 package:
   name: selscan
   version: {{ version }}
 
 source:
-  url: https://github.com/szpiech/selscan/archive/{{ version }}.tar.gz
-  patches:
-    - Makefile.linux.patch # [linux]
-    - Makefile.mac.patch # [osx]
+  url: https://github.com/notestaff/selscan/archive/v{{ version }}.tar.gz
   sha256: {{ sha256 }}
 
 build:
-  number: 2
+  number: 1
 
 requirements:
   build:
-    - make
+    - {{ compiler('c') }}
     - {{ compiler('cxx') }}
+    - make
   host:
     - gsl
     - zlib
+    - boost=1.74.0
   run:
+    - boost=1.74.0
     - gsl
     - zlib
 
