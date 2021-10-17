@@ -2,13 +2,13 @@
 
 set -eux -o pipefail
 
-# cd bioconda-recipes
-# ./bootstrap.py /tmp/miniconda
-# source ~/.config/bioconda/activate
-# bioconda-utils build --docker --mulled-test --packages selscan
-# cd ..
-#ls -lR /tmp/miniconda/miniconda/conda-bld
-#cp -prv /tmp/miniconda/miniconda/conda-bld .
+cd bioconda-recipes
+./bootstrap.py /tmp/miniconda
+source ~/.config/bioconda/activate
+bioconda-utils build --docker --mulled-test --packages selscan
+cd ..
+ls -lR /tmp/miniconda/miniconda/conda-bld
+cp -prv /tmp/miniconda/miniconda/conda-bld .
 
 echo "${QUAY_IO_PW}" | docker login -u="${QUAY_IO_USER}" --password-stdin quay.io
 
