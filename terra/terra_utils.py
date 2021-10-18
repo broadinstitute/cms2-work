@@ -62,13 +62,14 @@ def update_docker_images():
         docker_dir_abs = os.path.realpath(os.path.join('docker', docker_dir))
         if git_obj_type in ('tree', 'commit') and os.path.isfile(os.path.join(docker_dir_abs, 'Dockerfile')):
             _log.debug(f'looking at {docker_dir} {git_hash}')
-            pre_docker_script = os.path.join(docker_dir_abs, 'pre_docker.sh')
-            if os.path.isfile(pre_docker_script):
-                misc_utils.execute(pre_docker_script, cwd=docker_dir_abs)
             docker_tag = f'{docker_dir}-{git_hash}'
             docker_tag_exists = quay_tag_exists(docker_tag, quay_repo=quay_repo)
             _log.debug(f'{docker_tag=} {docker_tag_exists=}')
             if not docker_tag_exists:
+                pre_docker_script = os.path.join(docker_dir_abs, 'pre_docker.sh')
+                if os.path.isfile(pre_docker_script):
+                    misc_utils.execute(pre_docker_script, cwd=docker_dir_abs)
+
                 if not quay_logged_in:
                     misc_utils.execute('echo ${QUAY_CMS_TOKEN} | docker login -u="ilya_broad+cms_ci" --password-stdin quay.io')
                     quay_logged_in = True
