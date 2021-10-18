@@ -10,12 +10,15 @@ cd ..
 ls -lR /tmp/miniconda/miniconda/conda-bld
 cp -prv /tmp/miniconda/miniconda/conda-bld .
 
-docker login -u="${QUAY_IO_USER}" -p="${QUAY_IO_PW}" quay.io
+echo "Successfully copied selscan build"
 
-DOCKER_TAG="${TRAVIS_BRANCH}--${TRAVIS_COMMIT}"
+#echo "${QUAY_CMS_TOKEN}" | docker login -u="${QUAY_IO_USER}" --password-stdin quay.io
 
-docker build -t quay.io/${QUAY_IO_USER}/cms:${DOCKER_TAG} .
-docker push quay.io/${QUAY_IO_USER}/cms:${DOCKER_TAG}
+#DOCKER_TAG="${TRAVIS_BRANCH}--${TRAVIS_COMMIT}"
+
+#docker build -t quay.io/${QUAY_IO_USER}/cms:${DOCKER_TAG} .
+#docker push quay.io/${QUAY_IO_USER}/cms:${DOCKER_TAG}
+
 
 
 
