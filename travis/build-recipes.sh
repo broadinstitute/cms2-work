@@ -1,8 +1,9 @@
 #!/usr/bin/bash
 
-set -eu -o pipefail -x
+set -e -o pipefail -x
 
 TMP_MINICONDA=$(mktemp -d "${TMPDIR:-/tmp/}miniconda.XXXXXXXXXXXX")
+#TMP_MINICONDA=/tmp/miniconda
 cd bioconda-recipes
 rm -rf ${TMP_MINICONDA}
 ./bootstrap.py ${TMP_MINICONDA}
