@@ -494,7 +494,7 @@ task fetch_file_from_url {
     String wget_cmd_used = wget_cmd_here
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms:common-tools-67c27fe434bbc6bc48272f6121d905a2ef0ca258"
+    docker: "quay.io/ilya_broad/cms:common-tools-4c480f871174554205215ca7d564d34e9e79a808"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
