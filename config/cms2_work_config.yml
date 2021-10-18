@@ -32,7 +32,7 @@ terra:
       test_data: test.cms2_empirical.wdl.json
 
     cms2_test_fetch:
-      skip: False
+      skip: True
       wdl: cms2_test_fetch.wdl
       synopsis: test fetching of files
       method_name: cosi2_test_01  # arbitrary until figure out how to create new methods in Terra workspace
