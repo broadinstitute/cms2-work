@@ -1,5 +1,5 @@
 ######################################################################
-# Dockerfile to build an image for computing CMS oomponent statistics
+# Dockerfile to build an image for common python tools
 ######################################################################
 
 # Adapted from https://raw.githubusercontent.com/broadinstitute/viral-baseimage/master/Dockerfile
@@ -24,26 +24,14 @@ RUN /opt/docker/install-miniconda.sh
 
 ENV PATH="$MINICONDA_PATH/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-#RUN mkdir -p /tmp/miniconda/miniconda/conda-bld
-#COPY conda-bld /tmp/miniconda/miniconda/conda-bld
-
-#RUN conda install -c file:///tmp/miniconda/miniconda/conda-bld tar numpy scipy matplotlib pandas pytables h5py psutil tabix selscan=1.3.0a09 && conda clean -a -y
 RUN conda install tar numpy scipy matplotlib pandas pytables h5py psutil tabix dominate bedtools && conda clean -a -y
-
-#RUN rm -rf /tmp/miniconda
 
 COPY Dockerfile /opt/docker/Dockerfile.save.txt
 COPY misc_utils.py /opt/pyutils/
 
-#COPY model .
-#RUN make
-
 # switch back to the ubuntu user so this tool (and the files written) are not owned by root
 RUN groupadd -r -g 1000 ubuntu && useradd -r -g ubuntu -u 1000 -m ubuntu
 USER ubuntu
-
-#COPY cms .
-#COPY sim_generation .
 
 VOLUME ["/user-data"]
 ENV \
