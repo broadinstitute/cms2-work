@@ -11,13 +11,14 @@
 	shallow = true
 [submodule "cms2-work-archive"]
 	path = misc/cms2-work-archive
-	url = ../cms2-work.git
+	#url = ../cms2-work.git
+	url = ./
 	branch = cms2-work-archive
 	shallow = true
 [submodule "docker/cms2-docker-component-stats"]
 	path = docker/cms2-docker-component-stats
 	#url = ../cms2-docker-component-stats
-	url = '../cms2-work.git
+	#url = ../cms2-work.git
+	url = ./
 	branch = submodule--cms2-docker-component-stats--master
 	shallow = true
-
