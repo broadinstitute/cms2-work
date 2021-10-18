@@ -4,7 +4,11 @@ set -e -o pipefail -x
 
 TMP_MINICONDA=$(mktemp -d "${TMPDIR:-/tmp/}miniconda.XXXXXXXXXXXX")
 #TMP_MINICONDA=/tmp/miniconda
+git submodule init bioconda-recipes
+git submodule update --recursive bioconda-recipes
 cd bioconda-recipes
+pwd
+ls -l
 rm -rf ${TMP_MINICONDA}
 ./bootstrap.py ${TMP_MINICONDA}
 source ~/.config/bioconda/activate
