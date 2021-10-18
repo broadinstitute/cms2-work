@@ -20,5 +20,6 @@
 	#url = ../cms2-docker-component-stats
 	#url = ../cms2-work.git
 	url = ./
-	branch = submodule--cms2-docker-component-stats--master
+	#branch = submodule--cms2-docker-component-stats--master
+	branch = is-211017-1453-restore-selscan-build
 	shallow = true

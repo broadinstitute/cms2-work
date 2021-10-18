@@ -59,9 +59,9 @@ def update_docker_images():
     docker_dir_to_docker_tag = {}
     for line in docker_dirs.strip().split('\n'):
         mode, git_obj_type, git_hash, docker_dir = line.strip().split()
-        if git_obj_type in ('tree', 'commit') and os.path.isfile(os.path.join('docker', docker_dir, 'Dockerfile')):
+        docker_dir_abs = os.path.realpath(os.path.join('docker', docker_dir))
+        if git_obj_type in ('tree', 'commit') and os.path.isfile(os.path.join(docker_dir_abs, 'Dockerfile')):
             _log.debug(f'looking at {docker_dir} {git_hash}')
-            docker_dir_abs = os.path.realpath(os.path.join('docker', docker_dir))
             pre_docker_script = os.path.join(docker_dir_abs, 'pre_docker.sh')
             if os.path.isfile(pre_docker_script):
                 misc_utils.execute(pre_docker_script, cwd=docker_dir_abs)
