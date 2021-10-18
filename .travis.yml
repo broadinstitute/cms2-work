@@ -48,4 +48,6 @@ jobs:
         - set -e
         - ./travis/test-wdl.sh
         - tar -xzf terra/gcloud-config.tar.gz -C $HOME
+        - git submodule init docker/cms2-docker-component-stats
+        - git submodule update --recursive docker/cms2-docker-component-stats
         - ./terra/terra_utils.py deploy_to_terra

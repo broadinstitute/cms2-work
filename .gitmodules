@@ -23,3 +23,5 @@
 	#branch = submodule--cms2-docker-component-stats--master
 	branch = is-211017-1453-restore-selscan-build
 	shallow = true
+	fetchRecurseSubmodules = true
+
