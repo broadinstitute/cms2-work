@@ -39,7 +39,8 @@ task compute_one_pop_cms2_components {
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4cbaa837642387222b1af9065c4996630471c672"  # selscan=1.3.0a09
     preemptible: 3
     memory: "4 GB"
     cpu: 1
@@ -89,7 +90,8 @@ task compute_two_pop_cms2_components {
 
 # ** runtime
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    # docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4cbaa837642387222b1af9065c4996630471c672"  # selscan=1.3.0a09
     preemptible: 3
     memory: "8 GB"
     cpu: 8
@@ -144,7 +146,8 @@ task compute_one_pop_bin_stats_for_normalization {
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4cbaa837642387222b1af9065c4996630471c672"  # selscan=1.3.0a09
+    #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: 2
     memory: "8 GB"
     cpu: 1
@@ -198,7 +201,8 @@ task compute_two_pop_bin_stats_for_normalization {
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4cbaa837642387222b1af9065c4996630471c672"  # selscan=1.3.0a09
     preemptible: 2
     memory: "8 GB"
     cpu: 1
@@ -227,7 +231,8 @@ task normalize_and_collate_block {
     Pop sel_pop_used = inp.sel_pop
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4cbaa837642387222b1af9065c4996630471c672"  # selscan=1.3.0a09
+    #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "1 GB"
     cpu: 1
     disks: "local-disk 10 HDD"
