@@ -500,7 +500,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
       region_lines: a list of vcf lines for the region
       region_sel_pop: pop in which the region is selected (or None if neutral)
       pops_to_include: pops to include in the hapset
-      pop2cols: map from pop to the vcf cols containing data for samples from that pop
+      pop2vcfcols: map from pop to the vcf cols containing data for samples from that pop
       genmap: callable mapping basepair position to genetic map position in centimorgans
       tmp_dir: temp dir to use
     Returns:
@@ -554,6 +554,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
             bad_gt = False
             has_ancestral = False
             has_derived = False
+            pop_sample_sizes = collections.Counter()
             for pop in all_pops:
                 pop_gts = ''
                 for vcf_col in pop2vcfcols[pop]:
@@ -574,6 +575,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
                         if ancestral_or_not == '0':
                             has_derived = True
                         pop_gts += (' ' + ancestral_or_not)
+                        pop_sample_sizes[pop] += 1
                 # end: for vcf_col in pop2vcfcols[pop]
                 if bad_gt:
                     break
@@ -611,6 +613,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
             pop: os.path.basename(tped_fname) for pop, tped_fname in zip(all_pops, tped_fnames)
         },
         'popIds': all_pops,
+        'pop_sample_sizes': pop_sample_sizes,
         'tpedFiles': [os.path.basename(tped_fname) for tped_fname in tped_fnames]
     }
     _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.replicaInfo.json')),
