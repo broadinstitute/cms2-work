@@ -35,11 +35,13 @@ def tped_to_vcf(hapset_manifest_json_fname, out_vcf_fname):
             for tped_lines_tuple in tped_lines_tuples:
                 # make ref allele be A for ancestral and then D for derived?
                 tped_lines_fields = [line.strip().split() for line in tped_lines_tuple]
-                misc_utils.chk(len(set(map(operator.itemgetter(3), tped_lines_fields))) == 1, 'all tpeds in hapset must be for same pos')
+                misc_utils.chk(len(set(map(operator.itemgetter(3), tped_lines_fields))) == 1,
+                               'all tpeds in hapset must be for same pos')
                 vcf_fields = ['1', tped_lines_fields[0][3], '.', 'A', 'D', '.', '.', '.', 'GT']
                 for pop, tped_line_fields_list in zip(pops, tped_lines_fields):
                     for hap_num_in_pop in range(hapset_manifest['pop_sample_sizes'][pop]):
-                        vcf_fields.append('0' if tped_line_fields_list[4 + hap_num_in_pop] == '1' else '1')
+                        vcf_fields.append('0' if tped_line_fields_list[4 + hap_num_in_pop] == '1' \
+                                          else '1')
                 out_vcf.write('\t'.join(vcf_fields) + '\n')
 
 if __name__ == '__main__':
