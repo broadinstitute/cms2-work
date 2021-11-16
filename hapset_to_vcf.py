@@ -11,8 +11,8 @@ import sys
 
 import misc_utils
 
-def tped_to_vcf(hapset_manifest_json_fname, out_vcf_fname):
-    """Convert a .tped file to a .vcf"""
+def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_fname):
+    """Convert a hapset to an indexed .vcf.gz"""
     hapset_dir = os.path.dirname(hapset_manifest_json_fname)
 
     hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
@@ -43,7 +43,11 @@ def tped_to_vcf(hapset_manifest_json_fname, out_vcf_fname):
                         vcf_fields.append('0' if tped_line_fields_list[4 + hap_num_in_pop] == '1' \
                                           else '1')
                 out_vcf.write('\t'.join(vcf_fields) + '\n')
-
+            # end: for tped_lines_tuple in tped_lines_tuples
+        # end: with contextlib.ExitStack() as exit_stack
+    # end: with open(out_vcf_fname, 'w') as out_vcf
+# end: def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_fname)
+            
 if __name__ == '__main__':
     print(misc_utils.available_cpu_count())
-    tped_to_vcf(sys.argv[1], sys.argv[2])
+    hapset_to_vcf(sys.argv[1], sys.argv[2])
