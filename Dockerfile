@@ -45,7 +45,9 @@ ENV PATH="$MINICONDA_PATH/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/us
 RUN mkdir -p /tmp/miniconda/miniconda/conda-bld
 COPY conda-bld /tmp/miniconda/miniconda/conda-bld
 
-RUN conda install -c file:///tmp/miniconda/miniconda/conda-bld numpy scipy matplotlib pandas pytables h5py psutil tabix isafe selscan=1.3.0a09 && conda clean -a -y
+RUN conda install -c file:///tmp/miniconda/miniconda/conda-bld numpy=1.21.3 scipy=1.7.1 matplotlib=3.4.3 \
+    pandas=1.3.4 pytables=3.6.1 \
+    h5py=3.4.0 psutil=5.8.0 tabix=1.11 isafe=1.1.1 selscan=1.3.0a09 && conda clean -a -y
 
 RUN rm -rf /tmp/miniconda
 
