@@ -18,7 +18,7 @@ task compute_one_pop_cms2_components {
     set -ex -o pipefail
 
     python3 "~{script}" --hapsets @~{write_lines(hapsets)} \
-      --sel-pop ~{sel_pop.pop_id} --components ihs nsl ihh12 delihh derFreq \
+      --sel-pop ~{sel_pop.pop_id} --components ihs nsl ihh12 delihh derFreq iSAFE \
       --checkpoint-file "checkpoint.tar"
   >>>
 
