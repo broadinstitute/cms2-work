@@ -253,6 +253,7 @@ def run_one_replica(replicaNum, args, paramFile):
                                   cosi2Cmd=cosi2_cmd,
                                   popIds=popIds, popNames=popNames,
                                   tpedFiles=tpedFiles,
+                                  tpeds=dict(zip(popIds, tpedFiles)),
                                   trajFile=trajFile,
                                   paramFile=paramFileCopyFile))
         shutil.copyfile(src=paramFile, dst=paramFileCopyFile)
