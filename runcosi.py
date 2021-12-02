@@ -216,9 +216,9 @@ def run_one_replica(replicaNum, args, paramFile):
         region_beg=0,
         region_end=region_len_bp,
         simulated=True,
-        popIds=popNames,
-        pop_sample_sizes={pop_name: pop_sample_size \
-                          for pop_name, pop_sample_size in zip(popNames, pop_sample_sizes)},
+        popIds=popIds,
+        pop_sample_sizes={pop_id: pop_sample_size \
+                          for pop_id, pop_sample_size in zip(popIds, pop_sample_sizes)},
         replicaId=dict(blockNum=args.blockNum,
                        replicaNumInBlock=replicaNum,
                        replicaNumGlobal=args.blockNum * args.numRepsPerBlock + replicaNum,
@@ -251,7 +251,7 @@ def run_one_replica(replicaNum, args, paramFile):
                                   pop_sample_sizes=replicaInfoCopy['pop_sample_sizes'],
                                   simulated=True,
                                   cosi2Cmd=cosi2_cmd,
-                                  popIds=popNames, popNames=popNames,
+                                  popIds=popIds, popNames=popNames,
                                   tpedFiles=tpedFiles,
                                   trajFile=trajFile,
                                   paramFile=paramFileCopyFile))
