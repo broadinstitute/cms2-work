@@ -218,7 +218,7 @@ def run_one_replica(replicaNum, args, paramFile):
         simulated=True,
         popIds=popNames,
         pop_sample_sizes={pop_name: pop_sample_size \
-                          for pop_name, pop_sample_size in zip(pop_names, pop_sample_sizes)},
+                          for pop_name, pop_sample_size in zip(popNames, pop_sample_sizes)},
         replicaId=dict(blockNum=args.blockNum,
                        replicaNumInBlock=replicaNum,
                        replicaNumGlobal=args.blockNum * args.numRepsPerBlock + replicaNum,
