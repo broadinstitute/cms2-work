@@ -388,7 +388,7 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
 
     if 'iSAFE' in args.components:
         compute_isafe_scores(hapset_manifest_json_fname=hapset_manifest_json_fname,
-                             sel_pop=args.sel_pop, out_iSAFE_tsv=f'{hapset_dir}/{out_basename}.iSAFE.tsv')
+                             sel_pop=args.sel_pop)
 
 def parse_file_list(z):
     z_orig = copy.deepcopy(z)
