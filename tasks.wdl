@@ -12,6 +12,7 @@ task compute_one_pop_cms2_components {
     Pop sel_pop
   }
   File script = "./compute_cms2_components.py"
+  File misc_utils = "./misc_utils.py"
 
   command <<<
     set -ex -o pipefail
@@ -28,13 +29,15 @@ task compute_one_pop_cms2_components {
     Array[File]+ ihh12 = glob("hapset[0-9]*/*.ihh12.out")
     Array[File]+ delihh = glob("hapset[0-9]*/*.delihh.out")
     Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
+    Array[File]+ iSAFE = glob("hapset[0-9]*/*.iSAFE.tsv")
     Pop sel_pop_used = sel_pop
     Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
                             (length(ihs) == length(hapsets)) &&
                             (length(nsl) == length(hapsets)) &&
                             (length(ihh12) == length(hapsets)) &&
                             (length(delihh) == length(hapsets)) &&
-                            (length(derFreq) == length(hapsets)))
+                            (length(derFreq) == length(hapsets)) &&
+                            (length(iSAFE) == length(hapsets)))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
 
@@ -49,7 +52,7 @@ task compute_one_pop_cms2_components {
   }
 }
 
-# * task compute_two_pop_cms2_components_
+# * task compute_two_pop_cms2_components
 task compute_two_pop_cms2_components {
   meta {
     description: "Compute cross-pop comparison CMS2 component scores"
@@ -62,6 +65,7 @@ task compute_two_pop_cms2_components {
   }
 
   File script = "./compute_cms2_components.py"
+  File misc_utils = "./misc_utils.py"
 
 # ** command
   command <<<

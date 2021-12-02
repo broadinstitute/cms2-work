@@ -11,10 +11,12 @@ import functools
 import glob
 import gzip
 import io
+import itertools
 import json
 import logging
 import math
 import multiprocessing
+import operator
 import os
 import os.path
 import pathlib
@@ -25,6 +27,8 @@ import subprocess
 import sys
 import tempfile
 import time
+
+import misc_utils
 
 # * Utils
 
@@ -106,7 +110,7 @@ def find_one_file(glob_pattern):
     """If exactly one file matches `glob_pattern`, returns the path to that file, else fails."""
     matching_files = list(glob.glob(glob_pattern))
     if len(matching_files) == 1:
-        return matching_files[0]
+        return os.path.realpath(matching_files[0])
     raise RuntimeError(f'find_one_file({glob_pattern}): {len(matching_files)} matches - {matching_files}')
 
 def available_cpu_count():
@@ -190,6 +194,67 @@ def calc_derFreq(in_tped, out_derFreq_tsv):
             derFreq = n[0] / (n[0] + n[1])
             out.write('\t'.join([chrom, snpId, physPos_bp, f'{derFreq:.2f}']) + '\n')
 
+
+
+def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
+    """Convert a hapset to an indexed .vcf.gz"""
+    hapset_dir = os.path.dirname(hapset_manifest_json_fname)
+
+    hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
+    pops = hapset_manifest['popIds']
+
+    with open(out_vcf_basename + '.vcf', 'w') as out_vcf:
+        out_vcf.write('##fileformat=VCFv4.2\n')
+        out_vcf.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
+        vcf_cols = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
+
+        with open(out_vcf_basename + '.case.txt', 'w') as out_case, \
+             open(out_vcf_basename + '.cont.txt', 'w') as out_cont:
+            for pop in pops:
+                for hap_num_in_pop in range(hapset_manifest['pop_sample_sizes'][pop]):
+                    sample_id = f'{pop}_{hap_num_in_pop}'
+                    vcf_cols.append(sample_id)
+                    (out_case if pop == sel_pop else out_cont).write(f'{pop}\t{sample_id}\n')
+                    
+        out_vcf.write('\t'.join(vcf_cols) + '\n')
+        
+        with contextlib.ExitStack() as exit_stack:
+            tped_fnames = [os.path.join(hapset_dir, hapset_manifest['tpeds'][pop])
+                           for pop in hapset_manifest['popIds']]
+            tpeds = [exit_stack.enter_context(open(tped_fname)) for tped_fname in tped_fnames]
+            def make_tuple(*args): return tuple(args)
+            tped_lines_tuples = map(make_tuple, *map(iter, tpeds))
+            for tped_lines_tuple in tped_lines_tuples:
+                # make ref allele be A for ancestral and then D for derived?
+                tped_lines_fields = [line.strip().split() for line in tped_lines_tuple]
+                misc_utils.chk(len(set(map(operator.itemgetter(3), tped_lines_fields))) == 1,
+                               'all tpeds in hapset must be for same pos')
+                vcf_fields = ['1', tped_lines_fields[0][3], '.', 'A', 'D', '.', '.', '.', 'GT']
+                for pop, tped_line_fields_list in zip(pops, tped_lines_fields):
+                    for hap_num_in_pop in range(hapset_manifest['pop_sample_sizes'][pop]):
+                        vcf_fields.append('0' if tped_line_fields_list[4 + hap_num_in_pop] == '1' \
+                                          else '1')
+                out_vcf.write('\t'.join(vcf_fields) + '\n')
+            # end: for tped_lines_tuple in tped_lines_tuples
+        # end: with contextlib.ExitStack() as exit_stack
+    # end: with open(out_vcf_fname, 'w') as out_vcf
+    misc_utils.execute(f'bgzip -f -i {out_vcf_basename}.vcf')
+    misc_utils.execute(f'bcftools index {out_vcf_basename}.vcf.gz')
+# end: def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
+
+def compute_isafe_scores(hapset_manifest_json_fname, sel_pop):
+    hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
+    out_vcf_basename = f'{hapset_manifest_json_fname[:-4]}.{sel_pop}'
+    hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
+    misc_utils.execute(f'isafe --format vcf '
+                       f'--input {out_vcf_basename}.vcf.gz '
+                       f'--vcf-cont {out_vcf_basename}.vcf.gz '
+                       f'--sample-case {out_vcf_basename}.case.txt '
+                       f'--sample-cont {out_vcf_basename}.cont.txt '
+                       f'--region 1:{hapset_manifest["region_beg"]}:{hapset_manifest["region_end"]}'
+                       f'--output {out_vcf_basename}.iSAFE.tsv')
+
+
 # * Parsing args
 
 def parse_args():
@@ -208,7 +273,8 @@ def parse_args():
     #parser.add_argument('--out-basename', required=True, help='base name for output files')
     parser.add_argument('--sel-pop', required=True, help='test for selection in this population')
     parser.add_argument('--alt-pop', help='for two-pop tests, compare with this population')
-    parser.add_argument('--components', required=True, choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq'),
+    parser.add_argument('--components', required=True,
+                        choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq', 'iSAFE'),
                         nargs='+', help='which component tests to compute')
     parser.add_argument('--threads', type=int, help='selscan threads')
     parser.add_argument('--checkpoint-file', help='file used for checkpointing')
@@ -283,7 +349,8 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
     threads = min(args.threads or n_cpus, n_cpus)
     _log.info(f'Using {threads} threads')
     #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
-    replicaInfo = _json_loadf(find_one_file(f'{hapset_dir}/*.replicaInfo.json'))
+    hapset_manifest_json_fname = find_one_file(f'{hapset_dir}/*.replicaInfo.json')
+    replicaInfo = _json_loadf(hapset_manifest_json_fname)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     sel_pop_idx = pop_id_to_idx[args.sel_pop]
     sel_pop_tped = os.path.realpath(os.path.join(hapset_dir, replicaInfo["tpedFiles"][sel_pop_idx]))
@@ -318,6 +385,10 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
 
     if 'derFreq' in args.components:
         calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=f'{hapset_dir}/{out_basename}.derFreq.tsv')
+
+    if 'iSAFE' in args.components:
+        compute_isafe_scores(hapset_manifest_json_fname=hapset_manifest_json_fname,
+                             sel_pop=args.sel_pop, out_iSAFE_tsv=f'{hapset_dir}/{out_basename}.iSAFE.tsv')
 
 def parse_file_list(z):
     z_orig = copy.deepcopy(z)

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/broadinstitute/cms2-work/blob/is-211013-1315-add-isafe/hapset_manifest.schema.json",
+  "title": "Hapset manifest",
+  "description": "Description of files in a hapset (a set of haplotypes from one simulated or empirical region from a set of pops)",
+  "type": "object",
+  "properties": {
+    "hapset_id": {
+      "description": "The unique identifier for this hapset",
+      "type": "string"
+    },
+    "hapset_id": {
+      "description": "The unique identifier for this hapset",
+      "type": "string"
+    },
+  },
+  "required": [ "productId" ]
+}

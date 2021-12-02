@@ -146,6 +146,7 @@ struct NormalizeAndCollateBlockInput {
     Array[File]+ ihh12_out
     Array[File]+ delihh_out
     Array[File]+ derFreq_out
+    Array[File]+ iSAFE_out
     Array[Array[File]]+ xpehh_out
     Array[Array[File]]+ fst_and_delDAF_out
 

@@ -11,19 +11,26 @@ import sys
 
 import misc_utils
 
-def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_fname):
+def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
     """Convert a hapset to an indexed .vcf.gz"""
     hapset_dir = os.path.dirname(hapset_manifest_json_fname)
 
     hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
     pops = hapset_manifest['popIds']
 
-    with open(out_vcf_fname, 'w') as out_vcf:
+    with open(out_vcf_basename + '.vcf', 'w') as out_vcf:
         out_vcf.write('##fileformat=VCFv4.2\n')
+        out_vcf.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
         vcf_cols = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
-        for pop in pops:
-            for hap_num_in_pop in range(hapset_manifest['pop_sample_sizes'][pop]):
-                vcf_cols.append(f'{pop}_{hap_num_in_pop}')
+
+        with open(out_vcf_basename + '.case.txt', 'w') as out_case, \
+             open(out_vcf_basename + '.cont.txt', 'w') as out_cont:
+            for pop in pops:
+                for hap_num_in_pop in range(hapset_manifest['pop_sample_sizes'][pop]):
+                    sample_id = f'{pop}_{hap_num_in_pop}'
+                    vcf_cols.append(sample_id)
+                    (out_case if pop == sel_pop else out_cont).write(f'{pop}\t{sample_id}\n')
+                    
         out_vcf.write('\t'.join(vcf_cols) + '\n')
         
         with contextlib.ExitStack() as exit_stack:
@@ -46,8 +53,10 @@ def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_fname):
             # end: for tped_lines_tuple in tped_lines_tuples
         # end: with contextlib.ExitStack() as exit_stack
     # end: with open(out_vcf_fname, 'w') as out_vcf
+    misc_utils.execute(f'bgzip -f -i {out_vcf_basename}.vcf')
+    misc_utils.execute(f'bcftools index {out_vcf_basename}.vcf.gz')
 # end: def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_fname)
             
 if __name__ == '__main__':
     print(misc_utils.available_cpu_count())
-    hapset_to_vcf(sys.argv[1], sys.argv[2])
+    hapset_to_vcf(sys.argv[1], sys.argv[2], sys.argv[3])
