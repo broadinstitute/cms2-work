@@ -251,7 +251,7 @@ def compute_isafe_scores(hapset_manifest_json_fname, sel_pop):
                        f'--vcf-cont {out_vcf_basename}.vcf.gz '
                        f'--sample-case {out_vcf_basename}.case.txt '
                        f'--sample-cont {out_vcf_basename}.cont.txt '
-                       f'--region 1:{hapset_manifest["region_beg"]}:{hapset_manifest["region_end"]} '
+                       f'--region 1:{hapset_manifest["region_beg"]}-{hapset_manifest["region_end"]} '
                        f'--output {out_vcf_basename}.iSAFE.tsv')
 
 
