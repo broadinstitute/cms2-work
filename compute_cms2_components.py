@@ -423,5 +423,5 @@ def compute_component_scores(args):
                                                 checkpoint_file=args.checkpoint_file)
         
 if __name__=='__main__':
-  #compute_component_scores(parse_args())
-  hapset_to_vcf('/data/ilya-work/proj/dockstore-tool-cms2/tmp/az/model_defdef15_hard_sel1_common.citest_neutral__block_0__of_2__rep_0.replicaInfo.json', 'testout_vcf', '4')
+  compute_component_scores(parse_args())
+  #hapset_to_vcf('/data/ilya-work/proj/dockstore-tool-cms2/tmp/az/model_defdef15_hard_sel1_common.citest_neutral__block_0__of_2__rep_0.replicaInfo.json', 'testout_vcf', '4')
