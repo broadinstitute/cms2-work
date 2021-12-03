@@ -244,7 +244,7 @@ def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
 
 def compute_isafe_scores(hapset_manifest_json_fname, sel_pop):
     hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
-    out_vcf_basename = f'{hapset_manifest_json_fname[:-4]}.{sel_pop}'
+    out_vcf_basename = f'{hapset_manifest_json_fname[:-5]}.{sel_pop}'
     hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
     misc_utils.execute(f'isafe --format vcf '
                        f'--input {out_vcf_basename}.vcf.gz '
@@ -423,4 +423,5 @@ def compute_component_scores(args):
                                                 checkpoint_file=args.checkpoint_file)
         
 if __name__=='__main__':
-  compute_component_scores(parse_args())
+  #compute_component_scores(parse_args())
+  hapset_to_vcf('/data/ilya-work/proj/dockstore-tool-cms2/tmp/az/model_defdef15_hard_sel1_common.citest_neutral__block_0__of_2__rep_0.replicaInfo.json', 'testout_vcf', '4')
