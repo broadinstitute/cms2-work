@@ -10,6 +10,7 @@ task compute_one_pop_cms2_components {
   input {
     Array[File]+ hapsets
     Pop sel_pop
+    ComponentComputationParams component_computation_params
   }
   File script = "./compute_cms2_components.py"
   File misc_utils = "./misc_utils.py"
@@ -19,6 +20,7 @@ task compute_one_pop_cms2_components {
 
     python3 "~{script}" --hapsets @~{write_lines(hapsets)} \
       --sel-pop ~{sel_pop.pop_id} --components ihs nsl ihh12 delihh derFreq iSAFE \
+      --component-computation-params "~{write_json(component_computation_params)}" \
       --checkpoint-file "checkpoint.tar"
   >>>
 

@@ -28,7 +28,8 @@ workflow component_stats_for_sel_sims_wf {
       call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_selection {
 	input:
 	sel_pop=sel_pop,
-	hapsets=selection_sims[sel_scen_idx][sel_blk_idx]
+	hapsets=selection_sims[sel_scen_idx][sel_blk_idx],
+	component_computation_params=component_computation_params
       }
       scatter(alt_pop_idx in range(length(pops_info.pop_ids))) {
 	if ((alt_pop_idx != sel_pop_idx)  &&  pops_info.pop_alts_used[sel_pop_idx][alt_pop_idx]) {

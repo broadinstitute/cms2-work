@@ -242,7 +242,7 @@ def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
     misc_utils.execute(f'bcftools index {out_vcf_basename}.vcf.gz')
 # end: def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
 
-def compute_isafe_scores(hapset_manifest_json_fname, sel_pop):
+def compute_isafe_scores(hapset_manifest_json_fname, sel_pop, isafe_extra_flags):
     hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
     out_vcf_basename = f'{hapset_manifest_json_fname[:-5]}.{sel_pop}'
     hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
@@ -252,7 +252,7 @@ def compute_isafe_scores(hapset_manifest_json_fname, sel_pop):
                        f'--sample-case {out_vcf_basename}.case.txt '
                        f'--sample-cont {out_vcf_basename}.cont.txt '
                        f'--region 1:{hapset_manifest["region_beg"]}-{hapset_manifest["region_end"]} '
-                       f'--output {out_vcf_basename}')
+                       f'--output {out_vcf_basename} {isafe_extra_flags}')
 
 
 # * Parsing args
@@ -276,6 +276,7 @@ def parse_args():
     parser.add_argument('--components', required=True,
                         choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq', 'iSAFE'),
                         nargs='+', help='which component tests to compute')
+    parser.add_argument('--component-computation-params', help='info defining how to compute each component')
     parser.add_argument('--threads', type=int, help='selscan threads')
     parser.add_argument('--checkpoint-file', help='file used for checkpointing')
     #parser.add_argument('--out-json', required=True, help='json file describing the manifest of each file')
@@ -337,6 +338,10 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
     if os.path.getsize(hapset_haps_tar_gz) == 0:
         raise RuntimeError(f'Skipping failed sim {hapset_haps_tar_gz} hapset_num={hapset_num}')
 
+    component_computation_params = misc_utils.json_loadf(args.component_computation_params) \
+        if args.component_computation_params else {}
+
+
     hapset_dir = os.path.realpath(f'hapset{hapset_num:06}')
     execute(f'mkdir -p {hapset_dir}')
     execute(f'tar -zvxf {hapset_haps_tar_gz} -C {hapset_dir}/')
@@ -388,7 +393,8 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
 
     if 'iSAFE' in args.components:
         compute_isafe_scores(hapset_manifest_json_fname=hapset_manifest_json_fname,
-                             sel_pop=args.sel_pop)
+                             sel_pop=args.sel_pop,
+                             isafe_extra_flags=component_computation_params.get('isafe_extra_flags', ''))
 
 def parse_file_list(z):
     z_orig = copy.deepcopy(z)

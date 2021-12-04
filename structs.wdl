@@ -38,6 +38,8 @@ struct ComponentComputationParams {
     Int n_bins_ihs
     Int n_bins_nsl
     Int n_bins_delihh
+
+    String? isafe_extra_flags
 }
 
 struct SimulatedHapsetsDef {

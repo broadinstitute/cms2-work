@@ -45,7 +45,8 @@ workflow compute_normalization_stats_wf {
       call tasks.compute_one_pop_cms2_components as compute_one_pop_cms2_components_for_neutral {
 	input:
 	sel_pop=sel_pop,
-	hapsets=hapsets_block
+	hapsets=hapsets_block,
+	component_computation_params=component_computation_params
       }
     }
 
