@@ -32,6 +32,7 @@ task compute_one_pop_cms2_components {
     Array[File]+ delihh = glob("hapset[0-9]*/*.delihh.out")
     Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
     Array[File]+ iSAFE = glob("hapset[0-9]*/*.iSAFE.out")
+    Array[File]+ hapset_vcf = glob("hapset[0-9]*/*.vcf.gz")  # for debugging
     Pop sel_pop_used = sel_pop
     Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
                             (length(ihs) == length(hapsets)) &&
