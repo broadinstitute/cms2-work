@@ -10,14 +10,17 @@ task compute_one_pop_cms2_components {
   input {
     Array[File]+ hapsets
     Pop sel_pop
+    ComponentComputationParams component_computation_params
   }
   File script = "./compute_cms2_components.py"
+  File misc_utils = "./misc_utils.py"
 
   command <<<
     set -ex -o pipefail
 
     python3 "~{script}" --hapsets @~{write_lines(hapsets)} \
-      --sel-pop ~{sel_pop.pop_id} --components ihs nsl ihh12 delihh derFreq \
+      --sel-pop ~{sel_pop.pop_id} --components ihs nsl ihh12 delihh derFreq iSAFE \
+      --component-computation-params "~{write_json(component_computation_params)}" \
       --checkpoint-file "checkpoint.tar"
   >>>
 
@@ -28,18 +31,22 @@ task compute_one_pop_cms2_components {
     Array[File]+ ihh12 = glob("hapset[0-9]*/*.ihh12.out")
     Array[File]+ delihh = glob("hapset[0-9]*/*.delihh.out")
     Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
+    Array[File]+ iSAFE = glob("hapset[0-9]*/*.iSAFE.out")
+    Array[File]+ hapset_vcf = glob("hapset[0-9]*/*.vcf.gz")  # for debugging
     Pop sel_pop_used = sel_pop
     Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
                             (length(ihs) == length(hapsets)) &&
                             (length(nsl) == length(hapsets)) &&
                             (length(ihh12) == length(hapsets)) &&
                             (length(delihh) == length(hapsets)) &&
-                            (length(derFreq) == length(hapsets)))
+                            (length(derFreq) == length(hapsets)) &&
+                            (length(iSAFE) == length(hapsets)))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4fee1fcacb4f5a48cf188b753fed156e1bf3b9b2"  # selscan=1.3.0a09
     preemptible: 3
     memory: "4 GB"
     cpu: 1
@@ -48,7 +55,7 @@ task compute_one_pop_cms2_components {
   }
 }
 
-# * task compute_two_pop_cms2_components_
+# * task compute_two_pop_cms2_components
 task compute_two_pop_cms2_components {
   meta {
     description: "Compute cross-pop comparison CMS2 component scores"
@@ -61,6 +68,7 @@ task compute_two_pop_cms2_components {
   }
 
   File script = "./compute_cms2_components.py"
+  File misc_utils = "./misc_utils.py"
 
 # ** command
   command <<<
@@ -89,7 +97,8 @@ task compute_two_pop_cms2_components {
 
 # ** runtime
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    # docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4fee1fcacb4f5a48cf188b753fed156e1bf3b9b2"  # selscan=1.3.0a09
     preemptible: 3
     memory: "8 GB"
     cpu: 8
@@ -144,7 +153,8 @@ task compute_one_pop_bin_stats_for_normalization {
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4fee1fcacb4f5a48cf188b753fed156e1bf3b9b2"  # selscan=1.3.0a09
+    #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: 2
     memory: "8 GB"
     cpu: 1
@@ -198,7 +208,8 @@ task compute_two_pop_bin_stats_for_normalization {
   }
 
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4fee1fcacb4f5a48cf188b753fed156e1bf3b9b2"  # selscan=1.3.0a09
     preemptible: 2
     memory: "8 GB"
     cpu: 1
@@ -227,7 +238,8 @@ task normalize_and_collate_block {
     Pop sel_pop_used = inp.sel_pop
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4fee1fcacb4f5a48cf188b753fed156e1bf3b9b2"  # selscan=1.3.0a09
+    #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "1 GB"
     cpu: 1
     disks: "local-disk 10 HDD"
@@ -438,3 +450,66 @@ task call_neutral_region_explorer {
   }
 }
 
+task fetch_file_from_url {
+  meta {
+    description: "Downloads a file from a given URL.  Using an output of this ask as inputs, instead of using URLs directly, can improve reproducibility in case the contents of a URL changes or the URL becomes inaccessible, since call caching would save a copy of the file."
+  }
+  parameter_meta {
+# ** inputs
+    url: "(String) the URL from which to download a file"
+    out_fname: "(String?) name of output file (defaults to basename(url))"
+    sha256: "(String?) if given, fail unless the sha256 checksum of the downloaded file matches this value"
+    file_metadata: "(Map[String,String]) arbitrary metadata (such as description) to associate with this file"
+    wget_flags: "(String) wget options to use for downloading, such as timeout and number of retries"
+# ** outputs
+    file: "(File) the downloaded file"
+    url_used: "(String) url from which the file was fetched"
+    file_lastmod: "(File) the last-modified time of the file on the server (human-readable)"
+    file_size: "(Int) size of the downloaded file in bytes"
+    out_file_metadata: "(Map[String,String]) any metadata specified as input, copied to the output"
+    wget_cmd_used: "(String) the full wget command used to download the file"
+  }  
+  input {
+    String url
+    String? out_fname
+
+    String? sha256
+
+    Map[String,String] file_metadata = {}
+    String wget_flags = " -T 300 -t 20 -S "
+  }
+  String out_fname_here = select_first([out_fname, basename(url), "unknown_filename"])
+  String out_lastmod_fname = out_fname_here + ".lastmod.txt"
+  String wget_cmd_here = "wget -O " + out_fname_here + " " + wget_flags + " " + url
+  String sha256_here = select_first([sha256, ""])
+  
+  command <<<
+    set -ex -o pipefail
+
+    ~{wget_cmd_here}
+
+    if [ ! -z "~{sha256_here}" ]
+    then
+        echo "~{sha256_here} ~{out_fname_here}" > "~{out_fname_here}.sha256"
+        sha256sum -c "~{out_fname_here}.sha256"
+    fi
+
+    # save last-modified 
+    stat -c '%Y' "~{out_fname_here}" > "~{out_lastmod_fname}"
+  >>>
+  output {
+    File file = out_fname_here
+    String url_used = url
+    String file_lastmod = read_string(out_lastmod_fname)
+    Int file_size = round(size(file))
+    Map[String,String] out_file_metadata = file_metadata
+    String wget_cmd_used = wget_cmd_here
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms:common-tools-4c480f871174554205215ca7d564d34e9e79a808"
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}

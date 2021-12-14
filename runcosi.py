@@ -68,6 +68,9 @@ def slurp_file(fname, maxSizeMb=50):
     with open_or_gzopen(fname) as f:
         return f.read()
 
+def count_file_lines(fname):
+    return int(subprocess.check_output(f'wc {fname}', shell=True).decode().strip().split()[0])
+
 def open_or_gzopen(fname, *opts, **kwargs):
     mode = 'r'
     open_opts = list(opts)
@@ -141,6 +144,10 @@ def available_cpu_count():
                cgroup_cpus, proc_cpus, multiprocessing.cpu_count())
     return min(cgroup_cpus, proc_cpus, multiprocessing.cpu_count())
 
+def chk(cond, msg):
+    if not cond:
+        raise RuntimeError(f'chk failed: {msg}')
+
 # * run_one_sim
 
 def run_one_replica(replicaNum, args, paramFile):
@@ -154,15 +161,23 @@ def run_one_replica(replicaNum, args, paramFile):
     def getPopsFromParamFile(paramFile):
         pop_ids = []
         pop_names = []
+        pop_id_to_sample_size = {}
         with open(paramFile) as paramFileHandle:
             for line in paramFileHandle:
                 if line.startswith('pop_define'):
                     pop_define, pop_id, pop_name = line.strip().split()
                     pop_ids.append(pop_id)
                     pop_names.append(pop_name)
-        return pop_ids, pop_names
+                if line.startswith('sample_size'):
+                    sample_size_keyword, pop_id, sample_size = line.strip().split()
+                    pop_id_to_sample_size[pop_id] = int(sample_size)
+                if line.startswith('length'):
+                    length_keyword, region_len_bp = line.strip().split()
+        pop_sample_sizes = [pop_id_to_sample_size[pop_id] for pop_id in pop_ids]
+                    
+        return pop_ids, pop_names, pop_sample_sizes, int(region_len_bp)
 
-    popIds, popNames = getPopsFromParamFile(paramFile)
+    popIds, popNames, pop_sample_sizes, region_len_bp = getPopsFromParamFile(paramFile)
     _log.debug(f'popIds={popIds} popNames={popNames}')
 
     randomSeed = random.SystemRandom().randint(0, MAX_INT32)
@@ -188,44 +203,63 @@ def run_one_replica(replicaNum, args, paramFile):
     def _load_sweep_info():
         result = copy.deepcopy(no_sweep)
         try:
-            simNum, selPop, selGen, selBegPop, selBegGen, selCoeff, selFreq = map(float, slurp_file(sweepInfoFile).strip().split())
+            simNum, selPop, selGen, selBegPop, selBegGen, selCoeff, selFreq = \
+                map(float, slurp_file(sweepInfoFile).strip().split())
             result = dict(selPop=str(int(selPop)), selGen=selGen, selBegPop=str(int(selBegPop)),
                           selBegGen=selBegGen, selCoeff=selCoeff, selFreq=selFreq)
         except Exception as e:
             _log.warning(f'Could not load sweep info file {sweepInfoFile}: {e}')
         return result
 
-    replicaInfo = dict(replicaId=dict(blockNum=args.blockNum,
-                                      replicaNumInBlock=replicaNum,
-                                      replicaNumGlobal=args.blockNum * args.numRepsPerBlock + replicaNum,
-                                      replicaNumGlobalOutOf=args.numBlocks*args.numRepsPerBlock,
-                                      randomSeed=randomSeed),
-                       succeeded=False,
-                       region_haps_tar_gz=tpeds_tar_gz,
-                       modelInfo=dict(modelId=args.modelId,
-                                      modelIdParts=[os.path.basename(args.paramFileCommon),
-                                                    os.path.basename(args.paramFile)],
-                                      popIds=popIds, popNames=popNames,
-                                      sweepInfo=copy.deepcopy(no_sweep)))
+    replicaInfo = dict(
+        region_offset=0,
+        region_beg=0,
+        region_end=region_len_bp,
+        simulated=True,
+        popIds=popIds,
+        pop_sample_sizes={pop_id: pop_sample_size \
+                          for pop_id, pop_sample_size in zip(popIds, pop_sample_sizes)},
+        replicaId=dict(blockNum=args.blockNum,
+                       replicaNumInBlock=replicaNum,
+                       replicaNumGlobal=args.blockNum * args.numRepsPerBlock + replicaNum,
+                       replicaNumGlobalOutOf=args.numBlocks*args.numRepsPerBlock,
+                       randomSeed=randomSeed),
+        succeeded=False,
+        region_haps_tar_gz=tpeds_tar_gz,
+        modelInfo=dict(modelId=args.modelId,
+                       modelIdParts=[os.path.basename(args.paramFileCommon),
+                                     os.path.basename(args.paramFile)],
+                       popIds=popIds, popNames=popNames,
+                       sweepInfo=copy.deepcopy(no_sweep)))
     try:
         _run(cosi2_cmd, timeout=args.repAttemptTimeoutSeconds)
         # TODO: parse param file for list of pops, and check that we get all the files.
         sweepInfo = _load_sweep_info()
         replicaInfo['modelInfo'].update(sweepInfo=sweepInfo)
         tpedFiles = [f'{tpedPrefix}_0_{popId}.tped' for popId in popIds]
+        pop_snp_counts = [count_file_lines(tpedFile) for tpedFile in tpedFiles]
+        chk(len(set(pop_snp_counts)) == 1, f'different pop_snp_counts: {pop_snp_counts}')
+
         replicaInfoCopy = copy.deepcopy(replicaInfo)
-        replicaInfoCopy.update(succeeded=True)
+        replicaInfoCopy.update(n_variants=pop_snp_counts[0], succeeded=True)
         _write_json(fname=replicaInfoJsonFile,
-                    json_val=dict(replicaInfo=replicaInfoCopy,
+                    json_val=dict(hapset_id=tpedPrefix,
+                                  replicaInfo=replicaInfoCopy,
+                                  region_offset=replicaInfoCopy['region_offset'],
+                                  region_beg=replicaInfoCopy['region_beg'],
+                                  region_end=replicaInfoCopy['region_end'],
+                                  pop_sample_sizes=replicaInfoCopy['pop_sample_sizes'],
+                                  simulated=True,
                                   cosi2Cmd=cosi2_cmd,
                                   popIds=popIds, popNames=popNames,
                                   tpedFiles=tpedFiles,
+                                  tpeds=dict(zip(popIds, tpedFiles)),
                                   trajFile=trajFile,
                                   paramFile=paramFileCopyFile))
         shutil.copyfile(src=paramFile, dst=paramFileCopyFile)
         tpedFilesJoined = " ".join(tpedFiles)
-        trajFile_which = trajFile if os.path.isfile(trajFile) else ''
-        _run(f'tar cvfz {tpeds_tar_gz} {tpedFilesJoined} {trajFile_which} '
+        trajFile_maybe = trajFile if os.path.isfile(trajFile) else ''
+        _run(f'tar cvfz {tpeds_tar_gz} {tpedFilesJoined} {trajFile_maybe} '
              f'{paramFileCopyFile} {replicaInfoJsonFile}')
         replicaInfo.update(succeeded=True)
     except subprocess.SubprocessError as subprocessError:
@@ -299,10 +333,13 @@ def do_main():
     args = parse_args()
 
     with contextlib.ExitStack() as exit_stack:
-        executor = exit_stack.enter_context(concurrent.futures.ThreadPoolExecutor(max_workers=min(args.numRepsPerBlock,
-                                                                                                  available_cpu_count())))
-        paramFileCombined=constructParamFileCombined(paramFileCommon=args.paramFileCommon, paramFileVarying=args.paramFile)
-        replicaInfos = list(executor.map(functools.partial(run_one_replica_with_retries, args=args, paramFile=paramFileCombined),
+        executor = exit_stack.enter_context(concurrent.futures.ThreadPoolExecutor(
+            max_workers=min(args.numRepsPerBlock,
+                            available_cpu_count())))
+        paramFileCombined=constructParamFileCombined(paramFileCommon=args.paramFileCommon,
+                                                     paramFileVarying=args.paramFile)
+        replicaInfos = list(executor.map(functools.partial(run_one_replica_with_retries, args=args,
+                                                           paramFile=paramFileCombined),
                                          range(args.numRepsPerBlock)))
 
     if args.outJson:

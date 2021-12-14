@@ -302,7 +302,7 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
             inps[inp] = local_fname
         return inps[inp]
 
-    for component in ('ihs_out', 'delihh_out', 'nsl_out', 'ihh12_out', 'xpehh_out', 'derFreq_out'):
+    for component in ('ihs_out', 'delihh_out', 'nsl_out', 'ihh12_out', 'xpehh_out', 'derFreq_out', 'iSAFE_out'):
         make_local(component)
 
     def chk_idx(pd, name):
@@ -387,6 +387,12 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
     collated['mean_fst'] = collated.filter(like='Fst').mean(axis='columns')
     collated['mean_delDAF'] = collated.filter(like='delDAF').mean(axis='columns')
 
+    isafe = pd.read_table(f'{inps["iSAFE_out"]}',
+                               index_col='POS',
+                               low_memory=False).rename_axis('pos').add_prefix('iSAFE_')
+    chk_idx(isafe, 'isafe')
+    collated = collated.join(isafe, how='outer')
+
     replica_id_str = os.path.basename(inps['ihs_out'])
     if replica_id_str.endswith('.ihs.out'):
         replica_id_str = replica_id_str[:-len('.ihs.out')]
@@ -407,6 +413,7 @@ def normalize_and_collate_scores(args):
                       ihh12_out=inps['ihh12_out'][i],
                       delihh_out=inps['delihh_out'][i],
                       derFreq_out=inps['derFreq_out'][i],
+                      iSAFE_out=inps['iSAFE_out'][i],
                       xpehh_out=[v[i] for v in inps['xpehh_out']],
                       fst_and_delDAF_out=[v[i] for v in inps['fst_and_delDAF_out']],
                       norm_bins_ihs=inps['norm_bins_ihs'],

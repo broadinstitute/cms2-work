@@ -500,7 +500,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
       region_lines: a list of vcf lines for the region
       region_sel_pop: pop in which the region is selected (or None if neutral)
       pops_to_include: pops to include in the hapset
-      pop2cols: map from pop to the vcf cols containing data for samples from that pop
+      pop2vcfcols: map from pop to the vcf cols containing data for samples from that pop
       genmap: callable mapping basepair position to genetic map position in centimorgans
       tmp_dir: temp dir to use
     Returns:
@@ -519,6 +519,9 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
     with contextlib.ExitStack() as exit_stack:
         tpeds = [exit_stack.enter_context(open(tped_fname, 'w')) for tped_fname in tped_fnames]
         region_beg = None
+        region_offset = None
+        region_end = None
+        n_variants = 0
         for vcf_line_num, vcf_line in enumerate(region_lines):
             #
             # CEU, CHB, YRI, BEB
@@ -544,9 +547,6 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
             # determine the ancestral allele
             allele2anc = determine_ancestral_allele(info_dict=info_dict, all_alleles=all_alleles, stats=stats)
             
-            if region_beg is None:
-                region_beg = pos
-
             sample_data = sample_data_str.strip().split('\t')
 
             pops_genotypes = []
@@ -554,6 +554,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
             bad_gt = False
             has_ancestral = False
             has_derived = False
+            pop_sample_sizes = collections.Counter()
             for pop in all_pops:
                 pop_gts = ''
                 for vcf_col in pop2vcfcols[pop]:
@@ -574,6 +575,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
                         if ancestral_or_not == '0':
                             has_derived = True
                         pop_gts += (' ' + ancestral_or_not)
+                        pop_sample_sizes[pop] += 1
                 # end: for vcf_col in pop2vcfcols[pop]
                 if bad_gt:
                     break
@@ -592,7 +594,18 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
 
             for pop, tped, pop_gts in zip(all_pops, tpeds, pops_genotypes):
                 cm_pos = genmap(chrom=chrom, pos=pos, pop=pop)
-                tped.write(f'1 {vcf_line_num} {cm_pos} {pos-region_beg} {pop_gts}\n')
+
+                if region_offset is None:
+                    region_offset = pos
+
+                pos_from_offset = pos - region_offset
+
+                if region_beg is None:
+                    region_beg = pos_from_offset
+                region_end = pos_from_offset
+
+                n_variants += 1
+                tped.write(f'1 {vcf_line_num} {cm_pos} {pos_from_offset} {pop_gts}\n')
         # end: for vcf_line in region_lines:
     # end: with contextlib.ExitStack() as exit_stack:
 
@@ -603,7 +616,10 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
     # then, tar it up, with either tar command or the tarfile module.
     hapset_manifest = {
         'hapset_id': hapset_name,
+        'region_offset': region_offset,
         'region_beg': region_beg,
+        'region_end': region_end,
+        'n_variants': n_variants,
         'simulated': False,
         'selection': True,
         'selpop': region_sel_pop,
@@ -611,6 +627,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
             pop: os.path.basename(tped_fname) for pop, tped_fname in zip(all_pops, tped_fnames)
         },
         'popIds': all_pops,
+        'pop_sample_sizes': pop_sample_sizes,
         'tpedFiles': [os.path.basename(tped_fname) for tped_fname in tped_fnames]
     }
     _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.replicaInfo.json')),

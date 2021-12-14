@@ -38,6 +38,8 @@ struct ComponentComputationParams {
     Int n_bins_ihs
     Int n_bins_nsl
     Int n_bins_delihh
+
+    String? isafe_extra_flags
 }
 
 struct SimulatedHapsetsDef {
@@ -146,6 +148,7 @@ struct NormalizeAndCollateBlockInput {
     Array[File]+ ihh12_out
     Array[File]+ delihh_out
     Array[File]+ derFreq_out
+    Array[File]+ iSAFE_out
     Array[Array[File]]+ xpehh_out
     Array[Array[File]]+ fst_and_delDAF_out
 
