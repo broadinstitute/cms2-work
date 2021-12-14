@@ -24,7 +24,7 @@ RUN /opt/docker/install-miniconda.sh
 
 ENV PATH="$MINICONDA_PATH/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-RUN conda install tar numpy scipy matplotlib pandas pytables h5py psutil tabix dominate bedtools && conda clean -a -y
+RUN conda install tar numpy scipy matplotlib pandas pytables h5py psutil tabix dominate bedtools bedops && conda clean -a -y
 
 COPY Dockerfile /opt/docker/Dockerfile.save.txt
 COPY misc_utils.py /opt/pyutils/
