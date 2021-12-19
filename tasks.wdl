@@ -541,7 +541,7 @@ task construct_neutral_regions_list {
     python3 "~{construct_neutral_regions_list_script}" \
         --chrom-sizes "~{chrom_sizes}" \
         --chrom-end-margins-bp "~{chrom_end_margins_bp}" \
-        --gaps-txt-gz "~{gaps_txt_gz}"
+        --gaps-txt-gz "~{gaps_txt_gz}" \
         --genes-gff3 "~{genes_gff3}" \
         --neutral-regions-bed "~{neutral_regions_bed_fname}"
 
