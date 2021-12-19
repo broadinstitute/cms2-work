@@ -19,8 +19,8 @@ workflow construct_empirical_neutral_regions {
     input:
     chrom_sizes=fetch_chrom_sizes.file,
     chrom_end_margins_bp=chrom_end_margins_bp,
+    gaps_txt_gz=fetch_gaps.file,
     genes_gff3=fetch_gencode_human_gff3.file,
-    
   }  
 
   output {
