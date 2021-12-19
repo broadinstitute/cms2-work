@@ -187,7 +187,9 @@ def parse_args():
     parser.add_argument('--chrom-sizes', required=True, help='chromosome sizes')
     parser.add_argument('--chrom-end-margins-bp', type=int, required=True,
                         help='exclude this much from chrom ends')
+    parser.add_argument('--genes-gff3', required=True, help='GENCODE genes list')
     parser.add_argument('--gaps-txt-gz', required=True, help='file that shows gaps in assembly')
+    parser.add_argument('--neutral-regions-bed', required=True, help='output file for neutral regions')
 
     return parser.parse_args()
 
@@ -395,13 +397,18 @@ def construct_full_chroms_bed(chrom_sizes, end_margin, full_chroms_bed):
 def construct_gaps_bed(gaps_txt_gz, gaps_bed):
     execute(f'cat {gaps_txt_gz} | zcat | cut -f 2-4 > {gaps_bed}')
 
+def construct_genes_bed(genes_gff3, genes_bed):
+    execute(f'cat {genes_gff3} | gunzip --stdout - | awk \'$3 == "gene"\' - '
+            f'| convert2bed -i gff - > {genes_bed}')
+
 def construct_neutral_regions_list(args):
     full_chroms_bed = construct_full_chroms_bed(chrom_sizes=args.chrom_sizes, end_margin=args.chrom_end_margins_bp,
-                                                gaps_txt_gz=args.gaps_txt_gz,
                                                 full_chroms_bed='full_chroms.bed')
     construct_gaps_bed(args.gaps_txt_gz, 'gaps.bed')
     execute(f'bedtools subtract -a full_chroms.bed -b gaps.bed > full_chroms.sub_gaps.bed')
-    execute(f'cp full_chroms.sub_gaps.bed {args.neutral_regions_bed_fname}')
+    construct_genes_bed(genes_gff3=args.genes_gff3, genes_bed='genes.bed')
+    execute(f'bedtools subtract -a full_chroms.sub_gaps.bed -b genes.bed > full_chroms.sub_gaps.sub_genes.bed')
+    execute(f'cp full_chroms.sub_gaps.sub_genes.bed {args.neutral_regions_bed}')
     
 
 if __name__ == '__main__':
