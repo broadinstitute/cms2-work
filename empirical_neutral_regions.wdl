@@ -16,6 +16,7 @@ workflow construct_empirical_neutral_regions {
   call tasks.fetch_file_from_url as fetch_gaps { input: url=gap_url }
 
   call tasks.construct_neutral_regions_list {
+    input:
     chrom_sizes=fetch_chrom_sizes.file,
     chrom_end_margins_bp=chrom_end_margins_bp,
     genes_gff3=fetch_gencode_human_gff3.file,
