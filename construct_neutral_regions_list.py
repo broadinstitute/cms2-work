@@ -187,6 +187,7 @@ def parse_args():
     parser.add_argument('--chrom-sizes', required=True, help='chromosome sizes')
     parser.add_argument('--chrom-end-margins-bp', type=int, required=True,
                         help='exclude this much from chrom ends')
+    parser.add_argument('--gaps-txt-gz', required=True, help='file that shows gaps in assembly')
 
     return parser.parse_args()
 
@@ -380,16 +381,28 @@ def wait_for_nre_results(driver, args):
 # submit contents
 #element.submit()
 
-def construct_neutral_regions_list(args):
-    end_margin = args.chrom_end_margins_bp
-    with open(args.chrom_sizes) as chrom_sizes_in, open('full_chroms.bed', 'w') as full_chroms_out:
+def construct_full_chroms_bed(chrom_sizes, end_margin, full_chroms_bed):
+    with open(chrom_sizes) as chrom_sizes_in, open(full_chroms_bed, 'w') as full_chroms_bed_out:
         for line in chrom_sizes_in:
             chrom, chrom_size = line.strip().split()
             chrom_size = int(chrom_size)
             chk(chrom.startswith('chr'), 'bad chrom start')
             chrom_num = chrom[len('chr'):]
             if is_int(chrom_num) and 1 <= int(chrom_num) <= 22:
-                full_chroms_out.write(f'{chrom}\t{end_margin}\t{chrom_size-end_margin}\n')
+                full_chroms_bed_out.write(f'{chrom}\t{end_margin}\t{chrom_size-end_margin}\n')
+    return full_chroms_bed
+
+def construct_gaps_bed(gaps_txt_gz, gaps_bed):
+    execute(f'cat {gaps_txt_gz} | zcat | cut -f 2-4 > {gaps_bed}')
+
+def construct_neutral_regions_list(args):
+    full_chroms_bed = construct_full_chroms_bed(chrom_sizes=args.chrom_sizes, end_margin=args.chrom_end_margins_bp,
+                                                gaps_txt_gz=args.gaps_txt_gz,
+                                                full_chroms_bed='full_chroms.bed')
+    construct_gaps_bed(args.gaps_txt_gz, 'gaps.bed')
+    execute(f'bedtools subtract -a full_chroms.bed -b gaps.bed > full_chroms.sub_gaps.bed')
+    execute(f'cp full_chroms.sub_gaps.bed {args.neutral_regions_bed_fname}')
+    
 
 if __name__ == '__main__':
     construct_neutral_regions_list(parse_args())
