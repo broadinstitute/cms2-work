@@ -514,70 +514,6 @@ task fetch_file_from_url {
   }
 }
 
-task fetch_file_from_url {
-  meta {
-    description: "Downloads a file from a given URL.  Using an output of this ask as inputs, instead of using URLs directly, can improve reproducibility in case the contents of a URL changes or the URL becomes inaccessible, since call caching would save a copy of the file."
-  }
-  parameter_meta {
-# ** inputs
-    url: "(String) the URL from which to download a file"
-    out_fname: "(String?) name of output file (defaults to basename(url))"
-    sha256: "(String?) if given, fail unless the sha256 checksum of the downloaded file matches this value"
-    file_metadata: "(Map[String,String]) arbitrary metadata (such as description) to associate with this file"
-    wget_flags: "(String) wget options to use for downloading, such as timeout and number of retries"
-# ** outputs
-    file: "(File) the downloaded file"
-    url_used: "(String) url from which the file was fetched"
-    file_lastmod: "(File) the last-modified time of the file on the server (human-readable)"
-    file_size: "(Int) size of the downloaded file in bytes"
-    out_file_metadata: "(Map[String,String]) any metadata specified as input, copied to the output"
-    wget_cmd_used: "(String) the full wget command used to download the file"
-  }  
-  input {
-    String url
-    String? out_fname
-
-    String? sha256
-
-    Map[String,String] file_metadata = {}
-    String wget_flags = " -T 300 -t 20 -S "
-  }
-  String out_fname_here = select_first([out_fname, basename(url), "unknown_filename"])
-  String out_lastmod_fname = out_fname_here + ".lastmod.txt"
-  String wget_cmd_here = "wget -O " + out_fname_here + " " + wget_flags + " " + url
-  String sha256_here = select_first([sha256, ""])
-  
-  command <<<
-    set -ex -o pipefail
-
-    ~{wget_cmd_here}
-
-    if [ ! -z "~{sha256_here}" ]
-    then
-        echo "~{sha256_here} ~{out_fname_here}" > "~{out_fname_here}.sha256"
-        sha256sum -c "~{out_fname_here}.sha256"
-    fi
-
-    # save last-modified 
-    stat -c '%Y' "~{out_fname_here}" > "~{out_lastmod_fname}"
-  >>>
-  output {
-    File file = out_fname_here
-    String url_used = url
-    String file_lastmod = read_string(out_lastmod_fname)
-    Int file_size = round(size(file))
-    Map[String,String] out_file_metadata = file_metadata
-    String wget_cmd_used = wget_cmd_here
-  }
-  runtime {
-    docker: "quay.io/ilya_broad/cms:common-tools-59ce5755a941bc4621476228dec761002e6d84d5"
-    memory: "4 GB"
-    cpu: 1
-    disks: "local-disk 32 HDD"
-    preemptible: 1
-  }
-}
-
 task construct_neutral_regions_list {
   meta {
     description: "Constructs a list of likely-neutral genomic regions."
@@ -601,7 +537,7 @@ task construct_neutral_regions_list {
   command <<<
     set -ex -o pipefail
 
-    python3 "~{construct_neutral_regoins_list_script}" \
+    python3 "~{construct_neutral_regions_list_script}" \
         --chrom-sizes "~{chrom_sizes}" \
         --chrom-end-margins-bp "~{chrom_end_margins_bp}" \
         --genes-gff3 "~{genes_gff3}" \
