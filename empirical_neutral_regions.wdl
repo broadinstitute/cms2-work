@@ -21,7 +21,12 @@ workflow construct_empirical_neutral_regions {
     chrom_end_margins_bp=chrom_end_margins_bp,
     gaps_txt_gz=fetch_gaps.file,
     genes_gff3=fetch_gencode_human_gff3.file,
-  }  
+  }
+  
+  call tasks.compute_intervals_stats {
+    input:
+    intervals_files=flatten([[construct_neutral_regions_list.neutral_regions_bed], construct_neutral_regions_list.aux_beds])
+  }
 
   output {
     File empirical_neutral_regions_bed=construct_neutral_regions_list.neutral_regions_bed

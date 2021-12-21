@@ -3,16 +3,6 @@
 """Constructs a list of genomic regions that most likely have evolved neutrally in the past.
 """
 
-# import webdriver
-# from selenium import webdriver
-# import chromedriver_binary
-  
-# # create webdriver object
-# driver = webdriver.Chrome()
-  
-# # get geeksforgeeks.org
-# driver.get("http://nre.cb.bscb.cornell.edu/nre/run.html")
-
 import platform
 
 if not tuple(map(int, platform.python_version_tuple())) >= (3,8):
@@ -403,12 +393,12 @@ def construct_genes_bed(genes_gff3, genes_bed):
 
 def construct_neutral_regions_list(args):
     full_chroms_bed = construct_full_chroms_bed(chrom_sizes=args.chrom_sizes, end_margin=args.chrom_end_margins_bp,
-                                                full_chroms_bed='full_chroms.bed')
-    construct_gaps_bed(args.gaps_txt_gz, 'gaps.bed')
-    execute(f'bedtools subtract -a full_chroms.bed -b gaps.bed > full_chroms.sub_gaps.bed')
-    construct_genes_bed(genes_gff3=args.genes_gff3, genes_bed='genes.bed')
-    execute(f'bedtools subtract -a full_chroms.sub_gaps.bed -b genes.bed > full_chroms.sub_gaps.sub_genes.bed')
-    execute(f'cp full_chroms.sub_gaps.sub_genes.bed {args.neutral_regions_bed}')
+                                                full_chroms_bed='01.full_chroms.bed')
+    construct_gaps_bed(args.gaps_txt_gz, '02.gaps.bed')
+    execute(f'bedtools subtract -a 01.full_chroms.bed -b 02.gaps.bed > 03.full_chroms.sub_gaps.bed')
+    construct_genes_bed(genes_gff3=args.genes_gff3, genes_bed='04.genes.bed')
+    execute(f'bedtools subtract -a 03.full_chroms.sub_gaps.bed -b 02.genes.bed > 04.full_chroms.sub_gaps.sub_genes.bed')
+    execute(f'cp 04.full_chroms.sub_gaps.sub_genes.bed {args.neutral_regions_bed}')
     
 
 if __name__ == '__main__':

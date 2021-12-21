@@ -514,6 +514,44 @@ task fetch_file_from_url {
   }
 }
 
+task compute_intervals_stats {
+  meta {
+    description: "Compute summary stats for a set of genomic intervals files"
+  }
+  parameter_meta {
+# ** inputs
+    intervals_files: "(Array[File]+) genomic intervals files (.bed or .gff3)"
+
+# ** outputs
+    intervals_report_html: "(File) An HTML report of stats about the intervals"
+  }  
+  input {
+    Array[File]+ intervals_files
+    String intervals_report_html_fname = basename(intervals_files[0]) + ".stats.html"
+  }
+  File compute_intervals_stats_script = "./compute_intervals_stats.py"
+
+  command <<<
+    set -ex -o pipefail
+
+    python3 "~{compute_intervals_stats_script}" \
+        --intervals-files "@~{intervals_files}" \
+        --intervals-report-html "{intervals_report_html_fname}"
+
+  >>>
+  output {
+    File intervals_report_html = intervals_report_html_fname
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms:common-tools-59ce5755a941bc4621476228dec761002e6d84d5"
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}
+
+
 task construct_neutral_regions_list {
   meta {
     description: "Constructs a list of likely-neutral genomic regions."
@@ -548,6 +586,7 @@ task construct_neutral_regions_list {
   >>>
   output {
     File neutral_regions_bed = neutral_regions_bed_fname
+    Array[File] aux_beds = glob("*.bed")
   }
   runtime {
     docker: "quay.io/ilya_broad/cms:common-tools-59ce5755a941bc4621476228dec761002e6d84d5"
