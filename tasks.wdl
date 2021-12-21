@@ -535,7 +535,7 @@ task compute_intervals_stats {
     set -ex -o pipefail
 
     python3 "~{compute_intervals_stats_script}" \
-        --intervals-files "@~{intervals_files}" \
+        --intervals-files "@~{write_lines(intervals_files)}" \
         --intervals-report-html "{intervals_report_html_fname}"
 
   >>>
@@ -543,7 +543,7 @@ task compute_intervals_stats {
     File intervals_report_html = intervals_report_html_fname
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms:common-tools-59ce5755a941bc4621476228dec761002e6d84d5"
+    docker: "quay.io/ilya_broad/cms:common-tools-69afd7403a40ccf2c1578be9f67d6e09b1143f22"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
@@ -589,7 +589,7 @@ task construct_neutral_regions_list {
     Array[File] aux_beds = glob("*.bed")
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms:common-tools-59ce5755a941bc4621476228dec761002e6d84d5"
+    docker: "quay.io/ilya_broad/cms:common-tools-69afd7403a40ccf2c1578be9f67d6e09b1143f22"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
