@@ -536,7 +536,7 @@ task compute_intervals_stats {
 
     python3 "~{compute_intervals_stats_script}" \
         --intervals-files "@~{write_lines(intervals_files)}" \
-        --intervals-report-html "{intervals_report_html_fname}"
+        --intervals-report-html "~{intervals_report_html_fname}"
 
   >>>
   output {
