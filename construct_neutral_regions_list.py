@@ -397,8 +397,8 @@ def construct_neutral_regions_list(args):
     construct_gaps_bed(args.gaps_txt_gz, '02.gaps.bed')
     execute(f'bedtools subtract -a 01.full_chroms.bed -b 02.gaps.bed > 03.full_chroms.sub_gaps.bed')
     construct_genes_bed(genes_gff3=args.genes_gff3, genes_bed='04.genes.bed')
-    execute(f'bedtools subtract -a 03.full_chroms.sub_gaps.bed -b 02.genes.bed > 04.full_chroms.sub_gaps.sub_genes.bed')
-    execute(f'cp 04.full_chroms.sub_gaps.sub_genes.bed {args.neutral_regions_bed}')
+    execute(f'bedtools subtract -a 03.full_chroms.sub_gaps.bed -b 04.genes.bed > 05.full_chroms.sub_gaps.sub_genes.bed')
+    execute(f'cp 05.full_chroms.sub_gaps.sub_genes.bed {args.neutral_regions_bed}')
     
 
 if __name__ == '__main__':
