@@ -387,9 +387,10 @@ def construct_full_chroms_bed(chrom_sizes, end_margin, full_chroms_bed):
 def construct_gaps_bed(gaps_txt_gz, gaps_bed):
     execute(f'cat {gaps_txt_gz} | zcat | cut -f 2-4 > {gaps_bed}')
 
-def construct_genes_bed(genes_gff3, genes_bed):
+def construct_genes_bed(genes_gff3, genes_pad_bp, chrom_sizes, genes_bed):
     execute(f'cat {genes_gff3} | gunzip --stdout - | awk \'$3 == "gene"\' - '
-            f'| grep -v lncRNA | convert2bed -i gff - > {genes_bed}')
+            f'| grep -v lncRNA | convert2bed -i gff - '
+            f'| bedtools slop -i stdin -g {chrom_sizes} -b {genes_pad_bp} > {genes_bed}')
 
 def construct_pophumanscan_bed(pophumanscan_coords, pophumanscan_bed):
     execute(f"cat {pophumanscan_coords} | awk '(NR>1)' | cut -f 3-5 | sort -k1,1 -k2,2n | uniq > {pophumanscan_bed}")
@@ -405,7 +406,8 @@ def construct_neutral_regions_list(args):
     construct_gaps_bed(genomic_features["ucsc_gap_track"], '02.gaps.bed')
     execute(f'bedtools subtract -a 01.full_chroms.bed -b 02.gaps.bed > 03.full_chroms.sub_gaps.bed')
 
-    construct_genes_bed(genes_gff3=genomic_features["gencode_annots"], genes_bed='04.genes.bed')
+    construct_genes_bed(genes_gff3=genomic_features["gencode_annots"], chrom_sizes=genomic_features["chrom_sizes"],
+                        genes_pad_bp=neut_reg_params["genes_pad_bp"], genes_bed='04.genes.bed')
     execute(f'bedtools subtract -a 03.full_chroms.sub_gaps.bed -b 04.genes.bed > 05.full_chroms.sub_gaps.sub_genes.bed')
 
     construct_pophumanscan_bed(pophumanscan_coords=genomic_features["pophumanscan_coords"], pophumanscan_bed='06.pophumanscan.bed')
