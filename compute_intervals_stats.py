@@ -284,7 +284,8 @@ def compute_intervals_stats(args):
         tags.h2('Intervals stats')
 
         if args.metadata_json:
-            _json_loadf(args.metadata_json)
+            report_metadata = _json_loadf(args.metadata_json)
+            tags.p(str(report_metadata))
         
         for intervals_file in parse_file_list(args.intervals_files):
             tags.hr()
