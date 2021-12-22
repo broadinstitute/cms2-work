@@ -90,6 +90,28 @@ struct NeutralRegionExplorerParams {
   Array[File] gene_regions_bed
 }
 
+#
+# struct EmpiricalNeutralRegionsParams
+#
+# Definition of putatively neutral empirical regions.
+#
+struct EmpiricalNeutralRegionsParams {
+  Int genes_pad_bp  # exclude known genes, padded by this distance (bp)
+  Int telomeres_pad_bp  # exclude telomeres, padded by this distance (bp)
+}
+
+#
+# struct GenomicFeaturesForFindingEmpiricalNeutralRegions
+#
+# Genome features used in computing empirical neutral regions.
+#
+struct GenomicFeaturesForFindingEmpiricalNeutralRegions {
+  File chrom_sizes  # chromosome sizes
+  File gencode_annots # GENCODE annotations for genes
+  File ucsc_gap_track # telomeres, centromeres and assembly gaps
+  File pophumanscan_coords # regions previously suggested as being under selection
+}
+
 struct EmpiricalHapsetsDef {
   String empirical_hapsets_bundle_id
   NeutralRegionExplorerParams? nre_params

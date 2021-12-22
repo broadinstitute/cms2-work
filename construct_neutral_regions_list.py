@@ -61,7 +61,6 @@ def _json_loads(s):
 def _json_loadf(fname):
     return _json_loads(slurp_file(fname))
 
-
 def slurp_file(fname, maxSizeMb=50):
     """Read entire file into one string.  If file is gzipped, uncompress it on-the-fly.  If file is larger
     than `maxSizeMb` megabytes, throw an error; this is to encourage proper use of iterators for reading
@@ -174,11 +173,12 @@ def reverse_dict(d):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--chrom-sizes', required=True, help='chromosome sizes')
-    parser.add_argument('--chrom-end-margins-bp', type=int, required=True,
-                        help='exclude this much from chrom ends')
-    parser.add_argument('--genes-gff3', required=True, help='GENCODE genes list')
-    parser.add_argument('--gaps-txt-gz', required=True, help='file that shows gaps in assembly')
+    parser.add_argument('--empirical-neutral-regions-params', required=True,
+                        help='params defining criteria for considering a region to be likely neutral')
+
+    parser.add_argument('--genomic-features-for-finding-empirical-neutral-regions', required=True,
+                        help='genomic feature files used in finding empirical neutral regions')
+
     parser.add_argument('--neutral-regions-bed', required=True, help='output file for neutral regions')
 
     return parser.parse_args()
@@ -389,17 +389,21 @@ def construct_gaps_bed(gaps_txt_gz, gaps_bed):
 
 def construct_genes_bed(genes_gff3, genes_bed):
     execute(f'cat {genes_gff3} | gunzip --stdout - | awk \'$3 == "gene"\' - '
-            f'| convert2bed -i gff - > {genes_bed}')
+            f'| grep -v lncRNA | convert2bed -i gff - > {genes_bed}')
 
 def construct_neutral_regions_list(args):
-    full_chroms_bed = construct_full_chroms_bed(chrom_sizes=args.chrom_sizes, end_margin=args.chrom_end_margins_bp,
+
+    neut_reg_params = _json_loadf(args.empirical_neutral_regions_params)
+    genomic_features = _json_loadf(args.genomic_features_for_finding_empirical_neutral_regions)
+
+    full_chroms_bed = construct_full_chroms_bed(chrom_sizes=genomic_features["chrom_sizes"],
+                                                end_margin=neut_reg_params["telomeres_pad_bp"],
                                                 full_chroms_bed='01.full_chroms.bed')
-    construct_gaps_bed(args.gaps_txt_gz, '02.gaps.bed')
+    construct_gaps_bed(genomic_features["ucsc_gap_track"], '02.gaps.bed')
     execute(f'bedtools subtract -a 01.full_chroms.bed -b 02.gaps.bed > 03.full_chroms.sub_gaps.bed')
-    construct_genes_bed(genes_gff3=args.genes_gff3, genes_bed='04.genes.bed')
+    construct_genes_bed(genes_gff3=genomic_features["gencode_annots"], genes_bed='04.genes.bed')
     execute(f'bedtools subtract -a 03.full_chroms.sub_gaps.bed -b 04.genes.bed > 05.full_chroms.sub_gaps.sub_genes.bed')
     execute(f'cp 05.full_chroms.sub_gaps.sub_genes.bed {args.neutral_regions_bed}')
-    
 
 if __name__ == '__main__':
     construct_neutral_regions_list(parse_args())

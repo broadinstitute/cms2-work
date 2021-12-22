@@ -560,13 +560,13 @@ task construct_neutral_regions_list {
 # ** inputs
 
     chrom_sizes: "(File) chromosome sizes"
-    chrom_end_margins_bp: "(Int) size of chromosome ends to ignore"
 # ** outputs
     neutral_regions_bed: "(File) likely-neutral regions"
   }  
   input {
+    EmpiricalNeutralRegionsParams empirical_neutral_regions_params
+
     File chrom_sizes
-    Int chrom_end_margins_bp
     File gaps_txt_gz
     File genes_gff3
     String neutral_regions_bed_fname = "neutral_regions.bed"
@@ -578,7 +578,7 @@ task construct_neutral_regions_list {
 
     python3 "~{construct_neutral_regions_list_script}" \
         --chrom-sizes "~{chrom_sizes}" \
-        --chrom-end-margins-bp "~{chrom_end_margins_bp}" \
+        --empirical-neutral-regions-params "~{write_json(empirical_neutral_regions_params)}" \
         --gaps-txt-gz "~{gaps_txt_gz}" \
         --genes-gff3 "~{genes_gff3}" \
         --neutral-regions-bed "~{neutral_regions_bed_fname}"

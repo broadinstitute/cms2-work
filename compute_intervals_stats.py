@@ -284,7 +284,7 @@ def compute_intervals_stats(args):
         
         for intervals_file in parse_file_list(args.intervals_files):
             tags.hr()
-            tags.h3(f'Intervals file: {intervals_file}')
+            tags.h3(f'Intervals file: {os.path.basename(intervals_file)}')
 
             interval_lens = []
             with open(intervals_file) as intervals_file_in:
@@ -298,7 +298,7 @@ def compute_intervals_stats(args):
 
             plt.clf()
             plt.hist(interval_lens, bins=60)
-            plt.title(intervals_file)
+            plt.title(os.path.basename(intervals_file))
             html_insert_fig(tags)
 
 if __name__ == '__main__':
