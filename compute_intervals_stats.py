@@ -293,8 +293,9 @@ def compute_intervals_stats(args):
                     interval_lens.append(int(end) - int(beg))
             tags.p(f'Intervals count: {len(interval_lens):,}; mean len: {int(np.mean(interval_lens)):,}; '
                    f'median len: {int(np.median(interval_lens)):,} '
-                   f'min len: {int(np.min(interval_lens)):,} '
-                   f'max len: {int(np.max(interval_lens)):,}')
+                   f'min len: {np.min(interval_lens):,} '
+                   f'max len: {np.max(interval_lens):,} '
+                   f'tot len: {np.sum(interval_lens):,}')
 
             plt.clf()
             plt.hist(interval_lens, bins=60)

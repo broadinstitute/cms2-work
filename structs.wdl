@@ -98,6 +98,7 @@ struct NeutralRegionExplorerParams {
 struct EmpiricalNeutralRegionsParams {
   Int genes_pad_bp  # exclude known genes, padded by this distance (bp)
   Int telomeres_pad_bp  # exclude telomeres, padded by this distance (bp)
+  Int min_region_len_bp  # filter out neutral regions shorter than this
 }
 
 #

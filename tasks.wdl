@@ -559,16 +559,12 @@ task construct_neutral_regions_list {
   parameter_meta {
 # ** inputs
 
-    chrom_sizes: "(File) chromosome sizes"
 # ** outputs
     neutral_regions_bed: "(File) likely-neutral regions"
   }  
   input {
     EmpiricalNeutralRegionsParams empirical_neutral_regions_params
-
-    File chrom_sizes
-    File gaps_txt_gz
-    File genes_gff3
+    GenomicFeaturesForFindingEmpiricalNeutralRegions genomic_features_for_finding_empirical_neutral_regions
     String neutral_regions_bed_fname = "neutral_regions.bed"
   }
   File construct_neutral_regions_list_script = "./construct_neutral_regions_list.py"
@@ -577,10 +573,8 @@ task construct_neutral_regions_list {
     set -ex -o pipefail
 
     python3 "~{construct_neutral_regions_list_script}" \
-        --chrom-sizes "~{chrom_sizes}" \
         --empirical-neutral-regions-params "~{write_json(empirical_neutral_regions_params)}" \
-        --gaps-txt-gz "~{gaps_txt_gz}" \
-        --genes-gff3 "~{genes_gff3}" \
+        --genomic-features-for-finding-empirical-neutral-regions "~{write_json(genomic_features_for_finding_empirical_neutral_regions)}"
         --neutral-regions-bed "~{neutral_regions_bed_fname}"
 
   >>>
