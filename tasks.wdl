@@ -13,7 +13,7 @@ task compute_one_pop_cms2_components {
     ComponentComputationParams component_computation_params
   }
   File script = "./compute_cms2_components.py"
-  File misc_utils = "./misc_utils.py"
+  File misc_utils = "./misc_utils.py"  # !UnusedDeclaration
 
   command <<<
     set -ex -o pipefail
@@ -51,7 +51,7 @@ task compute_one_pop_cms2_components {
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 50 HDD"
-    checkpointFile: "checkpoint.tar"
+    checkpointFile: "checkpoint.tar"  # !UnknownRuntimeKey
   }
 }
 
@@ -68,7 +68,7 @@ task compute_two_pop_cms2_components {
   }
 
   File script = "./compute_cms2_components.py"
-  File misc_utils = "./misc_utils.py"
+  File misc_utils = "./misc_utils.py"  # !UnusedDeclaration
 
 # ** command
   command <<<
@@ -103,7 +103,7 @@ task compute_two_pop_cms2_components {
     memory: "8 GB"
     cpu: 8
     disks: "local-disk 50 HDD"
-    checkpointFile: "checkpoint.tar"
+    checkpointFile: "checkpoint.tar"  # !UnknownRuntimeKey
   }
 }
 
@@ -338,7 +338,7 @@ task construct_pops_info_for_1KG {
        --out-pops-info-json "~{pops_info_fname}"
   >>>
   output {
-    PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
+    PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]  # !UnverifiedStruct
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
@@ -488,7 +488,7 @@ task fetch_file_from_url {
 
     ~{wget_cmd_here}
 
-    if [ ! -z "~{sha256_here}" ]
+    if [ -n "~{sha256_here}" ]
     then
         echo "~{sha256_here} ~{out_fname_here}" > "~{out_fname_here}.sha256"
         sha256sum -c "~{out_fname_here}.sha256"
