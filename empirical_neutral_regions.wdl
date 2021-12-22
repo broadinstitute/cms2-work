@@ -41,10 +41,12 @@ workflow construct_empirical_neutral_regions {
   
   call tasks.compute_intervals_stats {
     input:
-    intervals_files=flatten([[construct_neutral_regions_list.neutral_regions_bed], construct_neutral_regions_list.aux_beds])
+    intervals_files=flatten([[construct_neutral_regions_list.neutral_regions_bed], construct_neutral_regions_list.aux_beds]),
+    metadata_json=construct_neutral_regions_list.empirical_neutral_regions_params_used_json
   }
 
   output {
     File empirical_neutral_regions_bed=construct_neutral_regions_list.neutral_regions_bed
+    File empirical_neutral_regions_report_html=compute_intervals_stats.intervals_report_html
   }
 }

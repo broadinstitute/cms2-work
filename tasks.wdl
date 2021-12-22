@@ -527,6 +527,7 @@ task compute_intervals_stats {
   }  
   input {
     Array[File]+ intervals_files
+    File? metadata_json
     String intervals_report_html_fname = basename(intervals_files[0]) + ".stats.html"
   }
   File compute_intervals_stats_script = "./compute_intervals_stats.py"
@@ -536,8 +537,8 @@ task compute_intervals_stats {
 
     python3 "~{compute_intervals_stats_script}" \
         --intervals-files "@~{write_lines(intervals_files)}" \
+        ~{'--metadata-json ' + metadata_json} \
         --intervals-report-html "~{intervals_report_html_fname}"
-
   >>>
   output {
     File intervals_report_html = intervals_report_html_fname
@@ -569,18 +570,23 @@ task construct_neutral_regions_list {
   }
   File construct_neutral_regions_list_script = "./construct_neutral_regions_list.py"
 
+  File empirical_neutral_regions_params_json = write_json(empirical_neutral_regions_params)
+
   command <<<
     set -ex -o pipefail
 
     python3 "~{construct_neutral_regions_list_script}" \
-        --empirical-neutral-regions-params "~{write_json(empirical_neutral_regions_params)}" \
+        --empirical-neutral-regions-params "~{empirical_neutral_regions_params_json}" \
         --genomic-features-for-finding-empirical-neutral-regions "~{write_json(genomic_features_for_finding_empirical_neutral_regions)}"
         --neutral-regions-bed "~{neutral_regions_bed_fname}"
 
   >>>
   output {
     File neutral_regions_bed = neutral_regions_bed_fname
+
     Array[File] aux_beds = glob("*.bed")
+    EmpiricalNeutralRegionsParams empirical_neutral_regions_params_used = empirical_neutral_regions_params
+    File empirical_neutral_regions_params_used_json = empirical_neutral_regions_params_json
   }
   runtime {
     docker: "quay.io/ilya_broad/cms:common-tools-69afd7403a40ccf2c1578be9f67d6e09b1143f22"

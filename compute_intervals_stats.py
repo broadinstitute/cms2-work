@@ -186,6 +186,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--intervals-files', required=True, nargs='+', help='intervals files on which to generate a report')
+    parser.add_argument('--metadata-json', help='metadata to show at top of report')
 
     parser.add_argument('--intervals-report-html', required=True, help='output file for intervals report')
 
@@ -281,6 +282,9 @@ def parse_file_list(z):
 def compute_intervals_stats(args):
     with create_html_page(html_fname=args.intervals_report_html, title='Intervals report') as (doc, tags, txt, trow, raw, raw_w):
         tags.h2('Intervals stats')
+
+        if args.metadata_json:
+            _json_loadf(args.metadata_json)
         
         for intervals_file in parse_file_list(args.intervals_files):
             tags.hr()
