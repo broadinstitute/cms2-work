@@ -577,7 +577,7 @@ task construct_neutral_regions_list {
 
     python3 "~{construct_neutral_regions_list_script}" \
         --empirical-neutral-regions-params "~{empirical_neutral_regions_params_json}" \
-        --genomic-features-for-finding-empirical-neutral-regions "~{write_json(genomic_features_for_finding_empirical_neutral_regions)}"
+        --genomic-features-for-finding-empirical-neutral-regions "~{write_json(genomic_features_for_finding_empirical_neutral_regions)}" \
         --neutral-regions-bed "~{neutral_regions_bed_fname}"
 
   >>>
