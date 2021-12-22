@@ -8,7 +8,7 @@ workflow construct_empirical_neutral_regions {
     EmpiricalNeutralRegionsParams empirical_neutral_regions_params = object {
       genes_pad_bp: 1000,
       telomeres_pad_bp: 1000000,
-      min_region_len_bp: 100000
+      min_region_len_bp: 200000
     }
   }
 
