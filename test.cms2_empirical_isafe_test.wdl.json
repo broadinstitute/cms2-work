@@ -1,0 +1,7 @@
+{
+    "cms2_empirical.empirical_hapsets_def" : { 
+	"empirical_hapsets_bundle_id": "g1k_isafe_test",
+	"empirical_neutral_regions_bed": "./neut2.test.bed",
+	"empirical_selection_regions_bed": "./sel_lct.test.bed"
+    }
+}
