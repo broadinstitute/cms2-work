@@ -50,7 +50,7 @@ task compute_one_pop_cms2_components {
     #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4fee1fcacb4f5a48cf188b753fed156e1bf3b9b2"  # selscan=1.3.0a09
     preemptible: 3
-    memory: "4 GB"
+    memory: "8 GB"
     cpu: 1
     disks: "local-disk 50 HDD"
     checkpointFile: "checkpoint.tar"  # !UnknownRuntimeKey
