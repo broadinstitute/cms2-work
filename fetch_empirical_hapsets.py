@@ -491,7 +491,7 @@ def determine_ancestral_allele(info_dict, all_alleles, stats):
 
 # * construct_hapset_for_one_empirical_region
 def construct_hapset_for_one_empirical_region(region_key, region_lines, region_sel_pop, pops_to_include, pop2vcfcols,
-                                              genmap, stats, tmp_dir, out_fnames_prefix):
+                                              pop2samples, genmap, stats, tmp_dir, out_fnames_prefix):
     """Given one empirical region and the pops in which it is putatively been under selection,
     for each such pop, create a hapset.
 
@@ -501,6 +501,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
       region_sel_pop: pop in which the region is selected (or None if neutral)
       pops_to_include: pops to include in the hapset
       pop2vcfcols: map from pop to the vcf cols containing data for samples from that pop
+      pop2samples: map from pop to the headings of vcf cols containing data for samples from that pop
       genmap: callable mapping basepair position to genetic map position in centimorgans
       tmp_dir: temp dir to use
     Returns:
@@ -628,7 +629,8 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
         },
         'popIds': all_pops,
         'pop_sample_sizes': pop_sample_sizes,
-        'tpedFiles': [os.path.basename(tped_fname) for tped_fname in tped_fnames]
+        'tpedFiles': [os.path.basename(tped_fname) for tped_fname in tped_fnames],
+        'pop2samples': pop2samples
     }
     _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.replicaInfo.json')),
                 json_val=hapset_manifest)
@@ -719,11 +721,12 @@ def fetch_empirical_regions(args):
         region_lines = []
         with open(chrom_regions_vcf) as chrom_regions_vcf_in:
             for vcf_line in itertools.chain(chrom_regions_vcf_in, ['#EOF']):
-                _log.debug(f'{vcf_line[:200]=}')
+                #_log.debug(f'{vcf_line[:200]=}')
                 if vcf_line.startswith('##'): continue
                 if vcf_line.startswith('#CHROM'):
                     vcf_cols = vcf_line.strip().split('\t')
                     pop2vcfcols = get_pop2vcfcols(ped_data, pops_data, vcf_cols)
+                    pop2samples = {pop: [vcf_cols[vcf_col_num] for vcf_col_num in pop2vcfcols[pop]] for pop in all_pops}
                     continue
                 if vcf_line.startswith('#'):
                     if region_lines:
@@ -735,6 +738,7 @@ def fetch_empirical_regions(args):
                                 region_sel_pop=region_sel_pop,
                                 pops_to_include=pops_to_include,
                                 pop2vcfcols=pop2vcfcols,
+                                pop2samples=pop2samples,
                                 genmap=genmap,
                                 stats=stats,
                                 tmp_dir=args.tmp_dir,
