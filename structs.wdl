@@ -113,9 +113,16 @@ struct GenomicFeaturesForFindingEmpiricalNeutralRegions {
   File pophumanscan_coords # regions previously suggested as being under selection
 }
 
+struct RelatedIndivsFilteringParams {
+  Boolean no_relatedness_filter
+}
+
 struct EmpiricalHapsetsDef {
   String empirical_hapsets_bundle_id
   NeutralRegionExplorerParams? nre_params
+
+  RelatedIndivsFilteringParams? related_indivs_filtering_params
+
   File? empirical_neutral_regions_bed
   File empirical_selection_regions_bed
 }

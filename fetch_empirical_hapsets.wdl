@@ -36,6 +36,7 @@ workflow fetch_empirical_hapsets_wf {
     pops_info=pops_info_1KG,
     empirical_regions_bed=select_first([call_neutral_region_explorer.neutral_regions_bed,
                                          empirical_hapsets_def.empirical_neutral_regions_bed]),
+    no_relatedness_filter=if defined(empirical_hapsets_def.related_indivs_filtering_params) then 
     out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id
   }
 

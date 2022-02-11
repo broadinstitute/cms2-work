@@ -282,6 +282,7 @@ def parse_args():
     parser.add_argument('--related-individuals-url',
                         default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
                         help='list of individuals related to other 1KG individuals, to be dropped from analysis')
+    parser.add_argument('--no-relatedness-filter', action='store_true', help='do not filter out related individuals')
     parser.add_argument('--genetic-maps-tar-gz', required=True, help='genetic maps')
     parser.add_argument('--pops-data-url', default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv',
                         help='info on pops and superpops')
@@ -337,14 +338,15 @@ def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template,
     return chrom_regions_vcf
 
 
-# * def gather_unrelated_individuals(ped_data, related_individuals_url)
-def gather_unrelated_individuals(ped_data, related_individuals_url):
+# * def gather_unrelated_individuals(ped_data, related_individuals_url, no_relatedness_filter)
+def gather_unrelated_individuals(ped_data, related_individuals_url, no_relatedness):
     """Pick a subset of the 1KG individuals such that no two are known to be related."""
 
     related_individuals = pd.read_table(related_individuals_url)
 
     orig_len = len(ped_data)
     ped_data = ped_data.rename(columns={c: c.replace(' ', '_') for c in ped_data.columns})
+    if no_relatedness: return ped_data
     ped_data = ped_data[(~ped_data['Individual_ID'].isin(related_individuals['Sample '])) & \
                         (ped_data['Paternal_ID'] == '0') & \
                         (ped_data['Maternal_ID'] == '0') & \
@@ -491,7 +493,7 @@ def determine_ancestral_allele(info_dict, all_alleles, stats):
 
 # * construct_hapset_for_one_empirical_region
 def construct_hapset_for_one_empirical_region(region_key, region_lines, region_sel_pop, pops_to_include, pop2vcfcols,
-                                              pop2samples, genmap, stats, tmp_dir, out_fnames_prefix):
+                                              pop2samples, vcf_header_lines, genmap, stats, tmp_dir, out_fnames_prefix):
     """Given one empirical region and the pops in which it is putatively been under selection,
     for each such pop, create a hapset.
 
@@ -502,6 +504,7 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
       pops_to_include: pops to include in the hapset
       pop2vcfcols: map from pop to the vcf cols containing data for samples from that pop
       pop2samples: map from pop to the headings of vcf cols containing data for samples from that pop
+      vcf_header_lines: list of all header lines from the vcf
       genmap: callable mapping basepair position to genetic map position in centimorgans
       tmp_dir: temp dir to use
     Returns:
@@ -517,12 +520,18 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
     all_pops = pops_to_include # [region_sel_pop] + list(outgroup_pops)
     tped_fnames = [os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}_{pop}.tped')) for pop in all_pops]
     _log.debug(f'{tped_fnames=}')
+
+    region_vcf_conversion_stats = collections.Counter()
+    for stat in ('not_snp', 'bad_allele', 'bad_format', 'bad_gt', 'no_ancestral_gts', 'no_derived_gts'):
+        region_vcf_conversion_stats[stat] = 0
+
     with contextlib.ExitStack() as exit_stack:
         tpeds = [exit_stack.enter_context(open(tped_fname, 'w')) for tped_fname in tped_fnames]
         region_beg = None
         region_offset = None
         region_end = None
         n_variants = 0
+        vcf_lines_used = []
         for vcf_line_num, vcf_line in enumerate(region_lines):
             #
             # CEU, CHB, YRI, BEB
@@ -532,17 +541,18 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
             pos = int(pos)
             info_dict = dict(inf.split(sep='=', maxsplit=1) for inf in info.split(';') if '=' in inf)
             if info_dict['VT'] != 'SNP':
+                region_vcf_conversion_stats['not_snp'] += 1
                 # TODO: handle VT=SNP,INDEL
                 continue
             alts = alt.split(',')
             all_alleles = [a.upper() for a in ([ref] + alts)]
             
             if has_bad_allele(all_alleles):
-                stats['bad_allele'] += 1
+                region_vcf_conversion_stats['bad_allele'] += 1
                 continue
 
             if not format_.startswith('GT'):
-                stats['bad_format'] += 1
+                region_vcf_conversion_stats['bad_format'] += 1
                 continue
 
             # determine the ancestral allele
@@ -584,14 +594,18 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
             # end: for pop in all_pops
 
             if bad_gt:
-                stats['bad_gt'] += 1
+                region_vcf_conversion_stats['bad_gt'] += 1
                 continue
             if not has_ancestral:
-                stats['no_ancestral_gts'] += 1
+                region_vcf_conversion_stats['no_ancestral_gts'] += 1
                 continue
             if not has_derived:
-                stats['no_derived_gts'] += 1
+                region_vcf_conversion_stats['no_derived_gts'] += 1
                 continue
+
+            vcf_lines_used.append(vcf_line)
+
+            n_variants += 1
 
             for pop, tped, pop_gts in zip(all_pops, tpeds, pops_genotypes):
                 cm_pos = genmap(chrom=chrom, pos=pos, pop=pop)
@@ -605,7 +619,6 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
                     region_beg = pos_from_offset
                 region_end = pos_from_offset
 
-                n_variants += 1
                 tped.write(f'1 {vcf_line_num} {cm_pos} {pos_from_offset} {pop_gts}\n')
         # end: for vcf_line in region_lines:
     # end: with contextlib.ExitStack() as exit_stack:
@@ -615,6 +628,11 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
 
     # specify that it's a real region etc
     # then, tar it up, with either tar command or the tarfile module.
+
+    vcf_lines_fname = string_to_file_name(f'{hapset_name}.vcf_lines.vcf')
+    dump_file(fname=os.path.join(hapset_dir, vcf_lines_fname),
+              value=''.join(vcf_header_lines + vcf_lines_used))
+
     hapset_manifest = {
         'hapset_id': hapset_name,
         'region_offset': region_offset,
@@ -630,12 +648,15 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
         'popIds': all_pops,
         'pop_sample_sizes': pop_sample_sizes,
         'tpedFiles': [os.path.basename(tped_fname) for tped_fname in tped_fnames],
-        'pop2samples': pop2samples
+        'pop2samples': pop2samples,
+        'vcf_conversion_stats': region_vcf_conversion_stats,
+        'vcf_lines_file': vcf_lines_fname
     }
     _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.replicaInfo.json')),
                 json_val=hapset_manifest)
     hapset_tar_gz = os.path.join(tmp_dir, f'{hapset_name}.hapset.tar.gz')
     execute(f'tar cvfz {hapset_tar_gz} -C {hapset_dir} .')
+    stats += region_vcf_conversion_stats
     return hapset_tar_gz
 # end: def construct_hapset_for_one_empirical_region(region_key, region_lines, region_sel_pop, outgroup_pops, pop2cols, ...)
 
@@ -700,7 +721,8 @@ def fetch_empirical_regions(args):
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.superpopulations.tsv
 
-    ped_data = gather_unrelated_individuals(pd.read_table(args.pedigree_data_url), args.related_individuals_url)
+    ped_data = gather_unrelated_individuals(pd.read_table(args.pedigree_data_url), args.related_individuals_url,
+                                            args.no_relatedness_filter)
     
     pops_data = pd.read_table(args.pops_data_url)
     superpop_to_representative_pop = _json_loadf(args.superpop_to_representative_pop_json)
@@ -718,12 +740,16 @@ def fetch_empirical_regions(args):
     for chrom in sorted(chrom2regions):
         chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom, chrom2regions[chrom].keys(),
                                                                args.phased_vcfs_url_template, args.tmp_dir)
+        vcf_header_lines = []
         region_lines = []
         with open(chrom_regions_vcf) as chrom_regions_vcf_in:
             for vcf_line in itertools.chain(chrom_regions_vcf_in, ['#EOF']):
                 #_log.debug(f'{vcf_line[:200]=}')
-                if vcf_line.startswith('##'): continue
+                if vcf_line.startswith('##'):
+                    vcf_header_lines.append(vcf_line)
+                    continue
                 if vcf_line.startswith('#CHROM'):
+                    vcf_header_lines.append(vcf_line)
                     vcf_cols = vcf_line.strip().split('\t')
                     pop2vcfcols = get_pop2vcfcols(ped_data, pops_data, vcf_cols)
                     pop2samples = {pop: [vcf_cols[vcf_col_num] for vcf_col_num in pop2vcfcols[pop]] for pop in all_pops}
@@ -739,6 +765,7 @@ def fetch_empirical_regions(args):
                                 pops_to_include=pops_to_include,
                                 pop2vcfcols=pop2vcfcols,
                                 pop2samples=pop2samples,
+                                vcf_header_lines=vcf_header_lines,
                                 genmap=genmap,
                                 stats=stats,
                                 tmp_dir=args.tmp_dir,
