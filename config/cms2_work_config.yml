@@ -40,7 +40,7 @@ terra:
       test_data: test.cms2_empirical.wdl.json
 
     cms2_empirical_isafe_test:
-      skip: False
+      skip: True
       wdl: cms2_empirical.wdl
       synopsis: fetch and analyze empirical data to test isafe
       method_name: cosi2_test_01  # arbitrary until figure out how to create new methods in Terra workspace
