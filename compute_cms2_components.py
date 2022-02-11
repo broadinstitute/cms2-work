@@ -225,15 +225,16 @@ def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
             def make_tuple(*args): return tuple(args)
             tped_lines_tuples = map(make_tuple, *map(iter, tpeds))
             for tped_lines_tuple in tped_lines_tuples:
-                # make ref allele be A for ancestral and then D for derived?
+                # make ref allele be A for ancestral and then G for derived?
                 tped_lines_fields = [line.strip().split() for line in tped_lines_tuple]
                 misc_utils.chk(len(set(map(operator.itemgetter(3), tped_lines_fields))) == 1,
                                'all tpeds in hapset must be for same pos')
-                vcf_fields = ['1', tped_lines_fields[0][3], '.', 'A', 'D', '.', '.', '.', 'GT']
+                vcf_fields = ['1', tped_lines_fields[0][3], '.', 'A', 'G', '.', '.', '.', 'GT']
                 for pop, tped_line_fields_list in zip(pops, tped_lines_fields):
                     for hap_num_in_pop in range(hapset_manifest['pop_sample_sizes'][pop]):
-                        vcf_fields.append('0' if tped_line_fields_list[4 + hap_num_in_pop] == '1' \
-                                          else '1')
+                        tped_allele = tped_line_fields_list[4 + hap_num_in_pop]
+                        misc_utils.chk(tped_allele in ('0', '1'), 'bad allele in tped')
+                        vcf_fields.append('0' if tped_allele == '1' else '1')
                 out_vcf.write('\t'.join(vcf_fields) + '\n')
             # end: for tped_lines_tuple in tped_lines_tuples
         # end: with contextlib.ExitStack() as exit_stack

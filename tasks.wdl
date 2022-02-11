@@ -13,7 +13,7 @@ task compute_one_pop_cms2_components {
     ComponentComputationParams component_computation_params
   }
   File script = "./compute_cms2_components.py"
-  File misc_utils = "./misc_utils.py"
+  File misc_utils = "./misc_utils.py"  # !UnusedDeclaration
 
   command <<<
     set -ex -o pipefail
@@ -33,6 +33,8 @@ task compute_one_pop_cms2_components {
     Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
     Array[File]+ iSAFE = glob("hapset[0-9]*/*.iSAFE.out")
     Array[File]+ hapset_vcf = glob("hapset[0-9]*/*.vcf.gz")  # for debugging
+    Array[File]+ hapset_sample_case_txt = glob("hapset[0-9]*/*.case.txt")  # for debugging
+    Array[File]+ hapset_sample_cont_txt = glob("hapset[0-9]*/*.cont.txt")  # for debugging
     Pop sel_pop_used = sel_pop
     Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
                             (length(ihs) == length(hapsets)) &&
@@ -48,10 +50,10 @@ task compute_one_pop_cms2_components {
     #docker: "quay.io/ilya_broad/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4fee1fcacb4f5a48cf188b753fed156e1bf3b9b2"  # selscan=1.3.0a09
     preemptible: 3
-    memory: "4 GB"
+    memory: "16 GB"
     cpu: 1
     disks: "local-disk 50 HDD"
-    checkpointFile: "checkpoint.tar"
+    checkpointFile: "checkpoint.tar"  # !UnknownRuntimeKey
   }
 }
 
@@ -68,7 +70,7 @@ task compute_two_pop_cms2_components {
   }
 
   File script = "./compute_cms2_components.py"
-  File misc_utils = "./misc_utils.py"
+  File misc_utils = "./misc_utils.py"  # !UnusedDeclaration
 
 # ** command
   command <<<
@@ -103,7 +105,7 @@ task compute_two_pop_cms2_components {
     memory: "8 GB"
     cpu: 8
     disks: "local-disk 50 HDD"
-    checkpointFile: "checkpoint.tar"
+    checkpointFile: "checkpoint.tar"  # !UnknownRuntimeKey
   }
 }
 
@@ -338,7 +340,7 @@ task construct_pops_info_for_1KG {
        --out-pops-info-json "~{pops_info_fname}"
   >>>
   output {
-    PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]
+    PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]  # !UnverifiedStruct
   }
   runtime {
     docker: "quay.io/ilya_broad/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
@@ -488,7 +490,7 @@ task fetch_file_from_url {
 
     ~{wget_cmd_here}
 
-    if [ ! -z "~{sha256_here}" ]
+    if [ -n "~{sha256_here}" ]
     then
         echo "~{sha256_here} ~{out_fname_here}" > "~{out_fname_here}.sha256"
         sha256sum -c "~{out_fname_here}.sha256"
@@ -506,7 +508,90 @@ task fetch_file_from_url {
     String wget_cmd_used = wget_cmd_here
   }
   runtime {
-    docker: "quay.io/ilya_broad/cms:common-tools-4c480f871174554205215ca7d564d34e9e79a808"
+    docker: "quay.io/ilya_broad/cms:wget-1544c1d7a6fbb36a7f0cfebf7aa332a6e52e767d"
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}
+
+task compute_intervals_stats {
+  meta {
+    description: "Compute summary stats for a set of genomic intervals files"
+  }
+  parameter_meta {
+# ** inputs
+    intervals_files: "(Array[File]+) genomic intervals files (.bed or .gff3)"
+
+# ** outputs
+    intervals_report_html: "(File) An HTML report of stats about the intervals"
+  }  
+  input {
+    Array[File]+ intervals_files
+    File? metadata_json
+    String intervals_report_html_fname = basename(intervals_files[0]) + ".stats.html"
+  }
+  File compute_intervals_stats_script = "./compute_intervals_stats.py"
+
+  command <<<
+    set -ex -o pipefail
+
+    python3 "~{compute_intervals_stats_script}" \
+        --intervals-files "@~{write_lines(intervals_files)}" \
+        ~{'--metadata-json ' + metadata_json} \
+        --intervals-report-html "~{intervals_report_html_fname}"
+  >>>
+  output {
+    File intervals_report_html = intervals_report_html_fname
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms:common-tools-69afd7403a40ccf2c1578be9f67d6e09b1143f22"
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}
+
+
+task construct_neutral_regions_list {
+  meta {
+    description: "Constructs a list of likely-neutral genomic regions."
+  }
+  parameter_meta {
+# ** inputs
+
+# ** outputs
+    neutral_regions_bed: "(File) likely-neutral regions"
+  }  
+  input {
+    EmpiricalNeutralRegionsParams empirical_neutral_regions_params
+    GenomicFeaturesForFindingEmpiricalNeutralRegions genomic_features_for_finding_empirical_neutral_regions
+    String neutral_regions_bed_fname = "neutral_regions.bed"
+  }
+  File construct_neutral_regions_list_script = "./construct_neutral_regions_list.py"
+
+  File empirical_neutral_regions_params_json = write_json(empirical_neutral_regions_params)
+
+  command <<<
+    set -ex -o pipefail
+
+    python3 "~{construct_neutral_regions_list_script}" \
+        --empirical-neutral-regions-params "~{empirical_neutral_regions_params_json}" \
+        --genomic-features-for-finding-empirical-neutral-regions "~{write_json(genomic_features_for_finding_empirical_neutral_regions)}" \
+        --neutral-regions-bed "~{neutral_regions_bed_fname}"
+
+  >>>
+  output {
+    File neutral_regions_bed = neutral_regions_bed_fname
+
+    Array[File] aux_beds = glob("*.bed")
+    EmpiricalNeutralRegionsParams empirical_neutral_regions_params_used = empirical_neutral_regions_params
+    File empirical_neutral_regions_params_used_json = empirical_neutral_regions_params_json
+  }
+  runtime {
+    docker: "quay.io/ilya_broad/cms:common-tools-69afd7403a40ccf2c1578be9f67d6e09b1143f22"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
