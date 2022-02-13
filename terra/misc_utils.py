@@ -141,7 +141,7 @@ def _json_to_org(val, org_file, depth=1, heading='root', title=None, json_file=N
         _recurse(val=val, heading=heading, depth=depth)
 # end: def _json_to_org(val, org_file, depth=1, heading='root')
 
-def json_to_org(json_fname, org_fname=None, maxSizeMb=500, **kw):
+def json_to_org(json_fname, org_fname=None, maxSizeMb=5000, **kw):
     """Transform a parsed json structure to an Org mode outliner file (see https://orgmode.org/ ).
     """
     org_fname = org_fname or replace_ext(json_fname, '.org')

@@ -305,6 +305,7 @@ def do_list_submissions(args):
             workflow_id = workflow_ids.pop()
             _log.info(f'PROCESSING WORKFLOW: {workflow_id}')
 
+            time.sleep(1)
             zz_result = get_workflow_metadata_gz(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=submission_id,
                                                  workflow_id=workflow_id, expand_subworkflows=args.expand_subworkflows)
             # #print('ZZ_RESULT: ', type(zz_result), dir(zz_result), zz_result)
