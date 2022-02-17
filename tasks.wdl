@@ -237,9 +237,12 @@ task normalize_and_collate_block {
     python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
   >>>  
   output {
-    Array[File]+ replica_info = inp.replica_info
+    Array[File]+ replica_info = glob("*.replicaInfo.json")
     Array[File]+ normed_collated_stats = glob("*.normed_and_collated.tsv")
     Pop sel_pop_used = inp.sel_pop
+
+    Boolean sanity_check = ((length(replica_info) == length(normed_collated_stats))
+    Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
   runtime {
     docker: "quay.io/ilya_broad/cms:cms2-docker-component-stats-4fee1fcacb4f5a48cf188b753fed156e1bf3b9b2"  # selscan=1.3.0a09
