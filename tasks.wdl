@@ -241,7 +241,7 @@ task normalize_and_collate_block {
     Array[File]+ normed_collated_stats = glob("*.normed_and_collated.tsv")
     Pop sel_pop_used = inp.sel_pop
 
-    Boolean sanity_check = ((length(replica_info) == length(normed_collated_stats))
+    Boolean sanity_check = (length(replica_info) == length(normed_collated_stats))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
   runtime {
