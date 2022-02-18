@@ -237,7 +237,7 @@ task normalize_and_collate_block {
     python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
   >>>  
   output {
-    Array[File]+ replica_info = glob("*.replicaInfo.json")
+    Array[File]+ replica_info = glob("*.normed_and_collated.replicaInfo.json")
     Array[File]+ normed_collated_stats = glob("*.normed_and_collated.tsv")
     Pop sel_pop_used = inp.sel_pop
 
