@@ -166,14 +166,9 @@ struct ReplicaInfo {
 struct NormalizeAndCollateBlockInput {
     Array[File]+ replica_info
     Pop sel_pop
-    Array[File]+ ihs_out
-    Array[File]+ nsl_out
-    Array[File]+ ihh12_out
-    Array[File]+ delihh_out
-    Array[File]+ derFreq_out
-    Array[File]+ iSAFE_out
-    Array[Array[File]]+ xpehh_out
-    Array[Array[File]]+ fst_and_delDAF_out
+
+    Array[File]+ one_pop_component_scores
+    Array[Array[File]]+ two_pop_component_scores
 
     File norm_bins_ihs
     File norm_bins_nsl

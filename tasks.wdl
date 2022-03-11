@@ -21,28 +21,23 @@ task compute_one_pop_cms2_components {
     python3 "~{script}" --hapsets @~{write_lines(hapsets)} \
       --sel-pop ~{sel_pop.pop_id} --components ihs nsl ihh12 delihh derFreq iSAFE \
       --component-computation-params "~{write_json(component_computation_params)}" \
-      --checkpoint-file "checkpoint.tar"
+      --checkpoint-file "checkpoint.tar" --scores-output-prefix scores_1pop
   >>>
 
   output {
-    Array[File]+ replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
-    Array[File]+ ihs = glob("hapset[0-9]*/*.ihs.out")
-    Array[File]+ nsl = glob("hapset[0-9]*/*.nsl.out")
-    Array[File]+ ihh12 = glob("hapset[0-9]*/*.ihh12.out")
-    Array[File]+ delihh = glob("hapset[0-9]*/*.delihh.out")
-    Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
-    Array[File]+ iSAFE = glob("hapset[0-9]*/*.iSAFE.out")
-    Array[File]+ hapset_vcf = glob("hapset[0-9]*/*.vcf.gz")  # for debugging
-    Array[File]+ hapset_sample_case_txt = glob("hapset[0-9]*/*.case.txt")  # for debugging
-    Array[File]+ hapset_sample_cont_txt = glob("hapset[0-9]*/*.cont.txt")  # for debugging
+    Array[File]+ component_scores = prefix("scores_1pop.", hapsets)
+    # Array[File]+ replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
+    # Array[File]+ ihs = glob("hapset[0-9]*/*.ihs.out")
+    # Array[File]+ nsl = glob("hapset[0-9]*/*.nsl.out")
+    # Array[File]+ ihh12 = glob("hapset[0-9]*/*.ihh12.out")
+    # Array[File]+ delihh = glob("hapset[0-9]*/*.delihh.out")
+    # Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
+    # Array[File]+ iSAFE = glob("hapset[0-9]*/*.iSAFE.out")
+    # Array[File]+ hapset_vcf = glob("hapset[0-9]*/*.vcf.gz")  # for debugging
+    # Array[File]+ hapset_sample_case_txt = glob("hapset[0-9]*/*.case.txt")  # for debugging
+    # Array[File]+ hapset_sample_cont_txt = glob("hapset[0-9]*/*.cont.txt")  # for debugging
     Pop sel_pop_used = sel_pop
-    Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
-                            (length(ihs) == length(hapsets)) &&
-                            (length(nsl) == length(hapsets)) &&
-                            (length(ihh12) == length(hapsets)) &&
-                            (length(delihh) == length(hapsets)) &&
-                            (length(derFreq) == length(hapsets)) &&
-                            (length(iSAFE) == length(hapsets)))
+    Boolean sanity_check = (length(component_cores) == length(hapsets))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
 
@@ -79,22 +74,21 @@ task compute_two_pop_cms2_components {
 
     python3 "~{script}" --hapsets "@~{write_lines(hapsets)}" \
         --sel-pop "~{sel_pop.pop_id}" --alt-pop "~{alt_pop.pop_id}" \
-        --components xpehh fst delDAF --checkpoint-file checkpoint.tar
+        --components xpehh fst delDAF --checkpoint-file checkpoint.tar \
+        --scores-output-prefix scores_2pop
   >>>
 
 # ** outputs
   output {
-    Array[File]+ replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
-    Array[File]+ xpehh = glob("hapset[0-9]*/*.xpehh.out")
-    Array[File]+ xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
-    Array[File]+ fst_and_delDAF = glob("hapset[0-9]*/*.fst_and_delDAF.tsv")
+    Array[File]+ component_scores = prefix("scores_2pop.", hapsets)
+    # Array[File]+ replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
+    # Array[File]+ xpehh = glob("hapset[0-9]*/*.xpehh.out")
+    # Array[File]+ xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
+    # Array[File]+ fst_and_delDAF = glob("hapset[0-9]*/*.fst_and_delDAF.tsv")
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
 
-    Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
-                            (length(xpehh) == length(hapsets)) &&
-                            (length(xpehh_log) == length(hapsets)) &&
-                            (length(fst_and_delDAF) == length(hapsets)))
+    Boolean sanity_check = (length(component_cores) == length(hapsets))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
 
@@ -120,28 +114,33 @@ task compute_one_pop_bin_stats_for_normalization {
   input {
     String out_fnames_prefix
     Pop sel_pop
-    Array[File]+ ihs_out
-    Array[File]+ delihh_out
-    Array[File]+ nsl_out
-    Array[File]+ ihh12_out
+    Array[File]+ component_scores_raw
+    # Array[File]+ ihs_out
+    # Array[File]+ delihh_out
+    # Array[File]+ nsl_out
+    # Array[File]+ ihh12_out
 
     Int n_bins_ihs
     Int n_bins_nsl
     Int n_bins_delihh
   }
   Int n_bins_ihh12 = 1
+  File script = "./extract_hapset_component_scores.py"
 
   command <<<
     set -ex -o pipefail
 
-    norm --ihs --bins ~{n_bins_ihs} --files "@~{write_lines(ihs_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_ihs.dat" \
-        --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihs.log"
-    norm --ihs --bins ~{n_bins_delihh} --files "@~{write_lines(delihh_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_delihh.dat" \
-        --only-save-bins --log "~{out_fnames_prefix}.norm_bins_delihh.log"
-    norm --nsl --bins ~{n_bins_nsl} --files "@~{write_lines(nsl_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_nsl.dat" \
-        --only-save-bins --log "~{out_fnames_prefix}.norm_bins_nsl.log"
-    norm --ihh12 --bins ~{n_bins_ihh12} --files "@~{write_lines(ihh12_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_ihh12.dat" \
-        --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihh12.log"
+    python3 "~{script}" --hapset-component-scores "@~{write_lines(component_scores_raw)}" --out-fnames-prefix "~{out_fnames_prefix}" \
+         --components ihs delihh nsl ihh12
+
+    norm --ihs --bins ~{n_bins_ihs} --files "@ihs.scores_files.txt" --save-bins "~{out_fnames_prefix}.norm_bins_ihs.dat" \
+         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihs.log"
+    norm --ihs --bins ~{n_bins_delihh} --files "@delihh.scores_files.txt" --save-bins "~{out_fnames_prefix}.norm_bins_delihh.dat" \
+         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_delihh.log"
+    norm --nsl --bins ~{n_bins_nsl} --files "@nsl.scores_files.txt" --save-bins "~{out_fnames_prefix}.norm_bins_nsl.dat" \
+         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_nsl.log"
+    norm --ihh12 --bins ~{n_bins_ihh12} --files "@ihh12.scores_files.txt" --save-bins "~{out_fnames_prefix}.norm_bins_ihh12.dat" \
+         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihh12.log"
   >>>
 
   output {
@@ -154,6 +153,11 @@ task compute_one_pop_bin_stats_for_normalization {
     File norm_bins_ihh12_log = out_fnames_prefix + ".norm_bins_ihh12.log"
     File norm_bins_delihh_log = out_fnames_prefix + ".norm_bins_delihh.log"
     Pop sel_pop_used = sel_pop
+
+    File ihs_scores_files_used = out_fnames_prefix + ".ihs.scores_files.txt"
+    File delihh_scores_files_used = out_fnames_prefix + ".delihh.scores_files.txt"
+    File nsl_scores_files_used = out_fnames_prefix + ".nsl.scores_files.txt"
+    File ihh12_scores_files_used = out_fnames_prefix + ".ihh12.scores_files.txt"
   }
 
   runtime {
@@ -178,6 +182,7 @@ task compute_two_pop_bin_stats_for_normalization {
     Array[File]+ xpehh_out
   }
   Int n_bins_xpehh = 1
+  File script = "./extract_hapset_component_scores.py"
 
   String norm_bins_xpehh_fname = "${out_fnames_prefix}__selpop_${sel_pop.pop_id}__altpop_${alt_pop.pop_id}.norm_bins_xpehh.dat"
   String norm_bins_xpehh_log_fname = "${out_fnames_prefix}__selpop_${sel_pop.pop_id}__altpop_${alt_pop.pop_id}.norm_bins_xpehh.dat"
@@ -189,9 +194,13 @@ task compute_two_pop_bin_stats_for_normalization {
   command <<<
     set -ex -o pipefail
 
-    norm --xpehh --bins ~{n_bins_xpehh} --files "@~{write_lines(xpehh_out)}" --save-bins "~{norm_bins_xpehh_fname}" --only-save-bins \
+    python3 "~{script}" --hapset-component-scores "@~{write_lines(component_scores_raw)}" --out-fnames-prefix "~{out_fnames_prefix}" \
+        --components xpehh
+
+    norm --xpehh --bins ~{n_bins_xpehh} --files "@~{out_fnames_prefix}.xpehh.scores_files.txt" \
+        --save-bins "~{norm_bins_xpehh_fname}" --only-save-bins \
         --log "~{norm_bins_xpehh_log_fname}"
-    norm --xpehh --xpehh-flip-pops --bins ~{n_bins_xpehh} --files "@~{write_lines(xpehh_out)}" \
+    norm --xpehh --xpehh-flip-pops --bins ~{n_bins_xpehh} --files "@~{out_fnames_prefix}.xpehh.scores_files.txt" \
         --save-bins "~{norm_bins_flip_pops_xpehh_fname}" \
         --only-save-bins \
         --log "~{norm_bins_flip_pops_xpehh_log_fname}"
@@ -209,6 +218,8 @@ task compute_two_pop_bin_stats_for_normalization {
 
     Pop flip_pops_sel_pop_used = alt_pop
     Pop flip_pops_alt_pop_used = sel_pop
+
+    File xpehh_scores_files_used = out_fnames_prefix + ".xpehh.scores_files.txt"
   }
 
   runtime {

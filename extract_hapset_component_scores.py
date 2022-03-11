@@ -1,4 +1,14 @@
-"""Miscellaneous utilities not specific to bioinformatics"""
+#!/usr/bin/env python3
+
+"""Given component scores for an array of hapsets, with one .tar.gz file per hapset
+containing scores for that hapset, extract all score files to local files, and
+make lists of the extracted files.
+"""
+
+import os
+import os.path
+import argparse
+import subprocess
 
 import argparse
 import csv
@@ -55,7 +65,6 @@ def _json_loadf(fname):
     return _json_loads(slurp_file(fname))
 
 json_loadf = _json_loadf
-write_json = _write_json
 
 def slurp_file(fname, maxSizeMb=50):
     """Read entire file into one string.  If file is gzipped, uncompress it on-the-fly.  If file is larger
@@ -107,7 +116,7 @@ def find_one_file(glob_pattern):
     """If exactly one file matches `glob_pattern`, returns the path to that file, else fails."""
     matching_files = list(glob.glob(glob_pattern))
     if len(matching_files) == 1:
-        return matching_files[0]
+        return os.path.realpath(matching_files[0])
     raise RuntimeError(f'find_one_file({glob_pattern}): {len(matching_files)} matches - {matching_files}')
 
 def available_cpu_count():
@@ -161,3 +170,61 @@ def chk(cond, msg):
     if not cond:
         raise RuntimeError(f'chk failed: {msg}')
 
+def mkdir_p(dirpath):
+    ''' Verify that the directory given exists, and if not, create it.
+    '''
+    try:
+        os.makedirs(dirpath)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(dirpath):
+            pass
+        else:
+            raise
+
+def extract_hapset_component_scores(args):
+    hapset_component_scores_files = parse_file_list(args.hapset_component_scores)
+
+    component2scores = collections.defaultdict(list)
+
+    for hapset_num, hapset_component_scores_file in enumerate(hapset_component_scores_files):
+        chk(hapset_components_scores_file.endswith('.tar.gz'))
+        hapset_dirname = os.path.realpath(f'{hapset_num:04}_' + os.path.basename(hapset_components_scores_file)[:-len('.tar.gz')])
+        mkdir_p(hapset_dirname)
+        execute(f'tar -xvzf {hapset_component_scores_file} -C {hapset_dirname}')
+        manifest = json_loadf(find_one_file(os.path.join(hapset_dirname, '*.manifest.json')))
+
+        for component in args.components:
+            component2scores[component].append(find_one_file(os.path.join(hapset_dirname, manifest[component])))
+            
+    for component in args.components:
+        scores_files_fname = f'{args.out_fnames_prefix}.{component}.scores_files.txt'
+        dump_file(fname=scores_files_fname, value='\n'.join(component2scores[component]))
+        
+
+def parse_file_list(z):
+    z_orig = copy.deepcopy(z)
+    z = list(z or [])
+    result = []
+    while z:
+        f = z.pop()
+        if not f.startswith('@'):
+            result.append(f)
+        else:
+            z.extend(slurp_file(f[1:]).strip().split('\n'))
+    _log.info(f'parse_file_list: parsed {z_orig} as {result}')
+    return result[::-1]
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--hapset-component-scores', required=True, help='files containing component scores per hapset')
+    parser.add_argument('--components', required=True,
+                        choices=('ihs', 'ihh12', 'nsl', 'delihh', 'xpehh', 'fst', 'delDAF', 'derFreq', 'iSAFE'),
+                        nargs='+', help='which component scores to extract')
+    parser.add_argument('--out-fnames-prefix', required=True, help='prefix output filenames with this prefix')
+    
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    extract_hapset_component_scores(parse_args())
