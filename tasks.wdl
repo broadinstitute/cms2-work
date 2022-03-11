@@ -37,7 +37,7 @@ task compute_one_pop_cms2_components {
     # Array[File]+ hapset_sample_case_txt = glob("hapset[0-9]*/*.case.txt")  # for debugging
     # Array[File]+ hapset_sample_cont_txt = glob("hapset[0-9]*/*.cont.txt")  # for debugging
     Pop sel_pop_used = sel_pop
-    Boolean sanity_check = (length(component_cores) == length(hapsets))
+    Boolean sanity_check = (length(component_scores) == length(hapsets))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
 
@@ -88,7 +88,7 @@ task compute_two_pop_cms2_components {
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
 
-    Boolean sanity_check = (length(component_cores) == length(hapsets))
+    Boolean sanity_check = (length(component_scores) == length(hapsets))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
 
@@ -179,7 +179,7 @@ task compute_two_pop_bin_stats_for_normalization {
     String out_fnames_prefix
     Pop sel_pop
     Pop alt_pop
-    Array[File]+ xpehh_out
+    Array[File]+ component_scores_raw
   }
   Int n_bins_xpehh = 1
   File script = "./extract_hapset_component_scores.py"

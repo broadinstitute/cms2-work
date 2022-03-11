@@ -56,10 +56,7 @@ workflow compute_normalization_stats_wf {
       out_fnames_prefix=out_fnames_prefix + "__selpop_" + sel_pop.pop_id,
       sel_pop=sel_pop,
 
-      ihs_out=flatten(compute_one_pop_cms2_components_for_neutral.ihs),
-      nsl_out=flatten(compute_one_pop_cms2_components_for_neutral.nsl),
-      ihh12_out=flatten(compute_one_pop_cms2_components_for_neutral.ihh12),
-      delihh_out=flatten(compute_one_pop_cms2_components_for_neutral.delihh),
+      component_scores_raw=flatten(compute_one_pop_cms2_components_for_neutral.component_scores),
 
       n_bins_ihs=component_computation_params.n_bins_ihs,
       n_bins_nsl=component_computation_params.n_bins_nsl,
@@ -87,7 +84,7 @@ workflow compute_normalization_stats_wf {
 	   sel_pop=pops[sel_pop_idx],
 	   alt_pop=pops[alt_pop_idx],
 
-	   xpehh_out=flatten(compute_two_pop_cms2_components_for_neutral.xpehh),
+	   component_scores_raw=flatten(compute_two_pop_cms2_components_for_neutral.component_scores),
 	 }
        }
      }
