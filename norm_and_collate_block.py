@@ -472,8 +472,8 @@ def normalize_and_collate_scores(args):
                       norm_bins_delihh=inps['norm_bins_delihh'],
                       norm_bins_xpehh=inps['norm_bins_xpehh'],
                       component_computation_params=inps['component_computation_params'])
-        _log.info(f'calling normalize_and_collate_scores_orig {i}: {inps_i}')
-        normalize_and_collate_scores_orig(inps_i, i)
+        _log.info(f'calling normalize_and_collate_scores_for_one_hapset {i}: {inps_i}')
+        normalize_and_collate_scores_for_one_hapset(inps_i, i)
 
 if __name__=='__main__':
   normalize_and_collate_scores(parse_args())
