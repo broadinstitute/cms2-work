@@ -397,6 +397,15 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
                              sel_pop=args.sel_pop,
                              isafe_extra_flags=component_computation_params.get('isafe_extra_flags', ''))
 
+    exts = [".replicaInfo.json", ".ihs.out", ".nsl.out", ".ihh12.out", ".delihh.out", ".derFreq.tsv",
+            ".iSAFE.out", ".vcf.gz", ".case.txt", ".cont.txt", ".xpehh.out", ".xpehh.log", ".fst_and_delDAF.tsv"]
+    for ext in exts:
+        matching_files = list(glob.glob(f'{hapset_dir}/*{ext}'))
+        if len(matching_files) != 1: continue
+        f_base = os.path.basename(f)
+        misc_utils.chk(not os.path.isfile(f_base), f'already exists: {f_base}')
+        os.link(f, f'{hapset_dir}.{f_base}')
+
 def parse_file_list(z):
     z_orig = copy.deepcopy(z)
     z = list(z or [])
