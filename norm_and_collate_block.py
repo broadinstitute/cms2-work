@@ -399,8 +399,10 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
     collated['hapset_id'] = replica_id_str
     descr_df(collated, 'collated final')
     collated.reset_index().to_csv(f'{inps_idx:06}.{replica_id_str}.normed_and_collated.tsv', sep='\t', na_rep='nan', index=False)
+    _write_json(fname=f'{inps_idx:06}.{replica_id_str}.normed_and_collated.replicaInfo.json', json_val=inps['replica_info'])
 
-# end: def normalize_and_collate_scores_orig(inps)
+# end: def normalize_and_collate_scores_orig(inps, inps_idx)
+
 
 def normalize_and_collate_scores(args):
     inps_orig = _json_loadf(args.input_json)
@@ -423,7 +425,7 @@ def normalize_and_collate_scores(args):
                       norm_bins_xpehh=inps['norm_bins_xpehh'],
                       component_computation_params=inps['component_computation_params'])
         _log.info(f'calling normalize_and_collate_scores_orig {i}: {inps_i}')
-        normalize_and_collate_scores_orig(inps_i, i)
+        normalize_and_collate_scores_orig(inps=inps_i, inps_idx=i)
 
 if __name__=='__main__':
   normalize_and_collate_scores(parse_args())
