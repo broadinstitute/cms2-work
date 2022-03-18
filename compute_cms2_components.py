@@ -407,8 +407,9 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
             continue
         f = matching_files[0]
         f_base = os.path.basename(f)
-        misc_utils.chk(not os.path.isfile(f_base), f'already exists: {f_base}')
-        os.link(f, f'{hapset_dir}.{f_base}')
+        f_out = f'{hapset_dir}.{f_base}'
+        misc_utils.chk(not os.path.isfile(f_out), f'already exists: {f_out}')
+        os.link(f, f_out)
 
 def parse_file_list(z):
     z_orig = copy.deepcopy(z)
