@@ -55,7 +55,6 @@ def _json_loadf(fname):
     return _json_loads(slurp_file(fname))
 
 json_loadf = _json_loadf
-write_json = _write_json
 
 def slurp_file(fname, maxSizeMb=50):
     """Read entire file into one string.  If file is gzipped, uncompress it on-the-fly.  If file is larger

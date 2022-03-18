@@ -243,7 +243,7 @@ def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
     misc_utils.execute(f'bcftools index {out_vcf_basename}.vcf.gz')
 # end: def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
 
-def compute_isafe_scores(hapset_manifest_json_fname, sel_pop, isafe_extra_flags, scores_manifest):
+def compute_isafe_scores(hapset_manifest_json_fname, sel_pop, isafe_extra_flags):
     hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
     out_vcf_basename = f'{hapset_manifest_json_fname[:-5]}.{sel_pop}'
     hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
@@ -254,12 +254,7 @@ def compute_isafe_scores(hapset_manifest_json_fname, sel_pop, isafe_extra_flags,
                        f'--sample-cont {out_vcf_basename}.cont.txt '
                        f'--region 1:{hapset_manifest["region_beg"]}-{hapset_manifest["region_end"]} '
                        f'--output {out_vcf_basename} {isafe_extra_flags}')
-    isafe_out_fname = f'{out_vcf_basename}.iSAFE.out'
-    misc_utils.chk(os.path.isfile(isafe_out_fname), f'iSAFE output not created: {isafe_out_fname}')
-    scores_manifest['iSAFE'] = os.path.basename(isafe_out_fname)
-    scores_manifest['iSAFE_vcf'] = os.path.basename(f'{out_vcf_basename}.vcf.gz')
-    scores_manifest['iSAFE_case'] = os.path.basename(f'{out_vcf_basename}.case.txt')
-    scores_manifest['iSAFE_cont'] = os.path.basename(f'{out_vcf_basename}.cont.txt')
+
 
 # * Parsing args
 
@@ -285,7 +280,6 @@ def parse_args():
     parser.add_argument('--component-computation-params', help='info defining how to compute each component')
     parser.add_argument('--threads', type=int, help='selscan threads')
     parser.add_argument('--checkpoint-file', help='file used for checkpointing')
-    parser.add_argument('--scores-output-prefix', required=True, help='prepend to output file names')
     #parser.add_argument('--out-json', required=True, help='json file describing the manifest of each file')
 
     # parser.add_argument('--ihs-bins', help='use ihs bins for normalization')
@@ -353,8 +347,6 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
     execute(f'mkdir -p {hapset_dir}')
     execute(f'tar -zvxf {hapset_haps_tar_gz} -C {hapset_dir}/')
 
-    scores_manifest = {}  # specifies which files in the output .tar.gz hold which scores
-
     out_basename = os.path.basename(hapset_haps_tar_gz) + '__selpop_' + str(args.sel_pop)
     if args.alt_pop:
         out_basename += '__altpop_' + str(args.alt_pop)
@@ -364,7 +356,6 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
     _log.info(f'Using {threads} threads')
     #shutil.copyfile(args.replica_info, f'{args.replica_id_string}.replica_info.json')
     hapset_manifest_json_fname = find_one_file(f'{hapset_dir}/*.replicaInfo.json')
-    scores_manifest['replicaInfo'] = hapset_manifest_json_fname
     replicaInfo = _json_loadf(hapset_manifest_json_fname)
     pop_id_to_idx = dict([(pop_id, idx) for idx, pop_id in enumerate(replicaInfo['popIds'])])
     sel_pop_idx = pop_id_to_idx[args.sel_pop]
@@ -383,16 +374,13 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
             ihs_detail = '' if component != 'ihs' else ' --ihs-detail '
             cmd = f'{selscan_cmd_base} {alt_pop_tped_opt} --{component} {ihs_detail}'
             #execute(cmd, cwd=hapset_dir)
-            component_out_fname = f'{out_basename}.{component}.out'
-            execute_with_checkpoint(cmd=cmd, out_fname=component_out_fname, cwd=hapset_dir, checkpoint_file=checkpoint_file)
-            scores_manifest[component] = component_out_fname
+            execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.{component}.out', cwd=hapset_dir, checkpoint_file=checkpoint_file)
 
     if 'delihh' in args.components:
         if 'ihs' not in args.components:
             raise RuntimeError('To compute delihh must first compute ihs')
         calc_delihh(readfilename=f'{hapset_dir}/{out_basename}.ihs.out',
                     writefilename=f'{hapset_dir}/{out_basename}.delihh.out')
-        scores_manifest['delihh'] = f'{out_basename}.delihh.out'
 
     if 'fst' in args.components or 'delDAF' in args.components:
         fst_and_delDAF_out_fname = os.path.join(hapset_dir, out_basename + '.fst_and_delDAF.tsv')
@@ -400,24 +388,23 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
             f'freqs_stats {sel_pop_tped} {alt_pop_tped} ' \
             f' {fst_and_delDAF_out_fname}'
         execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.fst_and_delDAF.tsv', cwd=hapset_dir, checkpoint_file=checkpoint_file)
-        scores_manifest['fst_and_delDAF'] = f'{out_basename}.fst_and_delDAF.tsv'
 
     if 'derFreq' in args.components:
         calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=f'{hapset_dir}/{out_basename}.derFreq.tsv')
-        scores_manifest['derFreq'] = f'{out_basename}.derFreq.tsv'
 
     if 'iSAFE' in args.components:
         compute_isafe_scores(hapset_manifest_json_fname=hapset_manifest_json_fname,
                              sel_pop=args.sel_pop,
-                             isafe_extra_flags=component_computation_params.get('isafe_extra_flags', ''),
-                             scores_manifest=scores_manifest)
+                             isafe_extra_flags=component_computation_params.get('isafe_extra_flags', ''))
 
-    manifest_json_fname = f'components.{"_".join(args.components)}.manifest.json'
-    misc_utils.write_json(fname=os.path.join(hapset_dir, manifest_json_fname), json_val=scores_manifest)
-    scores_output_files = f'{args.scores_output_prefix}.{os.path.basename(hapset_haps_tar_gz)}'
-    misc_utils.execute(f'tar -cvzf {scores_output_file} -C {hapset_dir} {manifest_json_fname} {" ".join(scores_manifest.values())}')
-
-# end: def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_num, checkpoint_file)
+    exts = [".replicaInfo.json", ".ihs.out", ".nsl.out", ".ihh12.out", ".delihh.out", ".derFreq.tsv",
+            ".iSAFE.out", ".vcf.gz", ".case.txt", ".cont.txt", ".xpehh.out", ".xpehh.log", ".fst_and_delDAF.tsv"]
+    for ext in exts:
+        matching_files = list(glob.glob(f'{hapset_dir}/*{ext}'))
+        if len(matching_files) != 1: continue
+        f_base = os.path.basename(f)
+        misc_utils.chk(not os.path.isfile(f_base), f'already exists: {f_base}')
+        os.link(f, f'{hapset_dir}.{f_base}')
 
 def parse_file_list(z):
     z_orig = copy.deepcopy(z)
@@ -431,7 +418,6 @@ def parse_file_list(z):
             z.extend(slurp_file(f[1:]).strip().split('\n'))
     _log.info(f'parse_file_list: parsed {z_orig} as {result}')
     return result[::-1]
-# end: def parse_file_list(z)
 
 def compute_component_scores(args):
     _log.info(f'Starting compute_component_scores: args={args}')
@@ -447,10 +433,7 @@ def compute_component_scores(args):
             execute(f'touch dummy.dat')
             execute(f'tar cvf {args.checkpoint_file} dummy.dat')
 
-    hapset_files = parse_file_list(args.hapsets)
-    hapset_files_basenames = list(map(os.path.basename, hapset_files))
-    misc_utils.chk(len(set(hapset_files_basenames)) == len(hapset_files_basenames), 'duplicate hapset files basenames')
-    for hapset_num, f in enumerate(hapset_files):
+    for hapset_num, f in enumerate(parse_file_list(args.hapsets)):
         compute_component_scores_for_one_hapset(args=copy.deepcopy(args),
                                                 hapset_haps_tar_gz=f, hapset_num=hapset_num,
                                                 checkpoint_file=args.checkpoint_file)

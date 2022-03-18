@@ -9,7 +9,6 @@ import collections
 import concurrent.futures
 import contextlib
 import copy
-import errno
 import functools
 import glob
 import gzip
@@ -153,27 +152,9 @@ def execute(action, **kw):
     finally:
         _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
 
-def mkdir_p(dirpath):
-    ''' Verify that the directory given exists, and if not, create it.
-    '''
-    try:
-        os.makedirs(dirpath)
-    except OSError as exc:  # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(dirpath):
-            pass
-        else:
-            raise
-
 def chk(cond, msg='condition failed'):
     if not cond:
         raise RuntimeError(f'Error: {msg}') 
-
-def find_one_file(glob_pattern):
-    """If exactly one file matches `glob_pattern`, returns the path to that file, else fails."""
-    matching_files = list(glob.glob(glob_pattern))
-    if len(matching_files) == 1:
-        return os.path.realpath(matching_files[0])
-    raise RuntimeError(f'find_one_file({glob_pattern}): {len(matching_files)} matches - {matching_files}')
 
 # * Parsing args
 
@@ -288,7 +269,7 @@ def orig_main(args):
         #if not os.path.isfile(fstdeldaf_outfilename):
         #    execute(fstdeldaf_fullcmd)
 
-def normalize_and_collate_scores_for_one_hapset(inps, inps_idx):
+def normalize_and_collate_scores_orig(inps, inps_idx):
 
     def descr_df(df, msg):
         """Describe a DataFrame"""
@@ -418,62 +399,31 @@ def normalize_and_collate_scores_for_one_hapset(inps, inps_idx):
     collated['hapset_id'] = replica_id_str
     descr_df(collated, 'collated final')
     collated.reset_index().to_csv(f'{inps_idx:06}.{replica_id_str}.normed_and_collated.tsv', sep='\t', na_rep='nan', index=False)
-    _write_json(fname=f'{inps_idx:06}.{replica_id_str}.normed_and_collated.replicaInfo.json', json_val=_json_loadf(inps['replica_info']))
 
-# end: def normalize_and_collate_scores_for_one_hapset(inps, inps_idx)
+# end: def normalize_and_collate_scores_orig(inps)
 
 def normalize_and_collate_scores(args):
     inps_orig = _json_loadf(args.input_json)
     for i in range(len(inps_orig['replica_info'])):
         inps = copy.deepcopy(inps_orig)
-
-
-        hapset_components_scores_file = inps['one_pop_component_scores'][i]
-        chk(hapset_components_scores_file.endswith('.tar.gz'))
-        hapset_dirname = os.path.realpath(f'{i:04}_' + \
-                                          os.path.basename(hapset_components_scores_file)[:-len('.tar.gz')])
-        hapset_dirname_1pop = os.path.join(hapset_dirname, '1pop')
-        mkdir_p(hapset_dirname_1pop)
-
-        execute(f'tar -xvzf {hapset_component_scores_file} -C {hapset_dirname_1pop}')
-        manifest_1pop = json_loadf(find_one_file(os.path.join(hapset_dirname_1pop, '*.manifest.json')))
-
-        replica_info = os.path.join(hapset_dirname_1pop, manifest_1pop['replicaInfo'])
-        ihs_out = os.path.join(hapset_dirname_1pop, manifest_1pop['ihs'])
-        nsl_out = os.path.join(hapset_dirname_1pop, manifest_1pop['nsl'])
-        ihh12_out = os.path.join(hapset_dirname_1pop, manifest_1pop['ihh12'])
-        delihh_out = os.path.join(hapset_dirname_1pop, manifest_1pop['delihh'])
-        derFreq_out = os.path.join(hapset_dirname_1pop, manifest_1pop['derFreq'])
-        iSAFE_out = os.path.join(hapset_dirname_1pop, manifest_1pop['iSAFE'])
-
-        xpehh_out = []
-        fst_and_delDAF_out = []
-        for two_pop_idx, two_pop_scores_file in enumerate([v[i] for v in in inps['two_pop_component_scores']]):
-            two_pop_scores_dirname = os.path.join(hapset_dirname, '2pop', f'{two_pop_idx:04}')
-            mkdir_p(two_pop_scores_dirname)
-            execute(f'tar -xvzf {two_pop_scores_file} -C {two_pop_scores_dirname}')
-            manifest_2pop = json_loadf(find_one_file(os.path.join(two_pop_scores_dirname, '*.manifest.json')))
-            xpehh_out.append(os.path.join(two_pop_scores_dirname, manifest_2pop['xpehh']))
-            fst_and_delDAF_out.append(os.path.join(two_pop_scores_dirname, manifest_2pop['fst_and_delDAF']))
-
-        inps_i = dict(replica_info=replica_info,
+        inps_i = dict(replica_info=inps['replica_info'][i],
                       sel_pop=inps['sel_pop'],
-                      ihs_out=ihs_out,
-                      nsl_out=nsl_out,
-                      ihh12_out=ihh12_out,
-                      delihh_out=delihh_out,
-                      derFreq_out=derFreq_out,
-                      iSAFE_out=iSAFE_out,
-                      xpehh_out=xpehh_out,
-                      fst_and_delDAF_out=fst_and_delDAF_out,
+                      ihs_out=inps['ihs_out'][i],
+                      nsl_out=inps['nsl_out'][i],
+                      ihh12_out=inps['ihh12_out'][i],
+                      delihh_out=inps['delihh_out'][i],
+                      derFreq_out=inps['derFreq_out'][i],
+                      iSAFE_out=inps['iSAFE_out'][i],
+                      xpehh_out=[v[i] for v in inps['xpehh_out']],
+                      fst_and_delDAF_out=[v[i] for v in inps['fst_and_delDAF_out']],
                       norm_bins_ihs=inps['norm_bins_ihs'],
                       norm_bins_nsl=inps['norm_bins_nsl'],
                       norm_bins_ihh12=inps['norm_bins_ihh12'],
                       norm_bins_delihh=inps['norm_bins_delihh'],
                       norm_bins_xpehh=inps['norm_bins_xpehh'],
                       component_computation_params=inps['component_computation_params'])
-        _log.info(f'calling normalize_and_collate_scores_for_one_hapset {i}: {inps_i}')
-        normalize_and_collate_scores_for_one_hapset(inps_i, i)
+        _log.info(f'calling normalize_and_collate_scores_orig {i}: {inps_i}')
+        normalize_and_collate_scores_orig(inps_i, i)
 
 if __name__=='__main__':
   normalize_and_collate_scores(parse_args())

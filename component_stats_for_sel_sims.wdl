@@ -48,8 +48,17 @@ workflow component_stats_for_sel_sims_wf {
 	    pop_ids: pops_info.pop_ids,
 	    sel_pop: sel_pop,
 
-	    one_pop_component_scores: compute_one_pop_cms2_components_for_selection.component_scores,
-	    two_pop_component_scores: select_all(compute_two_pop_cms2_components_for_selection.component_scores),
+	    replica_info: compute_one_pop_cms2_components_for_selection.replicaInfos,
+	    ihs_out: compute_one_pop_cms2_components_for_selection.ihs,
+	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh,
+	    nsl_out: compute_one_pop_cms2_components_for_selection.nsl,
+	    ihh12_out: compute_one_pop_cms2_components_for_selection.ihh12,
+	    delihh_out: compute_one_pop_cms2_components_for_selection.delihh,
+	    derFreq_out: compute_one_pop_cms2_components_for_selection.derFreq,
+	    iSAFE_out: compute_one_pop_cms2_components_for_selection.iSAFE,
+
+	    xpehh_out: select_all(compute_two_pop_cms2_components_for_selection.xpehh),
+	    fst_and_delDAF_out: select_all(compute_two_pop_cms2_components_for_selection.fst_and_delDAF),
 
 	    one_pop_components_sel_pop_used: compute_one_pop_cms2_components_for_selection.sel_pop_used,
 	    two_pop_components_sel_pop_used: select_all(compute_two_pop_cms2_components_for_selection.sel_pop_used),
