@@ -403,12 +403,13 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
         matching_files_pattern = f'{hapset_dir}/*{ext}'
         matching_files = list(glob.glob(matching_files_pattern))
         if len(matching_files) != 1:
-            _log.info(f'{pattern=}: {len(matching_files)=} {matching_files=}')
+            _log.info(f'{matching_files_pattern=}: {len(matching_files)=} {matching_files=}')
             continue
         f = matching_files[0]
         f_base = os.path.basename(f)
         f_out = f'{hapset_dir}.{f_base}'
         misc_utils.chk(not os.path.isfile(f_out), f'already exists: {f_out}')
+        _log.info(f'linking {f=} to {f_out=}')
         os.link(f, f_out)
 
 def parse_file_list(z):
