@@ -399,7 +399,7 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
     collated['hapset_id'] = replica_id_str
     descr_df(collated, 'collated final')
     collated.reset_index().to_csv(f'{inps_idx:06}.{replica_id_str}.normed_and_collated.tsv', sep='\t', na_rep='nan', index=False)
-    _write_json(fname=f'{inps_idx:06}.{replica_id_str}.normed_and_collated.replicaInfo.json', json_val=inps['replica_info'])
+    _write_json(fname=f'{inps_idx:06}.{replica_id_str}.normed_and_collated.replicaInfo.json', json_val=_json_loadf(inps['replica_info']))
 
 # end: def normalize_and_collate_scores_orig(inps, inps_idx)
 
