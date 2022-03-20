@@ -85,14 +85,14 @@ task compute_two_pop_cms2_components {
   output {
     Array[File]+ replicaInfos = glob("*.replicaInfo.json")
     Array[File]+ xpehh = glob("*.xpehh.out")
-    Array[File]+ xpehh_log = glob("*.xpehh.log")
+    #Array[File]+ xpehh_log = glob("*.xpehh.log")
     Array[File]+ fst_and_delDAF = glob("*.fst_and_delDAF.tsv")
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
 
     Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
                             (length(xpehh) == length(hapsets)) &&
-                            (length(xpehh_log) == length(hapsets)) &&
+                            #(length(xpehh_log) == length(hapsets)) &&
                             (length(fst_and_delDAF) == length(hapsets)))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
