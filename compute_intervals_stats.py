@@ -309,3 +309,4 @@ def compute_intervals_stats(args):
 
 if __name__ == '__main__':
     compute_intervals_stats(parse_args())
+
