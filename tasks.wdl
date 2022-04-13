@@ -25,16 +25,16 @@ task compute_one_pop_cms2_components {
   >>>
 
   output {
-    Array[File]+ replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
-    Array[File]+ ihs = glob("hapset[0-9]*/*.ihs.out")
-    Array[File]+ nsl = glob("hapset[0-9]*/*.nsl.out")
-    Array[File]+ ihh12 = glob("hapset[0-9]*/*.ihh12.out")
-    Array[File]+ delihh = glob("hapset[0-9]*/*.delihh.out")
-    Array[File]+ derFreq = glob("hapset[0-9]*/*.derFreq.tsv")
-    Array[File]+ iSAFE = glob("hapset[0-9]*/*.iSAFE.out")
-    Array[File]+ hapset_vcf = glob("hapset[0-9]*/*.vcf.gz")  # for debugging
-    Array[File]+ hapset_sample_case_txt = glob("hapset[0-9]*/*.case.txt")  # for debugging
-    Array[File]+ hapset_sample_cont_txt = glob("hapset[0-9]*/*.cont.txt")  # for debugging
+    Array[File]+ replicaInfos = glob("*.replicaInfo.json")
+    Array[File]+ ihs = glob("*.ihs.out")
+    Array[File]+ nsl = glob("*.nsl.out")
+    Array[File]+ ihh12 = glob("*.ihh12.out")
+    Array[File]+ delihh = glob("*.delihh.out")
+    Array[File]+ derFreq = glob("*.derFreq.tsv")
+    Array[File]+ iSAFE = glob("*.iSAFE.out")
+    Array[File]+ hapset_vcf = glob("*.vcf.gz")  # for debugging
+    Array[File]+ hapset_sample_case_txt = glob("*.case.txt")  # for debugging
+    Array[File]+ hapset_sample_cont_txt = glob("*.cont.txt")  # for debugging
     Pop sel_pop_used = sel_pop
     Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
                             (length(ihs) == length(hapsets)) &&
@@ -83,16 +83,16 @@ task compute_two_pop_cms2_components {
 
 # ** outputs
   output {
-    Array[File]+ replicaInfos = glob("hapset[0-9]*/*.replicaInfo.json")
-    Array[File]+ xpehh = glob("hapset[0-9]*/*.xpehh.out")
-    Array[File]+ xpehh_log = glob("hapset[0-9]*/*.xpehh.log")
-    Array[File]+ fst_and_delDAF = glob("hapset[0-9]*/*.fst_and_delDAF.tsv")
+    Array[File]+ replicaInfos = glob("*.replicaInfo.json")
+    Array[File]+ xpehh = glob("*.xpehh.out")
+    #Array[File]+ xpehh_log = glob("*.xpehh.log")
+    Array[File]+ fst_and_delDAF = glob("*.fst_and_delDAF.tsv")
     Pop sel_pop_used = sel_pop
     Pop alt_pop_used = alt_pop
 
     Boolean sanity_check = ((length(replicaInfos) == length(hapsets)) &&
                             (length(xpehh) == length(hapsets)) &&
-                            (length(xpehh_log) == length(hapsets)) &&
+                            #(length(xpehh_log) == length(hapsets)) &&
                             (length(fst_and_delDAF) == length(hapsets)))
     Array[Int]+ sanity_check_assert = if sanity_check then [1] else []
   }
@@ -235,7 +235,7 @@ task normalize_and_collate_block {
     python3 "~{normalize_and_collate_script}" --input-json "~{write_json(inp)}"
   >>>  
   output {
-    Array[File]+ replica_info = inp.replica_info
+    Array[File]+ replica_info = glob("*.normed_and_collated.replicaInfo.json")
     Array[File]+ normed_collated_stats = glob("*.normed_and_collated.tsv")
     Pop sel_pop_used = inp.sel_pop
   }

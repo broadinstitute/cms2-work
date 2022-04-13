@@ -252,7 +252,7 @@ def get_workflow_metadata_gz(namespace, workspace, submission_id, workflow_id, e
     except Exception as e:
         _log.warning(f'get_workflow_metadata_gz: error getting default fiss agent headers - {e}')
         headers = None
-    return fapi.__get(uri, headers=headers)
+    return fapi.__get(uri, headers=headers, timeout=240)
 # end: def get_workflow_metadata_gz(namespace, workspace, submission_id, workflow_id)
 
 def do_list_submissions(args):
@@ -305,6 +305,7 @@ def do_list_submissions(args):
             workflow_id = workflow_ids.pop()
             _log.info(f'PROCESSING WORKFLOW: {workflow_id}')
 
+            time.sleep(1)
             zz_result = get_workflow_metadata_gz(namespace=SEL_NAMESPACE, workspace=SEL_WORKSPACE, submission_id=submission_id,
                                                  workflow_id=workflow_id, expand_subworkflows=args.expand_subworkflows)
             # #print('ZZ_RESULT: ', type(zz_result), dir(zz_result), zz_result)

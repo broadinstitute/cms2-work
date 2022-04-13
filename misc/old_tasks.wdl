@@ -2,6 +2,44 @@ version 1.0
 
 import "./structs.wdl"
 
+# * task compute_one_pop_bin_stats_for_normalization
+task compute_one_pop_bin_stats_for_normalization {
+  meta {
+    description: "Compute the means and stds of component scores on neutral sims, for the purpose of normalization"
+    email: "ilya_shl@alum.mit.edu"
+  }
+  input {
+    String out_fnames_prefix
+    Pop sel_pop
+    Array[File]+ component_scores_raw
+    # Array[File]+ ihs_out
+    # Array[File]+ delihh_out
+    # Array[File]+ nsl_out
+    # Array[File]+ ihh12_out
+
+    Int n_bins_ihs
+    Int n_bins_nsl
+    Int n_bins_delihh
+  }
+  Int n_bins_ihh12 = 1
+  File script = "./compute_one_pop_bin_stats_for_normalization.py"
+
+  command <<<
+    set -ex -o pipefail
+
+    python3 "~{script}" --hapset-component-scores "@~{write_lines(component_scores_raw}" --out-fnames-prefix "~{out_fnames_prefix}"
+
+    norm --ihs --bins ~{n_bins_ihs} --files "@~{write_lines(ihs_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_ihs.dat" \
+        --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihs.log"
+    norm --ihs --bins ~{n_bins_delihh} --files "@~{write_lines(delihh_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_delihh.dat" \
+        --only-save-bins --log "~{out_fnames_prefix}.norm_bins_delihh.log"
+    norm --nsl --bins ~{n_bins_nsl} --files "@~{write_lines(nsl_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_nsl.dat" \
+        --only-save-bins --log "~{out_fnames_prefix}.norm_bins_nsl.log"
+    norm --ihh12 --bins ~{n_bins_ihh12} --files "@~{write_lines(ihh12_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_ihh12.dat" \
+        --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihh12.log"
+  >>>
+
+
 # * task compute_one_pop_cms2_components
 task compute_one_pop_cms2_components {
   meta {
