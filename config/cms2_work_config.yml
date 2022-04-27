@@ -8,6 +8,14 @@ terra:
     - ilya@broadinstitute.org
 
   root_workflows:
+    cms2_best_model_make_min_sim_train_data:
+      skip: False
+      wdl: cms2_main.wdl
+      synopsis: run sims and compute component stats with iSAFE on original model
+      method_name: test-cosi2-method-01  # arbitrary until figure out how to create new methods in Terra workspace
+      config_name: cms2_best_model_make_min_sim_train_data
+      test_data: test.cms2_best_model_make_min_sim_train_data.wdl.json
+
     cms2_make_min_sim_train_data:
       skip: True
       wdl: cms2_main.wdl
@@ -65,7 +73,7 @@ terra:
       test_data: cms2_test_fetch.wdl.json
 
     cms2_construct_empirical_neutral_regions:
-      skip: False
+      skip: True
       wdl: empirical_neutral_regions.wdl
       synopsis: construct empirical neutral regions
       method_name: test-cosi2-method-01  # arbitrary until figure out how to create new methods in Terra workspace
