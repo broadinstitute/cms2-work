@@ -1,0 +1,94 @@
+length 3000000
+mutation_rate 1.25e-08
+recomb_file /idi/sabeti-scratch/jvitti/params/test_recom.recom
+#/Users/vitti/Desktop/cms_ml_2/params/test_recom.recom
+gene_conversion_relative_rate 2.3
+
+pop_define 1 YRI
+sample_size 1 172
+pop_size 1 500000
+pop_define 2 CEU
+sample_size 2 172
+pop_size 2 250000
+pop_define 3 CHB
+sample_size 3 172
+pop_size 3 750000
+pop_define 4 BEB
+sample_size 4 172
+pop_size 4 1000000
+
+pop_event migration_rate "mig BEB->CHB" 4 3 0 0.00136172093665
+pop_event migration_rate "mig BEB->YRI" 4 1 0 0.005
+pop_event migration_rate "mig CEU->BEB" 2 4 0 0.005
+pop_event migration_rate "mig CEU->YRI" 2 1 0 0.01
+pop_event migration_rate "mig CHB->BEB" 3 4 0 0.00226891562673
+pop_event migration_rate "mig CHB->CEU" 3 2 0 1e-05
+pop_event migration_rate "mig CHB->YRI" 3 1 0 0.001
+pop_event migration_rate "mig YRI->CEU" 1 2 0 0.01
+pop_event migration_rate "mig YRI->CHB" 1 3 0 0.001
+pop_event migration_rate "mig YRI->BEB" 1 4 0 0.00728279079125
+pop_event exp_change_size2 "BEB exp Ne change" 4 1 50 1000000 50000
+pop_event exp_change_size2 "CHB exp Ne change" 3 1 75 750000 15000
+pop_event exp_change_size2 "YRI exp Ne change" 1 1 50 500000 40000
+pop_event migration_rate "mig CEU->CHB" 2 3 1 0.00061381604486
+pop_event exp_change_size2 "CEU exp Ne change" 2 1 50 250000 5039
+pop_event migration_rate "mig BEB->CHB" 4 3 4 1e-10
+pop_event migration_rate "mig YRI->CHB" 1 3 6 0.0001
+pop_event migration_rate "mig BEB->CEU" 4 2 10 0.0003
+pop_event migration_rate "mig BEB->YRI" 4 1 10 0.0002
+pop_event migration_rate "mig CEU->CHB" 2 3 10 0.005
+pop_event migration_rate "mig CEU->YRI" 2 1 10 0.00116816924107
+pop_event migration_rate "mig CHB->BEB" 3 4 10 1e-10
+pop_event migration_rate "mig CHB->CEU" 3 2 10 1e-05
+pop_event migration_rate "mig CHB->YRI" 3 1 10 0.000141006397915
+pop_event migration_rate "mig YRI->BEB" 1 4 10 0.0002
+pop_event migration_rate "mig YRI->CEU" 1 2 10 0.0005
+pop_event migration_rate "mig CEU->YRI" 2 1 28 0.0001
+pop_event migration_rate "mig BEB->CHB" 4 3 46 1e-10
+pop_event bottleneck "YRI bottleneck" 1 50 1e-10
+pop_event exp_change_size2 "BEB exp Ne change" 4 50 72 50000 4834
+pop_event exp_change_size2 "CEU exp Ne change" 2 50 300 5039 1500
+pop_event exp_change_size2 "YRI exp Ne change" 1 50 350 40000 8000
+pop_event migration_rate "mig YRI->CEU" 1 2 51 2.82017544024e-07
+pop_event bottleneck "BEB bottleneck" 4 67 1e-10
+pop_event admix "BEB admix" 4 2 68 0.44667558657
+pop_event exp_change_size2 "CHB exp Ne change" 3 75 300 15000 3000
+pop_event migration_rate "mig CEU->CHB" 2 3 94 1e-10
+pop_event migration_rate "mig BEB->CEU" 4 2 95 0.0001
+pop_event migration_rate "mig BEB->CEU" 4 2 100 0.0001
+pop_event migration_rate "mig BEB->YRI" 4 1 100 0.00269333810676
+pop_event migration_rate "mig CEU->BEB" 2 4 100 3.18160032659e-09
+pop_event migration_rate "mig CHB->BEB" 3 4 100 1e-10
+pop_event migration_rate "mig CHB->CEU" 3 2 100 0.0002
+pop_event migration_rate "mig CHB->YRI" 3 1 100 3.2668261552e-11
+pop_event migration_rate "mig CEU->BEB" 2 4 110 3.18160032659e-09
+pop_event bottleneck "BEB bottleneck" 4 149 1e-10
+pop_event split "BEB split" 3 4 150
+pop_event migration_rate "mig YRI->CHB" 1 3 189 1e-10
+pop_event exp_change_size2 "CEU exp Ne change" 2 300 2000 1500 1250
+pop_event exp_change_size2 "CHB exp Ne change" 3 300 900 3000 1000
+pop_event exp_change_size2 "YRI exp Ne change" 1 350 1087 8000 18397
+pop_event bottleneck "CEU bottleneck" 2 500 1e-10
+pop_event bottleneck "CHB bottleneck" 3 500 0.118659009739
+pop_event bottleneck "YRI bottleneck" 1 500 1e-10
+pop_event exp_change_size2 "YRI exp Ne change" 1 1087 3500 18397 10000
+pop_event bottleneck "CHB bottleneck" 3 1799 0.0904657845968
+pop_event split "CHB split" 2 3 1800
+pop_event bottleneck "CEU bottleneck" 2 2027 0.00282084598118
+pop_event split "CEU split" 1 2 2028
+pop_event change_size "YRI Ne change" 1 4000 29700
+pop_event bottleneck "YRI bottleneck" 1 5000 0.001
+pop_event change_size "YRI Ne change" 1 15000 15000
+
+pop_event migration_rate "no mig YRI->CEU" 1 2 2027 0
+pop_event migration_rate "no mig CEU->YRI" 2 1 2027 0
+pop_event migration_rate "no mig YRI->CHB" 1 3 2027 0
+pop_event migration_rate "no mig CHB->YRI" 3 1 2027 0
+pop_event migration_rate "no mig CEU->CHB" 2 3 2027 0
+pop_event migration_rate "no mig CHB->CEU" 3 2 2027 0
+pop_event migration_rate "no mig YRI->BEB" 1 4 149 0
+pop_event migration_rate "no mig BEB->YRI" 4 1 149 0
+pop_event migration_rate "no mig CEU->BEB" 2 4 149 0
+pop_event migration_rate "no mig BEB->CEU" 4 2 149 0
+pop_event migration_rate "no mig CHB->BEB" 3 4 149 0
+pop_event migration_rate "no mig BEB->CHB" 4 3 149 0
