@@ -1,6 +1,6 @@
 {% set name = "recognizer" %}
-{% set version = "1.5.1" %}
-{% set sha256 = "f449a8a7ab94b4a6aff4c3db36d1a291f5170b518b9007a8d8dda20fc0580410" %}
+{% set version = "1.7.0" %}
+{% set sha256 = "2c6d5a1bfc2303788b4ec033de541a6a413bf3db2307072ac24b83d2ae099283" %}
 
 package:
   name: {{ name|lower }}
