@@ -45,18 +45,23 @@ logging.basicConfig(level=logging.DEBUG,
 
 # * Params/constants definitions
 
-def quay_tag_exists(quay_tag, quay_repo='ilya_broad/cms', quay_token=os.environ['QUAY_CMS_TOKEN']):
+def quay_tag_exists(quay_tag, quay_repo, quay_token=os.environ['QUAY_CMS_TOKEN']):
     curl_cmd = f'curl -H "Authorization: Bearer {quay_token}" -X GET ' \
-        f'"https://quay.io/api/v1/repository/{quay_repo}/tag/{quay_tag}/images?owned=true"'
+        f'"https://quay.io/api/v1/repository/{quay_repo}/tag/?specificTag={quay_tag}"'
+    _log.debug(f'{curl_cmd=}')
     curl_out = subprocess.check_output(curl_cmd, shell=True).decode()
     curl_parsed = json.loads(curl_out.strip())
-    return not ('images' not in curl_parsed and curl_parsed['status'] == 404 and curl_parsed['error_type'] == 'not_found')
+    _log.debug(f'{curl_parsed=}')
+    return bool(curl_parsed['tags'])
 
-def update_docker_images():
-    quay_repo = 'ilya_broad/cms'
-    quay_logged_in = False
+def update_docker_images(quay_repo):
+
     docker_dirs = subprocess.check_output(f'git ls-tree HEAD:docker', shell=True).decode()
     docker_dir_to_docker_tag = {}
+
+    misc_utils.execute('echo ${QUAY_ROBOT_TOKEN} | docker login -u="broad_cms_ci+broad_cms_ci_robot" --password-stdin quay.io')
+    quay_logged_in = True
+
     for line in docker_dirs.strip().split('\n'):
         mode, git_obj_type, git_hash, docker_dir = line.strip().split()
         docker_dir_abs = os.path.realpath(os.path.join('docker', docker_dir))
@@ -70,9 +75,6 @@ def update_docker_images():
                 if os.path.isfile(pre_docker_script):
                     misc_utils.execute(pre_docker_script, cwd=docker_dir_abs)
 
-                if not quay_logged_in:
-                    misc_utils.execute('echo ${QUAY_CMS_TOKEN} | docker login -u="ilya_broad+cms_ci" --password-stdin quay.io')
-                    quay_logged_in = True
                 misc_utils.execute(f'docker build -t quay.io/{quay_repo}:{docker_tag} .',
                                    cwd=docker_dir_abs)
                 misc_utils.execute(f'docker push quay.io/{quay_repo}:{docker_tag}')
@@ -80,8 +82,8 @@ def update_docker_images():
             docker_dir_to_docker_tag[docker_dir] = docker_tag
     return docker_dir_to_docker_tag
 
-def do_update_wdl_dockers():
-    docker_dir_to_docker_tag = update_docker_images()
+def do_update_wdl_dockers(quay_repo='broad_cms_ci/cms'):
+    docker_dir_to_docker_tag = update_docker_images(quay_repo=quay_repo)
 
     for wdl_fname in glob.glob('*.wdl'):
         wdl = misc_utils.slurp_file(wdl_fname)
@@ -89,8 +91,8 @@ def do_update_wdl_dockers():
 
         for docker_dir, docker_tag in docker_dir_to_docker_tag.items():
             git_hash_re = '[0-9a-f]{40}'
-            wdl_repl = re.sub(f'docker: "quay.io/ilya_broad/cms:{docker_dir}-{git_hash_re}"',
-                              f'docker: "quay.io/ilya_broad/cms:{docker_tag}"',
+            wdl_repl = re.sub(f'docker: "quay.io/{quay_repo}:{docker_dir}-{git_hash_re}"',
+                              f'docker: "quay.io/{quay_repo}:{docker_tag}"',
                               wdl_repl, flags=re.MULTILINE)
         
         if wdl_repl != wdl:
