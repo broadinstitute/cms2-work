@@ -306,7 +306,7 @@ task create_tar_gz {
     File out_tar_gz = out_fname_tar_gz
   }
   runtime {
-    docker: "quay.io/broad_cms_ci/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
+    docker: "quay.io/broad_cms_ci/cms:wget-1544c1d7a6fbb36a7f0cfebf7aa332a6e52e767d"
     memory: "500 MB"
     cpu: 1
     disks: "local-disk 1 HDD"
