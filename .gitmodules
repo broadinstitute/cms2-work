@@ -21,7 +21,8 @@
 	#url = ../cms2-work.git
 	url = ./
 	#branch = submodule--cms2-docker-component-stats--master
-	branch = is-211017-1453-restore-selscan-build
+	#branch = is-211017-1453-restore-selscan-build
+	branch = is-is-220510-1347-update-miniconda
 	shallow = true
 	fetchRecurseSubmodules = true
 
