@@ -48,7 +48,7 @@ task compute_one_pop_cms2_components {
 
   runtime {
     #docker: "quay.io/broad_cms_ci/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-db97ffb09dc827757499a5f4235bbe34296efdec"  # selscan=1.3.0a09
+    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-aced0918ac0afd34f7cbb3031e3b044ac7e686cc"  # selscan=1.3.0a09
     preemptible: 3
     memory: "16 GB"
     cpu: 1
@@ -100,7 +100,7 @@ task compute_two_pop_cms2_components {
 # ** runtime
   runtime {
     # docker: "quay.io/broad_cms_ci/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-db97ffb09dc827757499a5f4235bbe34296efdec"  # selscan=1.3.0a09
+    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-aced0918ac0afd34f7cbb3031e3b044ac7e686cc"  # selscan=1.3.0a09
     preemptible: 3
     memory: "8 GB"
     cpu: 8
@@ -155,7 +155,7 @@ task compute_one_pop_bin_stats_for_normalization {
   }
 
   runtime {
-    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-db97ffb09dc827757499a5f4235bbe34296efdec"  # selscan=1.3.0a09
+    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-aced0918ac0afd34f7cbb3031e3b044ac7e686cc"  # selscan=1.3.0a09
     #docker: "quay.io/broad_cms_ci/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     preemptible: 2
     memory: "8 GB"
@@ -211,7 +211,7 @@ task compute_two_pop_bin_stats_for_normalization {
 
   runtime {
     #docker: "quay.io/broad_cms_ci/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
-    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-db97ffb09dc827757499a5f4235bbe34296efdec"  # selscan=1.3.0a09
+    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-aced0918ac0afd34f7cbb3031e3b044ac7e686cc"  # selscan=1.3.0a09
     preemptible: 2
     memory: "8 GB"
     cpu: 1
@@ -240,7 +240,7 @@ task normalize_and_collate_block {
     Pop sel_pop_used = inp.sel_pop
   }
   runtime {
-    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-db97ffb09dc827757499a5f4235bbe34296efdec"  # selscan=1.3.0a09
+    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-aced0918ac0afd34f7cbb3031e3b044ac7e686cc"  # selscan=1.3.0a09
     #docker: "quay.io/broad_cms_ci/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     memory: "1 GB"
     cpu: 1
@@ -546,7 +546,7 @@ task compute_intervals_stats {
     File intervals_report_html = intervals_report_html_fname
   }
   runtime {
-    docker: "quay.io/broad_cms_ci/cms:common-tools-9270cd5cc8fb9126e466d8ea6e1e7719e1aab810"
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
@@ -591,7 +591,7 @@ task construct_neutral_regions_list {
     File empirical_neutral_regions_params_used_json = empirical_neutral_regions_params_json
   }
   runtime {
-    docker: "quay.io/broad_cms_ci/cms:common-tools-9270cd5cc8fb9126e466d8ea6e1e7719e1aab810"
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
