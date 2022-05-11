@@ -25,4 +25,5 @@ conda config --add channels conda-forge
 #conda config --add channels notestaff
 conda config --set auto_update_conda false
 conda init bash
+conda update -y -n base -c defaults conda
 conda clean -y --all
