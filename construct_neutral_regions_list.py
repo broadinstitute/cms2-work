@@ -397,9 +397,8 @@ def construct_pophumanscan_bed(pophumanscan_coords, pophumanscan_bed):
 
 def construct_dgv_bed(dgv_bed):
     execute(f'wget https://hgdownload.soe.ucsc.edu/gbdb/hg19/dgv/dgvSupporting.bb')
-    execute(f'bigBedToBed dgvSupporting.bb dgv_bed')
+    execute(f'bigBedToBed dgvSupporting.bb {dgv_bed}')
     
-
 def construct_neutral_regions_list(args):
 
     neut_reg_params = _json_loadf(args.empirical_neutral_regions_params)
