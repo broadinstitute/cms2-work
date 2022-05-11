@@ -24,7 +24,7 @@ RUN /opt/docker/install-miniconda.sh
 
 ENV PATH="$MINICONDA_PATH/bin:$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-RUN conda install tar numpy scipy matplotlib pandas bokeh pytables h5py psutil tabix dominate bedtools bedops samtools bcftools ucsc-bigbedtobed && conda update --all --update-deps -y && conda clean -a -y && conda info
+RUN conda install tar numpy scipy matplotlib pandas bokeh pytables h5py psutil tabix dominate bedtools bedops samtools bcftools ucsc-bigbedtobed && conda update --all -y && conda clean -a -y && conda info
 
 COPY Dockerfile /opt/docker/Dockerfile.save.txt
 COPY misc_utils.py /opt/pyutils/
