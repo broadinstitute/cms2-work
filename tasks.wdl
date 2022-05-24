@@ -278,7 +278,7 @@ task collate_stats_and_metadata_for_sel_sims_block {
     File hapsets_metadata_tsv_gz = hapsets_metadata_tsv_gz_fname
   }
   runtime {
-    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-master--a785a15af758d87e457557ceb7528305d0beb42a"
+    docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-aced0918ac0afd34f7cbb3031e3b044ac7e686cc"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 25 HDD"
