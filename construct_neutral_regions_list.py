@@ -395,6 +395,10 @@ def construct_genes_bed(genes_gff3, genes_pad_bp, chrom_sizes, genes_bed):
 def construct_pophumanscan_bed(pophumanscan_coords, pophumanscan_bed):
     execute(f"cat {pophumanscan_coords} | awk '(NR>1)' | cut -f 3-5 | sort -k1,1 -k2,2n | uniq > {pophumanscan_bed}")
 
+def construct_dgv_bed(dgv_bed):
+    execute(f'wget https://hgdownload.soe.ucsc.edu/gbdb/hg19/dgv/dgvSupporting.bb')
+    execute(f'bigBedToBed dgvSupporting.bb {dgv_bed}')
+    
 def construct_neutral_regions_list(args):
 
     neut_reg_params = _json_loadf(args.empirical_neutral_regions_params)
@@ -414,11 +418,16 @@ def construct_neutral_regions_list(args):
     execute(f'bedtools subtract -a 05.full_chroms.sub_gaps.sub_genes.bed -b 06.pophumanscan.bed > '
             f'07.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.bed')
 
-    min_region_len_bp = neut_reg_params["min_region_len_bp"]
-    execute(f"awk '{{if($3-$2 >= {min_region_len_bp}) print}}' 07.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.bed "
-            f" > 08.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.len_filt.bed")
+    construct_dgv_bed(dgv_bed='08.dgv.bed')
+    execute(f'bedtools subtract -a 07.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.bed -b 08.dgv.bed > '
+            f'09.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.sub_dgv.bed')
+    
 
-    execute(f'cp 08.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.len_filt.bed {args.neutral_regions_bed}')
+    min_region_len_bp = neut_reg_params["min_region_len_bp"]
+    execute(f"awk '{{if($3-$2 >= {min_region_len_bp}) print}}' 09.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.sub_dgv.bed "
+            f" > 10.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.sub_dgv.len_filt.bed")
+
+    execute(f'cp 10.full_chroms.sub_gaps.sub_genes.sub_pophumanscan.sub_dgv.len_filt.bed {args.neutral_regions_bed}')
 
 if __name__ == '__main__':
     construct_neutral_regions_list(parse_args())
