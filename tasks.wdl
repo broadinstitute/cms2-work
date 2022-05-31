@@ -592,7 +592,7 @@ task construct_neutral_regions_list {
   }
   runtime {
     docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
-    memory: "4 GB"
+    memory: "16 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
     preemptible: 1
