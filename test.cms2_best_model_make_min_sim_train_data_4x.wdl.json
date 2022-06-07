@@ -1,0 +1,10 @@
+{
+    "cms2_main.nreps_neutral": 4096,
+    "cms2_main.nreps": 32768,
+    "cms2_main.numRepsPerBlock": 64,
+    "cms2_main.hapset_block_size": 64,
+    "cms2_main.paramFile_demographic_model": "./best_default_112115_825am__demography.par",
+    "cms2_main.paramFile_neutral": "./test.neutral.cosiParams",
+    "cms2_main.paramFiles_selection": ["./sel1_origin1.par"],
+    "cms2_main.recombFile": "./test_recom.recom"
+}
