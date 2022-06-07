@@ -343,7 +343,7 @@ task construct_pops_info_for_1KG {
     PopsInfo pops_info = read_json("${pops_info_fname}")["pops_info"]  # !UnverifiedStruct
   }
   runtime {
-    docker: "quay.io/broad_cms_ci/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
     memory: "16 GB"
     cpu: 1
     disks: "local-disk 256 HDD"
@@ -392,7 +392,7 @@ task fetch_empirical_hapsets_from_1KG {
     Array[File]+ empirical_hapsets = glob("hapsets/*.hapset.tar.gz")
   }
   runtime {
-    docker: "quay.io/broad_cms_ci/cms@sha256:c8727e20ba0bc058c5c5596c4fad1ee23bc20c59f4f337ed62edb10e3a646010"  # selscan=1.3.0a09 with tabix
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
     memory: "16 GB"
     cpu: 1
     disks: "local-disk 256 HDD"
