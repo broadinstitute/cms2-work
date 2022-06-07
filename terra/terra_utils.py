@@ -130,7 +130,7 @@ def customize_wdls_for_git_commit():
     execute = misc_utils.execute
     execute(f'sed -i "s#\\"./#\\"{TERRA_DEST}#g" *.wdl *.wdl.json')
     execute(f'gsutil -m cp *.py *.wdl *.cosiParams *.par *.recom *.test.bed {TERRA_DEST}')
-    execute(f'gsutil -m cp resources/*.bed {TERRA_DEST}/resources/')
+    execute(f'gsutil -m cp resources/*.bed {TERRA_DEST}resources/')
     execute('git config --global user.email "travis@travis-ci.org"')
     execute('git config --global user.name "Travis CI"')
     execute('git status')
