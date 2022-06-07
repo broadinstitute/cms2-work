@@ -64,6 +64,14 @@ terra:
       config_name: cms2-empirical-isafe-test
       test_data: test.cms2_empirical_isafe_test.wdl.json
 
+    cms2_empirical_woerner18neutralome:
+      skip: False
+      wdl: cms2_empirical.wdl
+      synopsis: fetch and analyze empirical data
+      method_name: cosi2_test_01  # arbitrary until figure out how to create new methods in Terra workspace
+      config_name: cms2-empirical-woerner18neutralome
+      test_data: test.cms2_empirical_woerner18neutralome.wdl.json
+
     cms2_test_fetch:
       skip: True
       wdl: cms2_test_fetch.wdl
@@ -73,10 +81,9 @@ terra:
       test_data: cms2_test_fetch.wdl.json
 
     cms2_construct_empirical_neutral_regions:
-      skip: False
+      skip: True
       wdl: empirical_neutral_regions.wdl
       synopsis: construct empirical neutral regions
       method_name: test-cosi2-method-01  # arbitrary until figure out how to create new methods in Terra workspace
       config_name: construct_empirical_neutral_regions
       test_data: test.construct_empirical_neutral_regions.wdl.json
-
