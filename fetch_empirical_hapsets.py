@@ -273,17 +273,17 @@ def parse_args():
     parser.add_argument('--sel-pop',
                         help='only use regions with putative selection in this pop; if not specified, treat all regions as neutral')
     parser.add_argument('--phased-vcfs-url-template',
-                        default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/' \
+                        default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/' \
                         'ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz',
                         help='URL template for phased vcfs for each chromosome; ${chrom} will be replaced with chrom name')
     parser.add_argument('--pedigree-data-url',
-                        default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped',
+                        default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped',
                         help='URL for the file mapping populations to sample IDs and giving relationships between samples')
     parser.add_argument('--related-individuals-url',
-                        default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
+                        default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
                         help='list of individuals related to other 1KG individuals, to be dropped from analysis')
     parser.add_argument('--genetic-maps-tar-gz', required=True, help='genetic maps')
-    parser.add_argument('--pops-data-url', default='ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv',
+    parser.add_argument('--pops-data-url', default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv',
                         help='info on pops and superpops')
     #parser.add_argument('--pops-outgroups-json', required=True, help='map from pop to pops to use as outgroups')
     parser.add_argument('--superpop-to-representative-pop-json', required=True,
@@ -302,6 +302,8 @@ def load_empirical_regions_bed(empirical_regions_bed, sel_pop):
         for line in empirical_regions_bed_in:
             
             chrom, beg, end, *rest = line.strip().split('\t')
+            if chrom.startswith('chr'):
+                chrom = chrom[len('chr'):]
             if sel_pop:
                 region_name, region_sel_pop = rest
                 if region_sel_pop != sel_pop:
