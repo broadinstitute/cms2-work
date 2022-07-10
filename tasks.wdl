@@ -516,6 +516,63 @@ task fetch_file_from_url {
   }
 }
 
+task fetch_file_from_google_drive {
+  meta {
+    description: "Downloads a file from Google Drive."
+  }
+  parameter_meta {
+# ** inputs
+    gdrive_file_id: "(String) file ID of the file"
+    out_fname: "(String) name of output file"
+    sha256: "(String?) if given, fail unless the sha256 checksum of the downloaded file matches this value"
+    file_metadata: "(Map[String,String]) arbitrary metadata (such as description) to associate with this file"
+# ** outputs
+    file: "(File) the downloaded file"
+    file_size: "(Int) size of the downloaded file in bytes"
+    out_file_metadata: "(Map[String,String]) any metadata specified as input, copied to the output"
+  }  
+  input {
+    String gdrive_file_id
+    String out_fname
+
+    String? sha256
+
+    Map[String,String] file_metadata = {}
+  }
+  String sha256_here = select_first([sha256, ""])
+  String out_lastmod_fname = out_fname + ".lastmod.txt"
+  
+  command <<<
+    set -ex -o pipefail
+
+    gdown -O "~{out_fname}" "~{gdrive_file_id}"
+
+    if [ -n "~{sha256_here}" ]
+    then
+        echo "~{sha256_here} ~{out_fname}" > "~{out_fname}.sha256"
+        sha256sum -c "~{out_fname}.sha256"
+    fi
+
+    # save last-modified 
+    stat -c '%Y' "~{out_fname}" > "~{out_lastmod_fname}"
+  >>>
+  output {
+    File file = out_fname
+    String url_used = url
+    String file_lastmod = read_string(out_lastmod_fname)
+    Int file_size = round(size(file))
+    Map[String,String] out_file_metadata = file_metadata
+  }
+  runtime {
+    docker: "quay.io/broad_cms_ci/cms:gdown-1544c1d7a6fbb36a7f0cfebf7aa332a6e52e767d"
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}
+
+
 task compute_intervals_stats {
   meta {
     description: "Compute summary stats for a set of genomic intervals files"
