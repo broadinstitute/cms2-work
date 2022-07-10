@@ -564,7 +564,7 @@ task fetch_file_from_google_drive {
     Map[String,String] out_file_metadata = file_metadata
   }
   runtime {
-    docker: "quay.io/broad_cms_ci/cms:gdown-1544c1d7a6fbb36a7f0cfebf7aa332a6e52e767d"
+    docker: "quay.io/broad_cms_ci/cms:gdown-2758c0c4158238c3c968a37dd48924d54aad3b63"
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 32 HDD"
