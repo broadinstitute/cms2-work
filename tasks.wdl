@@ -373,7 +373,7 @@ task merge_likely_neutral_regions {
   command <<<
     set -ex -o pipefail
 
-    cat "~{neutral_regions_bed}" | bedtools sort -i stdin | bedtools merge -i stdin -d "~{merge_mergin_bp}" \
+    cat "~{neutral_regions_bed}" | bedtools sort -i stdin | bedtools merge -i stdin -d "~{merge_margin_bp}" \
         > "~{neutral_regions_merged_fname}"
   >>>
   output {

@@ -33,7 +33,7 @@ workflow fetch_empirical_hapsets_wf {
 
   call tasks.fetch_file_from_google_drive as fetch_genetic_maps {
     input:
-    out_file_metadata: {"description": "hg19 genetic maps from https://www.science.org/doi/10.1126/sciadv.aaw9206" },
+    file_metadata={"description": "hg19 genetic maps from https://www.science.org/doi/10.1126/sciadv.aaw9206" },
     out_fname="hg19_maps.tar.gz",
     gdrive_file_id="17KWNaJQJuldfbL9zljFpqj5oPfUiJ0Nv",
     sha256="6e161fac40f0689ea33fe9c6afb1fccda670bfba29cc7be0df0348c232da2b3f"

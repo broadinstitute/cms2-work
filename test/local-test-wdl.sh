@@ -7,6 +7,5 @@ womtool validate -i cms2_empirical-test.wdl.json cms2_empirical.wdl
 #womtool validate -i test.cms2_empirical.wdl.json cms2_empirical.wdl
 womtool validate -i cms2_test_fetch.wdl.json cms2_test_fetch.wdl
 womtool validate -i test.construct_empirical_neutral_regions.wdl.json empirical_neutral_regions.wdl
-
-
+womtool validate -i test.cms2_empirical_woerner18neutralome.wdl.json cms2_empirical.wdl
 
