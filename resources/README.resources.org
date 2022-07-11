@@ -8,4 +8,13 @@
 
   wget https://pophumanscan.uab.cat/data/files/pophumanscanCoordinates.tab
 
+* likely neutral regions 
 
+  woerner2018role.neutralome.bed : neutral regions from 
+  "The Role of Phylogenetically Conserved Elements in Shaping Patterns of Human Genomic Diversity" by 
+  August E Woerner, Krishna R Veeramah, Joseph C Watkins, Michael F Hammer
+  ( https://doi.org/10.1093/molbev/msy145 )
+  sent by August E Woerner <August.Woerner@unthsc.edu>
+
+
+  

@@ -326,7 +326,7 @@ task construct_pops_info_for_1KG {
     pops_info: "(PopsInfo) a PopsInfo struct giving info for 1KG pops"
   }
   input {
-    File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
+    File superpop_to_representative_pop_json = "./resources/superpop-to-representative-pop.json"
     File empirical_regions_bed
   }
   File construct_pops_info_for_1KG_script = "./construct_pops_info_for_1KG.py"
@@ -351,6 +351,44 @@ task construct_pops_info_for_1KG {
   }
 }
 
+task merge_likely_neutral_regions {
+  meta {
+    description: "Merge overlapping likely-neutral regions"
+  }
+  parameter_meta {
+# ** inputs
+    neutral_regions_bed: "(File) .bed file listing likely-neutral genomic regions"
+    chrom_sizes: "(File) file listing chromosome sizes"
+    merge_margin_bp: "(Int) merge regions within this distance"
+# ** outputs
+    neutral_regions_merged_bed: "(File) list of merged likely-neutral regions"
+  }
+  input {
+    File neutral_regions_bed
+    File chrom_sizes
+    Int merge_margin_bp = 0
+  }
+  String neutral_regions_merged_fname = basename(neutral_regions_bed, ".bed") + ".merged.bed"
+
+  command <<<
+    set -ex -o pipefail
+
+    cat "~{neutral_regions_bed}" | bedtools sort -i stdin | bedtools merge -i stdin -d "~{merge_mergin_bp}" \
+        > "~{neutral_regions_merged_fname}"
+  >>>
+  output {
+    File neutral_regions_merged_bed = neutral_regions_merged_fname
+  }
+  runtime {
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+    memory: "16 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}
+
+
 task fetch_empirical_hapsets_from_1KG {
   meta {
     description: "Fetches empirical hapsets for specified regions from 1KG, converts to hapset format"
@@ -372,8 +410,8 @@ task fetch_empirical_hapsets_from_1KG {
     String? sel_pop_id
     File empirical_regions_bed
     String out_fnames_prefix
-    File genetic_maps_tar_gz = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/genetic_maps/hg19_maps.tar.gz"
-    File superpop_to_representative_pop_json = "gs://fc-21baddbc-5142-4983-a26e-7d85a72c830b/resources/superpop-to-representative-pop.json"
+    File genetic_maps_tar_gz
+    File superpop_to_representative_pop_json = "./resources/superpop-to-representative-pop.json"
   }
   File fetch_empirical_hapsets_script = "./fetch_empirical_hapsets.py"
 
@@ -382,7 +420,8 @@ task fetch_empirical_hapsets_from_1KG {
 
     mkdir "${PWD}/hapsets"
     python3 "~{fetch_empirical_hapsets_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
-       --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
+       --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" \
+       --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
        --out-fnames-prefix "~{out_fnames_prefix}" \
        ~{"--sel-pop " + sel_pop_id} \
        --tmp-dir "${PWD}/hapsets"
@@ -540,7 +579,6 @@ task fetch_file_from_google_drive {
     Map[String,String] file_metadata = {}
   }
   String sha256_here = select_first([sha256, ""])
-  String out_lastmod_fname = out_fname + ".lastmod.txt"
   
   command <<<
     set -ex -o pipefail
@@ -552,14 +590,9 @@ task fetch_file_from_google_drive {
         echo "~{sha256_here} ~{out_fname}" > "~{out_fname}.sha256"
         sha256sum -c "~{out_fname}.sha256"
     fi
-
-    # save last-modified 
-    stat -c '%Y' "~{out_fname}" > "~{out_lastmod_fname}"
   >>>
   output {
     File file = out_fname
-    String url_used = url
-    String file_lastmod = read_string(out_lastmod_fname)
     Int file_size = round(size(file))
     Map[String,String] out_file_metadata = file_metadata
   }
