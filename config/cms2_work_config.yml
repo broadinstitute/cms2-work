@@ -6,6 +6,7 @@ terra:
     - sgosai@broadinstitute.org
     - sreilly@broadinstitute.org
     - ilya@broadinstitute.org
+    - stephen.rong@yale.edu
 
   root_workflows:
     cms2_best_model_make_min_sim_train_data:

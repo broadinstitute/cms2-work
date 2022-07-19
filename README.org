@@ -6,6 +6,63 @@ Workflows to run population genetics simulations and compute component scores fo
 
   The top-level workflow is [[./cms2_main.wdl][cms2_main.wdl]] .  It is really a wrapper workflow, meant to hide many internal details/parameters.
 
+
+* CI/CD setup
+
+  The top-level WDL workflows to be run on a push to the git repo are specified in a YAML config file, config/cms2_work_config.yml,
+  under root_workflows.  The important fields under each workflow clause there are:
+     skip: if True, that workflow won't be run
+     wdl: name of top-level wdl file, in the root of the repo
+     test_data: name of the .wdl.json file giving the inputs to the workflow.
+         For inputs that specify a file, a relative path to a file in the repo can be given, e.g.
+	 "./myfile.bed" or "./resources/somefile.bed".   Files can also be specified as "gs://..." paths
+	 for files uploaded to the Terra workspace, but for reproducibility purposes it's best if
+	 everything is checked into the repo itself (space permitting).
+
+  This setup can be used for testing, but also for running analyses (just create a new branch, specify workflows to run and push to github).
+
+  When a push to github happens, Travis CI runs scripts as specified in .travis.yml .
+  These scripts do the following:
+  
+    - test the syntactic validity of the WDL workflows, using womtool from cromwell (by running ./travis/test-wdll.sh)
+    - deploy the workflows to Terra and start the enabled ones; this is done by running 
+      ./terra/terra_utils.py deploy_to_terra
+      and involves several steps:
+
+      - make a version of .wdl files, that are hard-wired to run the exact code version specified by 
+	the pushed commit.  These versions are then installed on Terra as Terra workflows.
+
+	In more detail, these customized wdl files get pushed to a "staging" git repo; see e.g.
+        https://github.com/notestaff/cms2-staging/tree/staging-is-220607-1621-try-neutralome--044eee8568ca34baa879ffe344e9099baed93950	
+
+	
+	
+        wdl files contain references to files in the repo
+	(e.g. "./compute_cms2_components.py") and to docker images which are defined by Dockerfiles
+	in the repo under docker/ .
+	
+	About the docker images:
+
+	Each directory under docker/ specifies the Dockerfile and build context for a docker image.
+	Each wdl task references a docker image in the form such as
+
+        docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+
+	where the "common-tools" part of the image name corresponds to the docker/common-tools directory in the repo.
+
+	As part of CI/CD, for each directory under docker/, we ensure that the corresponding Docker image is built
+	and uploaded to the docker repo.  The docker image tag is constructed from the subdir name
+	(common-tools above) and the git tree hash of the subdir content.   This way, the docker image only gets 
+	updated if the repo subtree defining that docker image changes, not simply every time something in the repo changes.
+	This often enables cromwell to reuse cached results of executing a task, which get invalidated anytime the task's
+	docker image changes.
+	The CI/CD code, for each image, quickly checks if the docker image corresponding to the git tree hash of the image
+	definition already exists, and if yes, skips the docker build.
+
+	About the repo files referenced from wdls:
+
+	
+
   
 * Docker images
 
