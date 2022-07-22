@@ -17,7 +17,6 @@ terra:
       config_name: cms2_best_model_make_min_sim_train_data
       test_data: test.cms2_best_model_make_min_sim_train_data_srong.wdl.json
 
-  root_workflows:
     cms2_best_model_make_min_sim_train_data:
       skip: True
       wdl: cms2_main.wdl
