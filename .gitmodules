@@ -6,7 +6,8 @@
 	path = cromwell-client
 	#url = ../cromwell-client.git
 	#branch = is-run-cromwell-directly
-	url = ../cms-work.git
+	#url = ../cms-work.git
+	url = https://github.com/notestaff/cromwell-client.git
 	branch = submodule--cromwell-client--is-run-cromwell-directly
 	shallow = true
 [submodule "cms2-work-archive"]
