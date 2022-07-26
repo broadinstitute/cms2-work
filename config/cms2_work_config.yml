@@ -9,12 +9,12 @@ terra:
     - stephen.rong@yale.edu
 
   root_workflows:
-    cms2_srong_test_new_model:
+    cms2_best_model_make_min_sim_train_data_srong:
       skip: False
       wdl: cms2_main.wdl
       synopsis: run sims and compute component stats with iSAFE on original model
       method_name: test-cosi2-method-01  # arbitrary until figure out how to create new methods in Terra workspace
-      config_name: cms2_best_model_make_min_sim_train_data
+      config_name: cms2_best_model_make_min_sim_train_data_srong
       test_data: test.cms2_best_model_make_min_sim_train_data_srong.wdl.json
 
     cms2_best_model_make_min_sim_train_data:
@@ -32,7 +32,6 @@ terra:
       method_name: test-cosi2-method-01  # arbitrary until figure out how to create new methods in Terra workspace
       config_name: cms2_make_min_sim_train_data
       test_data: test.cms2_make_min_sim_train_data.wdl.json
-
 
     cms2_sim_data:
       skip: True
