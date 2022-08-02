@@ -2,15 +2,16 @@
 length 3000000
 mutation_rate 1.25e-08
 recomb_file /idi/sabeti-scratch/jvitti/params/test_recom.recom
+#/Users/vitti/Desktop/cms_ml_2/params/test_recom.recom
 
-# 
+# Question: How to change?
 
 # 
 # 
 # 
 
 gene_conversion_relative_rate 2.3
-# generation time is 29 yrs
+#generation time is 29 yrs
 
 # demography
 
