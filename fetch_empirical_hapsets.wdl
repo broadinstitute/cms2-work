@@ -47,7 +47,6 @@ workflow fetch_empirical_hapsets_wf {
     input:
     neutral_regions_bed=select_first([call_neutral_region_explorer.neutral_regions_bed,
                                       empirical_hapsets_def.empirical_neutral_regions_bed]),
-    chrom_sizes=fetch_chrom_sizes.file,
     merge_margin_bp=select_first([empirical_hapsets_def.empirical_neutral_regions_merge_margin, 0])
   }
 

@@ -372,14 +372,12 @@ task merge_likely_neutral_regions {
   parameter_meta {
 # ** inputs
     neutral_regions_bed: "(File) .bed file listing likely-neutral genomic regions"
-    chrom_sizes: "(File) file listing chromosome sizes"
     merge_margin_bp: "(Int) merge regions within this distance"
 # ** outputs
     neutral_regions_merged_bed: "(File) list of merged likely-neutral regions"
   }
   input {
     File neutral_regions_bed
-    File chrom_sizes
     Int merge_margin_bp = 0
   }
   String neutral_regions_merged_fname = basename(neutral_regions_bed, ".bed") + ".merged.bed"
@@ -425,7 +423,7 @@ task slop_likely_neutral_regions {
   command <<<
     set -ex -o pipefail
 
-    cat "~{neutral_regions_bed}" | bedtools sort -i stdin | bedtools slop -i stdin -b "~{slop_margin_bp}" \
+    cat "~{neutral_regions_bed}" | bedtools sort -i stdin | bedtools slop -g "~{chrom_sizes}" -i stdin -b "~{slop_margin_bp}" \
         > "~{neutral_regions_slopped_fname}"
   >>>
   output {
