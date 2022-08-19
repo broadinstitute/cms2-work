@@ -117,6 +117,11 @@ struct EmpiricalHapsetsDef {
   String empirical_hapsets_bundle_id
   NeutralRegionExplorerParams? nre_params
   File? empirical_neutral_regions_bed
+
+  Int? empirical_neutral_regions_merge_margin  # merge regions within this margin of each other
+
+  Int? empirical_neutral_regions_slop_margin  # add margins of this size at ends of regions
+
   File empirical_selection_regions_bed
 }
 
@@ -124,6 +129,7 @@ struct HapsetsBundle {
     String hapsets_bundle_id
     PopsInfo pops_info
     Array[File]+ neutral_hapsets
+    Int neutral_hapsets_trim_margin_bp
     Array[Array[Array[File]+]+] selection_hapsets
 }
 

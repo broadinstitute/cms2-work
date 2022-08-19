@@ -126,18 +126,28 @@ task compute_one_pop_bin_stats_for_normalization {
     Int n_bins_ihs
     Int n_bins_nsl
     Int n_bins_delihh
+
+    Int trim_margin_bp = 0
   }
   Int n_bins_ihh12 = 1
+  File trim_margins_script = "./trim_margins.py"
 
   command <<<
     set -ex -o pipefail
 
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(ihs_out)}" --trim_margin_bp ~{trim_margin_bp} --pos-col 2
     norm --ihs --bins ~{n_bins_ihs} --files "@~{write_lines(ihs_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_ihs.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihs.log"
+
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(delihh_out)}" --trim_margin_bp ~{trim_margin_bp} --pos-col 2
     norm --ihs --bins ~{n_bins_delihh} --files "@~{write_lines(delihh_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_delihh.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_delihh.log"
+
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(nsl_out)}" --trim_margin_bp ~{trim_margin_bp} --pos-col 2
     norm --nsl --bins ~{n_bins_nsl} --files "@~{write_lines(nsl_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_nsl.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_nsl.log"
+
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(ihh12_out)}" --trim_margin_bp ~{trim_margin_bp} --pos-col 2 --has_header_line
     norm --ihh12 --bins ~{n_bins_ihh12} --files "@~{write_lines(ihh12_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_ihh12.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihh12.log"
   >>>
@@ -174,8 +184,11 @@ task compute_two_pop_bin_stats_for_normalization {
     Pop sel_pop
     Pop alt_pop
     Array[File]+ xpehh_out
+
+    Int trim_margin_bp = 0
   }
   Int n_bins_xpehh = 1
+  File trim_margins_script = "./trim_margins.py"
 
   String norm_bins_xpehh_fname = "${out_fnames_prefix}__selpop_${sel_pop.pop_id}__altpop_${alt_pop.pop_id}.norm_bins_xpehh.dat"
   String norm_bins_xpehh_log_fname = "${out_fnames_prefix}__selpop_${sel_pop.pop_id}__altpop_${alt_pop.pop_id}.norm_bins_xpehh.dat"
@@ -187,6 +200,7 @@ task compute_two_pop_bin_stats_for_normalization {
   command <<<
     set -ex -o pipefail
 
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(xpehh_out)}" --trim_margin_bp ~{trim_margin_bp} --pos-col 2 --has_header_line
     norm --xpehh --bins ~{n_bins_xpehh} --files "@~{write_lines(xpehh_out)}" --save-bins "~{norm_bins_xpehh_fname}" --only-save-bins \
         --log "~{norm_bins_xpehh_log_fname}"
     norm --xpehh --xpehh-flip-pops --bins ~{n_bins_xpehh} --files "@~{write_lines(xpehh_out)}" \
@@ -387,6 +401,45 @@ task merge_likely_neutral_regions {
     preemptible: 1
   }
 }
+
+
+task slop_likely_neutral_regions {
+  meta {
+    description: "Add a margin to likely-neutral regions"
+  }
+  parameter_meta {
+# ** inputs
+    neutral_regions_bed: "(File) .bed file listing likely-neutral genomic regions"
+    chrom_sizes: "(File) file listing chromosome sizes"
+    slop_margin_bp: "(Int) slop regions by this margin"
+# ** outputs
+    neutral_regions_slopped_bed: "(File) list of slopped likely-neutral regions"
+  }
+  input {
+    File neutral_regions_bed
+    File chrom_sizes
+    Int slop_margin_bp = 0
+  }
+  String neutral_regions_slopped_fname = basename(neutral_regions_bed, ".bed") + ".slopped.bed"
+
+  command <<<
+    set -ex -o pipefail
+
+    cat "~{neutral_regions_bed}" | bedtools sort -i stdin | bedtools slop -i stdin -b "~{slop_margin_bp}" \
+        > "~{neutral_regions_slopped_fname}"
+  >>>
+  output {
+    File neutral_regions_slopped_bed = neutral_regions_slopped_fname
+  }
+  runtime {
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+    memory: "16 GB"
+    cpu: 1
+    disks: "local-disk 32 HDD"
+    preemptible: 1
+  }
+}
+
 
 
 task fetch_empirical_hapsets_from_1KG {

@@ -47,7 +47,8 @@ workflow fetch_empirical_hapsets_wf {
     input:
     neutral_regions_bed=select_first([call_neutral_region_explorer.neutral_regions_bed,
                                       empirical_hapsets_def.empirical_neutral_regions_bed]),
-    chrom_sizes=fetch_chrom_sizes.file
+    chrom_sizes=fetch_chrom_sizes.file,
+    merge_margin_bp=select_first([empirical_hapsets_def.empirical_neutral_regions_merge_margin, 0])
   }
 
   call tasks.compute_intervals_stats as compute_neutral_intervals_merged_stats {
@@ -55,10 +56,22 @@ workflow fetch_empirical_hapsets_wf {
     intervals_files=[merge_likely_neutral_regions.neutral_regions_merged_bed]
   }
 
+  call tasks.slop_likely_neutral_regions {
+    input:
+    neutral_regions_bed=merge_likely_neutral_regions.neutral_regions_merged_bed,
+    chrom_sizes=fetch_chrom_sizes.file,
+    slop_margin_bp=select_first([empirical_hapsets_def.empirical_neutral_regions_slop_margin, 0])
+  }
+
+  call tasks.compute_intervals_stats as compute_neutral_intervals_slopped_stats {
+    input:
+    intervals_files=[slop_likely_neutral_regions.neutral_regions_slopped_bed]
+  }
+
   call tasks.fetch_empirical_hapsets_from_1KG  as fetch_neutral_regions {
     input:
     pops_info=pops_info_1KG,
-    empirical_regions_bed=merge_likely_neutral_regions.neutral_regions_merged_bed,
+    empirical_regions_bed=slop_likely_neutral_regions.neutral_regions_slopped_bed,
     genetic_maps_tar_gz=fetch_genetic_maps.file,
     out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id
   }
@@ -80,9 +93,12 @@ workflow fetch_empirical_hapsets_wf {
       hapsets_bundle_id: empirical_hapsets_def.empirical_hapsets_bundle_id,
       pops_info: pops_info_1KG,
       neutral_hapsets: fetch_neutral_regions.empirical_hapsets,
+      neutral_hapsets_trim_margin_bp: empirical_hapsets_def.empirical_neutral_regions_slop_margin,
       selection_hapsets: selection_hapsets_for_sel_pop
     }
     File neutral_regions_merged_stats_report_html = compute_neutral_intervals_merged_stats.intervals_report_html
+    File neutral_regions_slopped_stats_report_html = compute_neutral_intervals_slopped_stats.intervals_report_html
+
     Array[Boolean]+ assert_results = [check_neutral_regions_spec.assert_result]
   }
 }

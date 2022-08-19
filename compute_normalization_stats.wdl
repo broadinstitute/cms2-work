@@ -27,6 +27,7 @@ workflow compute_normalization_stats_wf {
     ComponentComputationParams component_computation_params
 
     Int hapset_block_size = 2
+    Int trim_margin_bp = 50000
   }  # end: input
 
   Array[Pop]+ pops = pops_info.pops
@@ -63,7 +64,9 @@ workflow compute_normalization_stats_wf {
 
       n_bins_ihs=component_computation_params.n_bins_ihs,
       n_bins_nsl=component_computation_params.n_bins_nsl,
-      n_bins_delihh=component_computation_params.n_bins_delihh
+      n_bins_delihh=component_computation_params.n_bins_delihh,
+
+      trim_margin_bp=trim_margin_bp
     }  # end: call tasks.compute_one_pop_bin_stats_for_normalization
   }  # end: scatter(sel_pop in pops)
 
@@ -87,7 +90,9 @@ workflow compute_normalization_stats_wf {
 	   sel_pop=pops[sel_pop_idx],
 	   alt_pop=pops[alt_pop_idx],
 
-	   xpehh_out=flatten(compute_two_pop_cms2_components_for_neutral.xpehh),
+	   trim_margin_bp=trim_margin_bp,
+
+	   xpehh_out=flatten(compute_two_pop_cms2_components_for_neutral.xpehh)
 	 }
        }
      }

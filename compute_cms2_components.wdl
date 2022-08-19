@@ -112,6 +112,7 @@ workflow compute_cms2_components_wf {
     neutral_hapsets=hapsets_bundle.neutral_hapsets,
 
     component_computation_params=component_computation_params,
+    trim_margin_bp=hapsets_bundle.neutral_hapsets_trim_margin_bp,
 
     hapset_block_size=hapset_block_size,
   }
