@@ -1,6 +1,6 @@
 {
-    "cms2_main.nreps_neutral": 1024,
-    "cms2_main.nreps": 8192,
+    "cms2_main.nreps_neutral": 32,
+    "cms2_main.nreps": 32,
     "cms2_main.numRepsPerBlock": 32,
     "cms2_main.hapset_block_size": 32,
     "cms2_main.paramFile_demographic_model": "./best_default_112115_825am__demography.par",
