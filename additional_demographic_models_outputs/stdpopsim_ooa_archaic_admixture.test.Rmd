@@ -1,0 +1,81 @@
+---
+title: "OOA archaic admixture model test"
+author: "Stephen Rong"
+date: "2022-08-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r main, include=TRUE}
+# Load packages
+library(tidyverse)
+library(ggpubr)
+
+# Pop meta
+pop_id <- c(1, 2, 3, 4, 5)
+pop_sample_n <- c(172, 172, 172, 172, 172)
+pop_label <- c("YRI", "CEU", "CHB", "Nean", "ArchaicAfr")
+pop_exp_label <- as.vector(unlist(sapply(pop_id, function(x) {rep(pop_label[x], pop_sample_n[x])})))
+
+# MS output
+ms_output <- readLines("stdpopsim_ooa_archaic_admixture.test.out")
+ms_output_pos <- str_split(ms_output[6], " ")[[1]][-1]
+print(length)
+# sample_segsites <- (1:length(ms_output_pos))
+sample_segsites <- (1:length(ms_output_pos))[seq(1, length(ms_output_pos), 20)]
+ms_output_hap <- ms_output[7:(length(ms_output)-1)]
+ms_output_hap_l <- lapply(ms_output_hap, function(x) {as.numeric(str_split(x, "")[[1]])})
+ms_output_hap_m <- do.call("rbind", ms_output_hap_l)
+ms_output_hap_sample <- ms_output_hap_m[,sample_segsites]
+ms_output_hap_pca <- prcomp(ms_output_hap_sample)
+ms_output_hap_tb <- as_tibble(ms_output_hap_pca$x)
+ms_output_hap_tb$Pop <- pop_exp_label
+ms_output_hap_tb <- ms_output_hap_tb %>% dplyr::select(contains("Pop"), !contains("Pop"))
+
+# SFS plot
+ms_output_hap_sfs <- enframe(table(colSums(ms_output_hap_m)))
+names(ms_output_hap_sfs) <- c("AC", "Prop")
+ms_output_hap_sfs <- ms_output_hap_sfs %>% 
+  dplyr::mutate(
+    AC = as.numeric(AC), 
+    Prop = as.numeric(Prop)
+  )
+ggplot(ms_output_hap_sfs) + theme_pubr() + 
+  geom_bar(aes(AC, Prop), stat="identity") + 
+  xlab("Allele Count") + ylab("Number of SNPs")
+ggsave("stdpopsim_ooa_archaic_admixture.test.sfs.pdf")
+
+# Visualize
+ggplot(ms_output_hap_tb, aes(PC1, PC2, color=Pop)) + theme_pubr() + 
+  geom_point(alpha=0.2) + 
+  stat_ellipse(level=0.99, alpha=0.5) + 
+  coord_fixed()
+ggsave("stdpopsim_ooa_archaic_admixture.test.pca1.pca2.pdf")
+
+ggplot(ms_output_hap_tb, aes(PC1, PC3, color=Pop)) + theme_pubr() + 
+  geom_point(alpha=0.2) + 
+  stat_ellipse(level=0.99, alpha=0.5) + 
+  coord_fixed()
+ggsave("stdpopsim_ooa_archaic_admixture.test.pca1.pca3.pdf")
+
+ggplot(ms_output_hap_tb, aes(PC2, PC3, color=Pop)) + theme_pubr() + 
+  geom_point(alpha=0.2) + 
+  stat_ellipse(level=0.99, alpha=0.5) + 
+  coord_fixed()
+ggsave("stdpopsim_ooa_archaic_admixture.test.pca2.pca3.pdf")
+
+# Clustering
+sample <- c(0, cumsum(pop_sample_n)[-length(pop_sample_n)])+1
+sample <- unlist(lapply(sample, function(x) {x:(x+7)}))
+ms_output_hap_dist <- as.matrix(dist(ms_output_hap_m[sample,]))
+rownames(ms_output_hap_dist) <- as.character(sample)
+colnames(ms_output_hap_dist) <- as.character(sample)
+ms_output_hap_hclust <- hclust(as.dist(ms_output_hap_dist))
+ms_output_hap_hclust_plot <- plot(ms_output_hap_hclust)
+pdf("stdpopsim_ooa_archaic_admixture.test.hclust.pdf")
+ms_output_hap_hclust_plot
+dev.off()
+```
