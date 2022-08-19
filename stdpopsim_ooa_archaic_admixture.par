@@ -23,11 +23,11 @@ sample_size 3 172
 pop_size 3 65742
 
 pop_define 4 Neanderthal
-sample_size 4 0
+sample_size 4 172
 pop_size 4 3600
 
 pop_define 5 ArchaicAFR
-sample_size 5 0
+sample_size 5 172
 pop_size 5 3600
 
 # 	prior to present
