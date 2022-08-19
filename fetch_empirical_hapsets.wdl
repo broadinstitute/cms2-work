@@ -55,11 +55,13 @@ workflow fetch_empirical_hapsets_wf {
     intervals_files=[merge_likely_neutral_regions.neutral_regions_merged_bed]
   }
 
+  Int slop_margin_bp = select_first([empirical_hapsets_def.empirical_neutral_regions_slop_margin, 0])
+
   call tasks.slop_likely_neutral_regions {
     input:
     neutral_regions_bed=merge_likely_neutral_regions.neutral_regions_merged_bed,
     chrom_sizes=fetch_chrom_sizes.file,
-    slop_margin_bp=select_first([empirical_hapsets_def.empirical_neutral_regions_slop_margin, 0])
+    slop_margin_bp=slop_margin_bp
   }
 
   call tasks.compute_intervals_stats as compute_neutral_intervals_slopped_stats {
@@ -92,7 +94,7 @@ workflow fetch_empirical_hapsets_wf {
       hapsets_bundle_id: empirical_hapsets_def.empirical_hapsets_bundle_id,
       pops_info: pops_info_1KG,
       neutral_hapsets: fetch_neutral_regions.empirical_hapsets,
-      neutral_hapsets_trim_margin_bp: empirical_hapsets_def.empirical_neutral_regions_slop_margin,
+      neutral_hapsets_trim_margin_bp: slop_margin_bp,
       selection_hapsets: selection_hapsets_for_sel_pop
     }
     File neutral_regions_merged_stats_report_html = compute_neutral_intervals_merged_stats.intervals_report_html
