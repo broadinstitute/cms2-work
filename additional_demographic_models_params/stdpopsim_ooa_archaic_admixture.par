@@ -1,14 +1,8 @@
 # parameters
-length 3000000
+length 15000000
 mutation_rate 1.25e-08
 recomb_file /idi/sabeti-scratch/jvitti/params/test_recom.recom
 #/Users/vitti/Desktop/cms_ml_2/params/test_recom.recom
-
-# Question: How to change?
-
-# 
-# 
-# 
 
 gene_conversion_relative_rate 2.3
 #generation time is 29 yrs
@@ -29,11 +23,11 @@ sample_size 3 172
 pop_size 3 65742
 
 pop_define 4 Neanderthal
-sample_size 4 3
+sample_size 4 172
 pop_size 4 3600
 
 pop_define 5 ArchaicAFR
-sample_size 5 0
+sample_size 5 172
 pop_size 5 3600
 
 # 	prior to present
@@ -90,9 +84,3 @@ pop_event split "ArchaicAFR split from YRI" 1 5 17207
 
 # 	time of Nean split
 pop_event split "Nean split from YRI" 1 4 19276
-
-# 	Question: Is migration assumed to be zero packwards in time if not specified?
-
-# 
-# 
-# 
