@@ -1,6 +1,6 @@
 {
     "cms2_empirical.empirical_hapsets_def" : { 
-	"empirical_hapsets_bundle_id": "g1k_neutralome",
+	"empirical_hapsets_bundle_id": "g1k",
 
 	"empirical_neutral_regions_bed": "./resources/woerner2018role.neutralome.bed",
 	"empirical_neutral_regions_slop_margin": 50000,
