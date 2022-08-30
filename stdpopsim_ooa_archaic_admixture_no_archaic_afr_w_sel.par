@@ -72,4 +72,5 @@ pop_event change_size "YRI expansion" 1 10345 3600
 pop_event split "Nean split from YRI" 1 4 19276
 
 # 	selection event
-pop_event sweep_mult_standing "sweep" 1 U(0, 4000) E(20) .5 .05-.95 1 U(0, 4000)
+pop_event sweep "sweep" 1 0 .1 .5 .9
+# pop_event sweep_mult_standing "sweep" 1 U(0, 4000) E(20) .5 .05-.95 1 U(0, 4000)
