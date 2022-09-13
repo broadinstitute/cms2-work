@@ -1,0 +1,19 @@
+length 3000000
+mutation_rate 1.25e-08
+recomb_file /idi/sabeti-scratch/jvitti/params/test_recom.recom
+#/Users/vitti/Desktop/cms_ml_2/params/test_recom.recom
+gene_conversion_relative_rate 2.3
+
+pop_define 1 YRI
+sample_size 1 172
+pop_size 1 500000
+pop_define 2 CEU
+sample_size 2 172
+pop_size 2 250000
+pop_define 3 CHB
+sample_size 3 172
+pop_size 3 750000
+
+pop_event split "CHB split" 2 3 1800
+pop_event split "CEU split" 1 2 2028
+
