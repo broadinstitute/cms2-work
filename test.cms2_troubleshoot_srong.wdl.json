@@ -5,6 +5,6 @@
     "cms2_main.hapset_block_size": 8,
     "cms2_main.paramFile_demographic_model": "./troubleshoot_minimal_1_orig_model_three_pop_split_only.par",
     "cms2_main.paramFile_neutral": "./test.neutral.cosiParams",
-    "cms2_main.paramFiles_selection": ["./troubleshoot_sel_origin.par"],
+    "cms2_main.paramFiles_selection": ["./troubleshoot_sel_origin_relaxed.par"],
     "cms2_main.recombFile": "./test_recom.recom"
 }
