@@ -1,0 +1,50 @@
+# parameters
+length 3000000
+mutation_rate 1.25e-08
+recomb_file /idi/sabeti-scratch/jvitti/params/test_recom.recom
+#/Users/vitti/Desktop/cms_ml_2/params/test_recom.recom
+
+gene_conversion_relative_rate 2.3
+#generation time is 29 yrs
+
+# demography
+
+# 	present day
+pop_define 1 YRI
+sample_size 1 172
+pop_size 1 13900
+
+pop_define 2 CEU
+sample_size 2 172
+pop_size 2 10850
+
+pop_define 3 CHB
+sample_size 3 172
+pop_size 3 65742
+
+pop_define 4 Neanderthal
+sample_size 4 10
+pop_size 4 3600
+
+# 	prior to present
+pop_event exp_change_size2 "CEU exp Ne change" 2 0 1241 10850 2300
+pop_event exp_change_size2 "CHB exp Ne change" 3 0 1241 65742 650
+
+# 	time of archaic migrations end
+
+# 	time of CEU-CHB split
+pop_event split "CHB split from CEU" 2 3 1241
+pop_event change_size "CEU size" 2 1241 880
+
+# 	time of YRI-CEU split
+pop_event split "CEU split from YRI" 1 2 2103
+
+# 	time ArchaicAFR-Neanderthal migrations begin
+
+# 	time of YRI bottleneck
+pop_event change_size "YRI expansion" 1 10345 3600
+
+# 	time of ArchaicAFR split
+
+# 	time of Neanderthal split
+pop_event split "Neanderthal split from YRI" 1 4 19276
