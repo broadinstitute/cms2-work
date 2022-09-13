@@ -3,8 +3,8 @@
     "cms2_main.nreps": 8,
     "cms2_main.numRepsPerBlock": 8,
     "cms2_main.hapset_block_size": 8,
-    "cms2_main.paramFile_demographic_model": "./stdpopsim_ooa_archaic_admixture_one_pop.par",
+    "cms2_main.paramFile_demographic_model": "./troubleshoot_minimal_1_orig_model_control.par",
     "cms2_main.paramFile_neutral": "./test.neutral.cosiParams",
-    "cms2_main.paramFiles_selection": ["./sel1_origin1_srong.par"],
+    "cms2_main.paramFiles_selection": ["./troubleshoot_sel_origin.par"],
     "cms2_main.recombFile": "./test_recom.recom"
 }
