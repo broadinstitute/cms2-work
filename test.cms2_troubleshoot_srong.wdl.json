@@ -3,7 +3,7 @@
     "cms2_main.nreps": 8,
     "cms2_main.numRepsPerBlock": 8,
     "cms2_main.hapset_block_size": 8,
-    "cms2_main.paramFile_demographic_model": "./troubleshoot_minimal_1_full_model_mig_none.par",
+    "cms2_main.paramFile_demographic_model": "./troubleshoot_minimal_1_full_model_mig_only_pop1.par",
     "cms2_main.paramFile_neutral": "./test.neutral.cosiParams",
     "cms2_main.paramFiles_selection": ["./troubleshoot_sel_origin.par"],
     "cms2_main.recombFile": "./test_recom.recom"
