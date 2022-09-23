@@ -3,6 +3,7 @@ version 1.0
 import "./structs.wdl"
 import "./tasks.wdl"
 import "./wdl_assert.wdl"
+import "./fetch_g1k_vcfs.wdl"
 
 workflow fetch_empirical_hapsets_wf {
   meta {
@@ -42,6 +43,7 @@ workflow fetch_empirical_hapsets_wf {
   call tasks.fetch_file_from_url as fetch_chrom_sizes {
      input: url="https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes"
   }
+
   
   call tasks.merge_likely_neutral_regions {
     input:
@@ -69,12 +71,23 @@ workflow fetch_empirical_hapsets_wf {
     intervals_files=[slop_likely_neutral_regions.neutral_regions_slopped_bed]
   }
 
+  call fetch_g1k_vcfs.fetch_g1k_vcfs_wf as fetch_neutral_vcfs {
+    input:
+    intervals_files=[slop_likely_neutral_regions.neutral_regions_slopped_bed]
+  }
+
   call tasks.fetch_empirical_hapsets_from_1KG  as fetch_neutral_regions {
     input:
     pops_info=pops_info_1KG,
     empirical_regions_bed=slop_likely_neutral_regions.neutral_regions_slopped_bed,
     genetic_maps_tar_gz=fetch_genetic_maps.file,
-    out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id
+    out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id,
+    chrom_vcfs=fetch_neutral_vcfs.chrom_vcfs
+  }
+
+  call fetch_g1k_vcfs.fetch_g1k_vcfs_wf as fetch_selection_vcfs {
+    input:
+    intervals_files=[empirical_hapsets_def.empirical_selection_regions_bed]
   }
 
   scatter(sel_pop in pops_info_1KG.sel_pops) {
@@ -84,7 +97,8 @@ workflow fetch_empirical_hapsets_wf {
       genetic_maps_tar_gz=fetch_genetic_maps.file,
       sel_pop_id=sel_pop.pop_id,
       empirical_regions_bed=empirical_hapsets_def.empirical_selection_regions_bed,
-      out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id
+      out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id,
+      chrom_vcfs=fetch_selection_vcfs.chrom_vcfs
     }
     Array[Array[File]+]+ selection_hapsets_for_sel_pop = [fetch_selection_regions.empirical_hapsets]
   }

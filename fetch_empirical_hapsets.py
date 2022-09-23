@@ -272,10 +272,13 @@ def parse_args():
     parser.add_argument('--empirical-regions-bed', required=True, help='empirical regions bed file')
     parser.add_argument('--sel-pop',
                         help='only use regions with putative selection in this pop; if not specified, treat all regions as neutral')
-    parser.add_argument('--phased-vcfs-url-template',
-                        default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/' \
-                        'ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz',
-                        help='URL template for phased vcfs for each chromosome; ${chrom} will be replaced with chrom name')
+    # parser.add_argument('--phased-vcfs-url-template',
+    #                     default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/' \
+    #                     'ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz',
+    #                     help='URL template for phased vcfs for each chromosome; ${chrom} will be replaced with chrom name')
+
+    parser.add_argument('--chrom-vcfs', required=True, help='vcfs and indices')
+    
     parser.add_argument('--pedigree-data-url',
                         default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped',
                         help='URL for the file mapping populations to sample IDs and giving relationships between samples')
@@ -314,8 +317,8 @@ def load_empirical_regions_bed(empirical_regions_bed, sel_pop):
             chrom2regions[chrom].setdefault(f'{chrom}:{beg}-{end}', []).append(region_sel_pop)
     return chrom2regions
 
-# * def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template, tmp_dir)
-def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template, tmp_dir):
+# * def fetch_one_chrom_regions_phased_vcf(chrom, regions, chrom_vcf, tmp_dir)
+def fetch_one_chrom_regions_phased_vcf(chrom, regions, chrom_vcf, tmp_dir):
     """Fetch phased vcf subset for the empirical regions on one chromosome"""
     _log.info(f'Processing chrom {chrom}: {len(regions)=}')
     chrom_regions_deduped_bed = os.path.realpath(f'{tmp_dir}/chrom_{chrom}_sel_regions_deduped.bed')
@@ -332,7 +335,8 @@ def fetch_one_chrom_regions_phased_vcf(chrom, regions, phased_vcfs_url_template,
     cache_key = hashlib.md5(''.join(cache_key_parts).encode()).hexdigest()
     done_fname = f'{chrom_regions_vcf}.{cache_key}.done'
     if not os.path.isfile(done_fname):
-        chrom_phased_vcf_url = string.Template(phased_vcfs_url_template).substitute(chrom=chrom)
+        #chrom_phased_vcf_url = string.Template(phased_vcfs_url_template).substitute(chrom=chrom)
+        chrom_phased_vcf_url = chrom_vcf
         execute(f'tabix -h --separate-regions -R {chrom_regions_deduped_bed} {chrom_phased_vcf_url} > {chrom_regions_vcf}',
                 cwd=os.path.realpath(tmp_dir), retries=5, retry_delay=10)
         execute(f'touch {done_fname}')
@@ -717,9 +721,13 @@ def fetch_empirical_regions(args):
 
     stats = collections.Counter()
 
+    chrom_vcfs = _json_loadf(args.chrom_vcfs)
+    chrom2vcf = { chrom: chrom_vcf for chrom, chrom_vcf in zip(chrom_vcfs['chrom_ids'], chrom_vcfs['chrom_vcfs']) }
+    _log.debug(f'{chrom2vcf=}')
+
     for chrom in sorted(chrom2regions):
         chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom, chrom2regions[chrom].keys(),
-                                                               args.phased_vcfs_url_template, args.tmp_dir)
+                                                               chrom_vcf=chrom2vcf[chrom], args.tmp_dir)
         region_lines = []
         with open(chrom_regions_vcf) as chrom_regions_vcf_in:
             for vcf_line in itertools.chain(chrom_regions_vcf_in, ['#EOF']):

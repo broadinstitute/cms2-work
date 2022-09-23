@@ -438,8 +438,6 @@ task slop_likely_neutral_regions {
   }
 }
 
-
-
 task fetch_empirical_hapsets_from_1KG {
   meta {
     description: "Fetches empirical hapsets for specified regions from 1KG, converts to hapset format"
@@ -452,6 +450,7 @@ task fetch_empirical_hapsets_from_1KG {
     # add: metadata to attach to all regions
     genetic_maps_tar_gz: "(File) genetic maps"
     superpop_to_representative_pop_json: "(File) map from superpop to the pop used to represent it in model-fitting simulations"
+    chrom_vcfs: "(ChromVcfs) the vcf files"
 
 # ** outputs
     empirical_hapsets: "(Array[File]) for each empirical region, a .tar.gz file containing one tped for each pop, and a *.replicaInfo.json file describing the hapset"
@@ -463,6 +462,7 @@ task fetch_empirical_hapsets_from_1KG {
     String out_fnames_prefix
     File genetic_maps_tar_gz
     File superpop_to_representative_pop_json = "./resources/superpop-to-representative-pop.json"
+    ChromVcfs chrom_vcfs
   }
   File fetch_empirical_hapsets_script = "./fetch_empirical_hapsets.py"
 
@@ -473,6 +473,7 @@ task fetch_empirical_hapsets_from_1KG {
     python3 "~{fetch_empirical_hapsets_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" \
        --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
+       --chrom-vcfs "~{write_json(chrom_vcfs)}" \
        --out-fnames-prefix "~{out_fnames_prefix}" \
        ~{"--sel-pop " + sel_pop_id} \
        --tmp-dir "${PWD}/hapsets"
@@ -695,6 +696,41 @@ task compute_intervals_stats {
   }
 }
 
+task get_intervals_chroms {
+  meta {
+    description: "Get list of chroms used in intervals files"
+  }
+  parameter_meta {
+# ** inputs
+    intervals_files: "(Array[File]+) genomic intervals files (.bed or .gff3)"
+
+# ** outputs
+    intervals_chroms: "(Array[String]) List of intervals chroms"
+  }  
+  input {
+    Array[File]+ intervals_files
+    String intervals_chroms_fname = basename(intervals_files[0]) + ".chroms.txt"
+  }
+  File get_intervals_chroms_script = "./get_intervals_chroms.py"
+
+  command <<<
+    set -ex -o pipefail
+
+    python3 "~{get_intervals_chroms_script}" \
+        --intervals-files "@~{write_lines(intervals_files)}" \
+        --out-intervals-chroms-txt "~{intervals_chroms_fname}"
+  >>>
+  output {
+    Array[String] intervals_chroms = read_lines(intervals_chroms_fname)
+  }
+  runtime {
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+    memory: "4 GB"
+    cpu: 1
+    disks: "local-disk 8 HDD"
+    preemptible: 1
+  }
+}
 
 task construct_neutral_regions_list {
   meta {
