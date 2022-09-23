@@ -21,12 +21,12 @@ workflow fetch_g1k_vcfs_wf {
   scatter(chrom in chroms) {
     String chrom_url = "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/" +
       "ALL.chr${chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
-    call fetch_file_from_url as fetch_chrom_vcf {
+    call tasks.fetch_file_from_url as fetch_chrom_vcf {
       input:
       file_metadata={"description": "1KG chr${chrom} vcf" },
       url=chrom_url
     }
-    call fetch_file_from_url as fetch_chrom_vcf_tbi {
+    call tasks.fetch_file_from_url as fetch_chrom_vcf_tbi {
       input:
       file_metadata={"description": "1KG chr${chrom} vcf index" },
       url=chrom_url+".tbi"
