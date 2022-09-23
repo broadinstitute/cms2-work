@@ -279,14 +279,17 @@ def parse_args():
 
     parser.add_argument('--chrom-vcfs', required=True, help='vcfs and indices')
     
-    parser.add_argument('--pedigree-data-url',
-                        default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped',
+    parser.add_argument('--pedigree-data-ped',
+                        required=True,
                         help='URL for the file mapping populations to sample IDs and giving relationships between samples')
-    parser.add_argument('--related-individuals-url',
-                        default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
+    parser.add_argument('--related-individuals-txt',
+                        required=True,
+                        #default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
                         help='list of individuals related to other 1KG individuals, to be dropped from analysis')
     parser.add_argument('--genetic-maps-tar-gz', required=True, help='genetic maps')
-    parser.add_argument('--pops-data-url', default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv',
+    parser.add_argument('--pops-data-url',
+                        required=True,
+                        #default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv',
                         help='info on pops and superpops')
     #parser.add_argument('--pops-outgroups-json', required=True, help='map from pop to pops to use as outgroups')
     parser.add_argument('--superpop-to-representative-pop-json', required=True,
@@ -706,7 +709,7 @@ def fetch_empirical_regions(args):
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv
     # ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.superpopulations.tsv
 
-    ped_data = gather_unrelated_individuals(pd.read_table(args.pedigree_data_url), args.related_individuals_url)
+    ped_data = gather_unrelated_individuals(pd.read_table(args.pedigree_data_ped), args.related_individuals_txt)
     
     pops_data = pd.read_table(args.pops_data_url)
     superpop_to_representative_pop = _json_loadf(args.superpop_to_representative_pop_json)

@@ -44,6 +44,17 @@ workflow fetch_empirical_hapsets_wf {
      input: url="https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes"
   }
 
+  call tasks.fetch_file_from_url as fetch_pedigree_data {
+    input: url="https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_g1k.ped"
+  }
+
+  call tasks.fetch_file_from_url as fetch_related_individuals {
+    input: url="https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt"
+  }
+
+  call tasks.fetch_file_from_url as fetch_pops_data {
+    input: url="https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv"
+  }
   
   call tasks.merge_likely_neutral_regions {
     input:
@@ -66,28 +77,46 @@ workflow fetch_empirical_hapsets_wf {
     slop_margin_bp=slop_margin_bp
   }
 
+  call tasks.strip_chr_prefix as strip_chr_prefix_neutral {
+    input:
+    bed_file=slop_likely_neutral_regions.neutral_regions_slopped_bed
+  }
+
+  File neutral_bed_final = strip_chr_prefix_neutral.bed_file_nochr
+
   call tasks.compute_intervals_stats as compute_neutral_intervals_slopped_stats {
     input:
-    intervals_files=[slop_likely_neutral_regions.neutral_regions_slopped_bed]
+    intervals_files=[neutral_bed_final]
   }
 
   call fetch_g1k_vcfs.fetch_g1k_vcfs_wf as fetch_neutral_vcfs {
     input:
-    intervals_files=[slop_likely_neutral_regions.neutral_regions_slopped_bed]
+    intervals_files=[neutral_bed_final]
   }
 
   call tasks.fetch_empirical_hapsets_from_1KG  as fetch_neutral_regions {
     input:
     pops_info=pops_info_1KG,
-    empirical_regions_bed=slop_likely_neutral_regions.neutral_regions_slopped_bed,
+    empirical_regions_bed=neutral_bed_final,
     genetic_maps_tar_gz=fetch_genetic_maps.file,
+    pedigree_data_ped=fetch_pedigree_data.file,
+    related_individuals_txt=fetch_related_individuals.file,
+    pops_data_tsv=fetch_pops_data.file,
     out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id,
     chrom_vcfs=fetch_neutral_vcfs.chrom_vcfs
   }
 
+  call tasks.strip_chr_prefix as strip_chr_prefix_selection {
+    input:
+    bed_file=empirical_hapsets_def.empirical_selection_regions_bed
+  }
+
+  File selection_bed_final = strip_chr_prefix_selection.bed_file_nochr
+
+
   call fetch_g1k_vcfs.fetch_g1k_vcfs_wf as fetch_selection_vcfs {
     input:
-    intervals_files=[empirical_hapsets_def.empirical_selection_regions_bed]
+    intervals_files=[selection_bed_final]
   }
 
   scatter(sel_pop in pops_info_1KG.sel_pops) {
@@ -95,8 +124,11 @@ workflow fetch_empirical_hapsets_wf {
       input:
       pops_info=pops_info_1KG,
       genetic_maps_tar_gz=fetch_genetic_maps.file,
+      pedigree_data_ped=fetch_pedigree_data.file,
+      related_individuals_txt=fetch_related_individuals.file,
+      pops_data_tsv=fetch_pops_data.file,
       sel_pop_id=sel_pop.pop_id,
-      empirical_regions_bed=empirical_hapsets_def.empirical_selection_regions_bed,
+      empirical_regions_bed=selection_bed_final,
       out_fnames_prefix=empirical_hapsets_def.empirical_hapsets_bundle_id,
       chrom_vcfs=fetch_selection_vcfs.chrom_vcfs
     }

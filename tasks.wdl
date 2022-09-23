@@ -463,6 +463,9 @@ task fetch_empirical_hapsets_from_1KG {
     File genetic_maps_tar_gz
     File superpop_to_representative_pop_json = "./resources/superpop-to-representative-pop.json"
     ChromVcfs chrom_vcfs
+    File pedigree_data_ped
+    File related_individuals_txt
+    File pops_data_tsv
   }
   File fetch_empirical_hapsets_script = "./fetch_empirical_hapsets.py"
 
@@ -473,6 +476,9 @@ task fetch_empirical_hapsets_from_1KG {
     python3 "~{fetch_empirical_hapsets_script}" --empirical-regions-bed "~{empirical_regions_bed}" \
        --genetic-maps-tar-gz "~{genetic_maps_tar_gz}" \
        --superpop-to-representative-pop-json "~{superpop_to_representative_pop_json}" \
+       --pedigree-data-ped "~{pedigree_data_ped}" \
+       --related-individuals-txt "~{related_individuals_txt}" \
+       --pops-data-tsv "~{pops_data_tsv}" \
        --chrom-vcfs "~{write_json(chrom_vcfs)}" \
        --out-fnames-prefix "~{out_fnames_prefix}" \
        ~{"--sel-pop " + sel_pop_id} \
@@ -604,6 +610,7 @@ task fetch_file_from_url {
     cpu: 1
     disks: "local-disk 32 HDD"
     preemptible: 1
+    maxRetries: 6
   }
 }
 
@@ -728,6 +735,40 @@ task get_intervals_chroms {
     memory: "4 GB"
     cpu: 1
     disks: "local-disk 8 HDD"
+    preemptible: 1
+  }
+}
+
+task strip_chr_prefix {
+  meta {
+    description: "Strip chr prefix from a bedfile"
+  }
+  parameter_meta {
+# ** inputs
+    bed_file: "(File) genomic intervals file (.bed)"
+
+# ** outputs
+    bed_file_nochr: "(File) Same bed file with chr stripped"
+  }  
+  input {
+    File bed_file
+  }
+
+  String bed_file_nochr_fname = basename(bed_file, ".bed") + ".nochr.bed"
+
+  command <<<
+    set -ex -o pipefail
+
+    cat "~{bed_file}" | sed s/^chr//g > "~{bed_file_nochr_fname}"
+  >>>
+  output {
+    File bed_file_nochr = bed_file_nochr_fname
+  }
+  runtime {
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+    memory: "8 GB"
+    cpu: 1
+    disks: "local-disk 16 HDD"
     preemptible: 1
   }
 }
