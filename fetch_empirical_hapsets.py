@@ -746,7 +746,7 @@ def fetch_empirical_regions(args):
     
     genmap = GeneticMaps(args.genetic_maps_tar_gz, superpop_to_representative_pop, args.tmp_dir)
 
-    stats = collections.Counter(n_regions_processed=0)
+    stats_cumul = collections.Counter(n_regions_processed=0)
 
     chrom_vcfs = _json_loadf(args.chrom_vcfs)
     chrom2vcf = { chrom: (chrom_vcf, chrom_vcf_tbi) \
@@ -783,15 +783,15 @@ def fetch_empirical_regions(args):
                                 pop2vcfcols=pop2vcfcols,
                                 pop2samples=pop2samples,
                                 genmap=genmap,
-                                stats=stats,
+                                stats_cumul=stats_cumul,
                                 tmp_dir=args.tmp_dir,
                                 out_fnames_prefix=args.out_fnames_prefix)
                     region_key = vcf_line.strip()[1:]
                     region_lines = []
                 region_lines.append(vcf_line)
     # for chrom in sorted(chrom2regions)
-    _log.info(f'{stats=}')
-    _write_json(fname=args.out_cumul_stats_json, json_val=stats)
+    _log.info(f'{stats_cumul=}')
+    _write_json(fname=args.out_cumul_stats_json, json_val=stats_cumul)
     
 # end: def fetch_empirical_regions(args)
 
