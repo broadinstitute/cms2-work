@@ -468,6 +468,7 @@ task fetch_empirical_hapsets_from_1KG {
     File pops_data_tsv
   }
   File fetch_empirical_hapsets_script = "./fetch_empirical_hapsets.py"
+  String stats_cumul_json_fname = out_fnames_prefix + ".stats_cumul.json"
 
   command <<<
     set -ex -o pipefail
@@ -481,12 +482,14 @@ task fetch_empirical_hapsets_from_1KG {
        --pops-data-tsv "~{pops_data_tsv}" \
        --chrom-vcfs "~{write_json(chrom_vcfs)}" \
        --out-fnames-prefix "~{out_fnames_prefix}" \
+       --out-cumul-stats-json "~{stats_cumul_json_fname}"
        ~{"--sel-pop " + sel_pop_id} \
        --tmp-dir "${PWD}/hapsets"
     df -h
   >>>
   output {
     Array[File]+ empirical_hapsets = glob("hapsets/*.hapset.tar.gz")
+    File stats_cumul_json = stats_cumul_json_fname
   }
   runtime {
     docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"

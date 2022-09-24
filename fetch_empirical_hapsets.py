@@ -296,6 +296,8 @@ def parse_args():
                         help='map from superpop to representative sub-pop used in model-fitting')
     parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
     parser.add_argument('--out-fnames-prefix', required=True, help='prefix for output filenames')
+    parser.add_argument('--out-cumul-stats-json', required=True, help='save conversion stats to this file')
+    
     return parser.parse_args()
 
 # * def load_empirical_regions_bed(empirical_regions_bed)
@@ -486,13 +488,19 @@ def determine_ancestral_allele(info_dict, all_alleles, stats):
     """
     ancestral_allele_from_vcf_info = info_dict.get('AA', '|').split(sep='|', maxsplit=1)[0].upper()
 
-    stats[f'{ancestral_allele_from_vcf_info in all_alleles=}'] += 1
+    if ancestral_allele_from_vcf_info in all_alleles:
+        stats['ancestral_allele_from_vcf_info_in_all_alleles'] += 1
+    if ancestral_allele_from_vcf_info not in all_alleles:
+        stats['ancestral_allele_from_vcf_info_not_in_all_alleles'] += 1
 
     alt_freqs = list(map(float, info_dict['AF'].split(',')))
     all_freqs = [1.0 - sum(alt_freqs)] + alt_freqs
     major_allele = all_alleles[np.argmax(all_freqs)].upper()
 
-    stats[f'{ancestral_allele_from_vcf_info == major_allele=}'] += 1
+    if ancestral_allele_from_vcf_info == major_allele:
+        stats['ancestral_allele_from_vcf_info_eq_major_allele'] += 1
+    if ancestral_allele_from_vcf_info != major_allele:
+        stats['ancestral_allele_from_vcf_info_ne_major_allele'] += 1
     
     ancestral_allele_idx = all_alleles.index(ancestral_allele_from_vcf_info \
                                              if ancestral_allele_from_vcf_info in all_alleles \
@@ -504,7 +512,7 @@ def determine_ancestral_allele(info_dict, all_alleles, stats):
 
 # * construct_hapset_for_one_empirical_region
 def construct_hapset_for_one_empirical_region(region_key, region_lines, region_sel_pop, pops_to_include, pop2vcfcols,
-                                              pop2samples, genmap, stats, tmp_dir, out_fnames_prefix):
+                                              pop2samples, genmap, stats_cumul, tmp_dir, out_fnames_prefix):
     """Given one empirical region and the pops in which it is putatively been under selection,
     for each such pop, create a hapset.
 
@@ -516,12 +524,14 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
       pop2vcfcols: map from pop to the vcf cols containing data for samples from that pop
       pop2samples: map from pop to the headings of vcf cols containing data for samples from that pop
       genmap: callable mapping basepair position to genetic map position in centimorgans
+      stats_cumul: a collections.Counter for counting occurrences of various situations
       tmp_dir: temp dir to use
     Returns:
       path to a .tar.gz of the hapset
     """
     _log.debug(f'in comstruct_hapset_for_one_empirical_region_and_one_selpop: '
-               f'{region_key=} {len(region_lines)=} {region_sel_pop=} {pops_to_include=} {pop2vcfcols=} {stats=}')
+               f'{region_key=} {len(region_lines)=} {region_sel_pop=} {pops_to_include=} {pop2vcfcols=} '
+               f'{stats_cumul=}')
     tmp_dir = os.path.realpath(tmp_dir)
     hapset_name = string_to_file_name(f'{out_fnames_prefix}_hg19_{region_key}_{region_sel_pop}')
     hapset_dir = os.path.join(tmp_dir, hapset_name)
@@ -536,6 +546,13 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
         region_offset = None
         region_end = None
         n_variants = 0
+        stat_names = ['bad_allele', 'bad_format', 'bad_gt', 'no_ancestral_gts', 'no_derived_gts',
+                      'ancestral_allele_from_vcf_info_in_all_alleles',
+                      'ancestral_allele_from_vcf_info_not_in_all_alleles',
+                      'ancestral_allele_from_vcf_info_eq_major_allele',
+                      'ancestral_allele_from_vcf_info_ne_major_allele']
+        stats = collections.Counter({stat_name: 0 for stat_name in stat_names})
+                                    
         for vcf_line_num, vcf_line in enumerate(region_lines):
             #
             # CEU, CHB, YRI, BEB
@@ -643,12 +660,15 @@ def construct_hapset_for_one_empirical_region(region_key, region_lines, region_s
         'popIds': all_pops,
         'pop_sample_sizes': pop_sample_sizes,
         'tpedFiles': [os.path.basename(tped_fname) for tped_fname in tped_fnames],
-        'pop2samples': pop2samples
+        'pop2samples': pop2samples,
+        'conversion_stats': stats
     }
     _write_json(fname=os.path.join(hapset_dir, string_to_file_name(f'{hapset_name}.replicaInfo.json')),
                 json_val=hapset_manifest)
     hapset_tar_gz = os.path.join(tmp_dir, f'{hapset_name}.hapset.tar.gz')
     execute(f'tar cvfz {hapset_tar_gz} -C {hapset_dir} .')
+    stats_cumul += stats
+    stats_cumul['n_regions_processed'] += 1
     return hapset_tar_gz
 # end: def construct_hapset_for_one_empirical_region(region_key, region_lines, region_sel_pop, outgroup_pops, pop2cols, ...)
 
@@ -771,6 +791,7 @@ def fetch_empirical_regions(args):
                 region_lines.append(vcf_line)
     # for chrom in sorted(chrom2regions)
     _log.info(f'{stats=}')
+    _write_json(fname=args.out_cumul_stats_json, json_val=stats)
     
 # end: def fetch_empirical_regions(args)
 
