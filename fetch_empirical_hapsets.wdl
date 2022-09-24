@@ -82,7 +82,7 @@ workflow fetch_empirical_hapsets_wf {
     bed_file=slop_likely_neutral_regions.neutral_regions_slopped_bed
   }
 
-  call tasks.keep_only_autosomes as keep_only_autosomes_neutral {
+  call tasks.keep_only_autosome_intervals as keep_only_autosomes_neutral {
     input:
     bed_file=strip_chr_prefix_neutral.bed_file_nochr
   }
@@ -116,7 +116,7 @@ workflow fetch_empirical_hapsets_wf {
     bed_file=empirical_hapsets_def.empirical_selection_regions_bed
   }
 
-  call tasks.keep_only_autosomes as keep_only_autosomes_selection {
+  call tasks.keep_only_autosome_intervals as keep_only_autosomes_selection {
     input:
     bed_file=strip_chr_prefix_selection.bed_file_nochr
   }
