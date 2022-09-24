@@ -326,7 +326,7 @@ def fetch_one_chrom_regions_phased_vcf(chrom, regions, chrom_vcf, tmp_dir):
     _log.info(f'Processing chrom {chrom}: {len(regions)=}')
     chrom_regions_deduped_bed = os.path.realpath(f'{tmp_dir}/chrom_{chrom}_sel_regions_deduped.bed')
 
-    cache_key_parts = [chrom, phased_vcfs_url_template]
+    cache_key_parts = [chrom, chrom_vcf]
     with open(chrom_regions_deduped_bed, 'w') as chrom_regions_out:
         for region in sorted(regions):
             region_chrom, region_beg_end = region.split(':')
