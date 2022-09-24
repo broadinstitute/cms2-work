@@ -320,8 +320,8 @@ def load_empirical_regions_bed(empirical_regions_bed, sel_pop):
             chrom2regions[chrom].setdefault(f'{chrom}:{beg}-{end}', []).append(region_sel_pop)
     return chrom2regions
 
-# * def fetch_one_chrom_regions_phased_vcf(chrom, regions, chrom_vcf, tmp_dir)
-def fetch_one_chrom_regions_phased_vcf(chrom, regions, chrom_vcf, tmp_dir):
+# * def fetch_one_chrom_regions_phased_vcf(chrom, regions, chrom_vcf, chrom_vcf_tbi, tmp_dir)
+def fetch_one_chrom_regions_phased_vcf(chrom, regions, chrom_vcf, chrom_vcf_tbi, tmp_dir):
     """Fetch phased vcf subset for the empirical regions on one chromosome"""
     _log.info(f'Processing chrom {chrom}: {len(regions)=}')
     chrom_regions_deduped_bed = os.path.realpath(f'{tmp_dir}/chrom_{chrom}_sel_regions_deduped.bed')
@@ -339,8 +339,12 @@ def fetch_one_chrom_regions_phased_vcf(chrom, regions, chrom_vcf, tmp_dir):
     done_fname = f'{chrom_regions_vcf}.{cache_key}.done'
     if not os.path.isfile(done_fname):
         #chrom_phased_vcf_url = string.Template(phased_vcfs_url_template).substitute(chrom=chrom)
-        chrom_phased_vcf_url = chrom_vcf
-        execute(f'tabix -h --separate-regions -R {chrom_regions_deduped_bed} {chrom_phased_vcf_url} > {chrom_regions_vcf}',
+        chrom_vcf_link = done_fname + '.vcf.gz'
+        chrom_vcf_tbi_link = chrom_vcf_link + '.tbi'
+        os.symlink(os.path.abspath(chrom_vcf), chrom_vcf_link)
+        os.symlink(os.path.abspath(chrom_vcf_tbi), chrom_vcf_tbi_link)
+        execute(f'tabix -h --separate-regions -R {chrom_regions_deduped_bed} {chrom_vcf_link} '
+                f'> {chrom_regions_vcf}',
                 cwd=os.path.realpath(tmp_dir), retries=5, retry_delay=10)
         execute(f'touch {done_fname}')
     return chrom_regions_vcf
@@ -725,13 +729,17 @@ def fetch_empirical_regions(args):
     stats = collections.Counter()
 
     chrom_vcfs = _json_loadf(args.chrom_vcfs)
-    chrom2vcf = { chrom: chrom_vcf for chrom, chrom_vcf in zip(chrom_vcfs['chrom_ids'], chrom_vcfs['chrom_vcfs']) }
+    chrom2vcf = { chrom: (chrom_vcf, chrom_vcf_tbi) \
+                  for chrom, chrom_vcf, chrom_vcf_tbi in zip(chrom_vcfs['chrom_ids'],
+                                                             chrom_vcfs['chrom_vcfs'],
+                                                             chrom_vcfs['chrom_vcf_tbis']) }
     _log.debug(f'{chrom2vcf=}')
 
     for chrom in sorted(chrom2regions):
         chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom=chrom,
                                                                regions=chrom2regions[chrom].keys(),
-                                                               chrom_vcf=chrom2vcf[chrom],
+                                                               chrom_vcf=chrom2vcf[chrom][0],
+                                                               chrom_vcf_tbi=chrom2vcf[chrom][1],
                                                                tmp_dir=args.tmp_dir)
         region_lines = []
         with open(chrom_regions_vcf) as chrom_regions_vcf_in:
