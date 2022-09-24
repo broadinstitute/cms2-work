@@ -749,7 +749,7 @@ def fetch_empirical_regions(args):
                 if vcf_line.startswith('#CHROM'):
                     vcf_cols = vcf_line.strip().split('\t')
                     pop2vcfcols = get_pop2vcfcols(ped_data, pops_data, vcf_cols)
-                    pop2samples = {pop: [vcf_cols[vcf_col_num] for vcf_col_num in pop2vcfcols[pop]] for pop in all_pops}
+                    pop2samples = {pop: [vcf_cols[vcf_col_num] for vcf_col_num in pop2vcfcols[pop]] for pop in pop2vcfcols}
                     continue
                 if vcf_line.startswith('#'):
                     if region_lines:
