@@ -287,7 +287,7 @@ def parse_args():
                         #default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt',
                         help='list of individuals related to other 1KG individuals, to be dropped from analysis')
     parser.add_argument('--genetic-maps-tar-gz', required=True, help='genetic maps')
-    parser.add_argument('--pops-data-url',
+    parser.add_argument('--pops-data-tsv',
                         required=True,
                         #default='https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/20131219.populations.tsv',
                         help='info on pops and superpops')
@@ -711,7 +711,7 @@ def fetch_empirical_regions(args):
 
     ped_data = gather_unrelated_individuals(pd.read_table(args.pedigree_data_ped), args.related_individuals_txt)
     
-    pops_data = pd.read_table(args.pops_data_url)
+    pops_data = pd.read_table(args.pops_data_tsv)
     superpop_to_representative_pop = _json_loadf(args.superpop_to_representative_pop_json)
     pop2outgroup_pops = compute_outgroup_pops(pops_data=pops_data,
                                               superpop_to_representative_pop=superpop_to_representative_pop)
