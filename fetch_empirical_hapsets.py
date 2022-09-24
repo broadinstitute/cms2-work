@@ -746,7 +746,7 @@ def fetch_empirical_regions(args):
     
     genmap = GeneticMaps(args.genetic_maps_tar_gz, superpop_to_representative_pop, args.tmp_dir)
 
-    stats = collections.Counter()
+    stats = collections.Counter(n_regions_processed=0)
 
     chrom_vcfs = _json_loadf(args.chrom_vcfs)
     chrom2vcf = { chrom: (chrom_vcf, chrom_vcf_tbi) \
