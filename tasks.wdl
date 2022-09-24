@@ -773,6 +773,40 @@ task strip_chr_prefix {
   }
 }
 
+task keep_only_autosome_intervals {
+  meta {
+    description: "Strip non-autosome intervals from a .bed file"
+  }
+  parameter_meta {
+# ** inputs
+    bed_file: "(File) genomic intervals file (.bed)"
+
+# ** outputs
+    bed_file_onlyaut: "(File) Same bed file with only autosomes"
+  }  
+  input {
+    File bed_file
+  }
+
+  String bed_file_onlyaut_fname = basename(bed_file, ".bed") + ".onlyaut.bed"
+
+  command <<<
+    set -ex -o pipefail
+
+    cat "~{bed_file}" | grep ^[1-9] > "~{bed_file_onlyaut_fname}"
+  >>>
+  output {
+    File bed_file_onlyaut = bed_file_onlyaut_fname
+  }
+  runtime {
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+    memory: "8 GB"
+    cpu: 1
+    disks: "local-disk 16 HDD"
+    preemptible: 1
+  }
+}
+
 task construct_neutral_regions_list {
   meta {
     description: "Constructs a list of likely-neutral genomic regions."

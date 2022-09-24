@@ -82,7 +82,12 @@ workflow fetch_empirical_hapsets_wf {
     bed_file=slop_likely_neutral_regions.neutral_regions_slopped_bed
   }
 
-  File neutral_bed_final = strip_chr_prefix_neutral.bed_file_nochr
+  call tasks.keep_only_autosomes as keep_only_autosomes_neutral {
+    input:
+    bed_file=strip_chr_prefix_neutral.bed_file_nochr
+  }
+
+  File neutral_bed_final = keep_only_autosomes_neutral.bed_file_onlyaut
 
   call tasks.compute_intervals_stats as compute_neutral_intervals_slopped_stats {
     input:
@@ -111,8 +116,12 @@ workflow fetch_empirical_hapsets_wf {
     bed_file=empirical_hapsets_def.empirical_selection_regions_bed
   }
 
-  File selection_bed_final = strip_chr_prefix_selection.bed_file_nochr
+  call tasks.keep_only_autosomes as keep_only_autosomes_selection {
+    input:
+    bed_file=strip_chr_prefix_selection.bed_file_nochr
+  }
 
+  File selection_bed_final = keep_only_autosomes_selection.bed_file_onlyaut
 
   call fetch_g1k_vcfs.fetch_g1k_vcfs_wf as fetch_selection_vcfs {
     input:
@@ -145,6 +154,9 @@ workflow fetch_empirical_hapsets_wf {
     }
     File neutral_regions_merged_stats_report_html = compute_neutral_intervals_merged_stats.intervals_report_html
     File neutral_regions_slopped_stats_report_html = compute_neutral_intervals_slopped_stats.intervals_report_html
+
+    File neutral_intervals_bed = neutral_bed_final
+    File selection_intervals_bed = selection_bed_final
 
     Array[Boolean]+ assert_results = [check_neutral_regions_spec.assert_result]
   }

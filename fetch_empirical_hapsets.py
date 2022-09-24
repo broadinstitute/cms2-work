@@ -729,8 +729,10 @@ def fetch_empirical_regions(args):
     _log.debug(f'{chrom2vcf=}')
 
     for chrom in sorted(chrom2regions):
-        chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom, chrom2regions[chrom].keys(),
-                                                               chrom_vcf=chrom2vcf[chrom], args.tmp_dir)
+        chrom_regions_vcf = fetch_one_chrom_regions_phased_vcf(chrom=chrom,
+                                                               regions=chrom2regions[chrom].keys(),
+                                                               chrom_vcf=chrom2vcf[chrom],
+                                                               tmp_dir=args.tmp_dir)
         region_lines = []
         with open(chrom_regions_vcf) as chrom_regions_vcf_in:
             for vcf_line in itertools.chain(chrom_regions_vcf_in, ['#EOF']):
