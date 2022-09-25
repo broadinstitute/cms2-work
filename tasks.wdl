@@ -482,7 +482,7 @@ task fetch_empirical_hapsets_from_1KG {
        --pops-data-tsv "~{pops_data_tsv}" \
        --chrom-vcfs "~{write_json(chrom_vcfs)}" \
        --out-fnames-prefix "~{out_fnames_prefix}" \
-       --out-cumul-stats-json "~{stats_cumul_json_fname}"
+       --out-cumul-stats-json "~{stats_cumul_json_fname}" \
        ~{"--sel-pop " + sel_pop_id} \
        --tmp-dir "${PWD}/hapsets"
     df -h
