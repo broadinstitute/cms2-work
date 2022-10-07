@@ -47,7 +47,8 @@ workflow compute_normalization_stats_wf {
 	input:
 	sel_pop=sel_pop,
 	hapsets=hapsets_block,
-	component_computation_params=component_computation_params
+	component_computation_params=component_computation_params,
+	components=["ihs", "nsl", "ihh12", "delihh"]
       }
     }
 

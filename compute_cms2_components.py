@@ -184,16 +184,16 @@ def calc_delihh(readfilename, writefilename):
             writefile.write('\t'.join([locus, phys, freq_1, ihh_1, ihh_0, str(unstand_delIHH)]) + '\n')
 # end: def calc_delihh(readfilename, writefilename):
 
-def calc_derFreq(in_tped, out_derFreq_tsv):
+def calc_derFreq(in_tped, out_derFreq_tsv, compute_cond):
     """Calculate the derived allele frequency for each SNP in one population"""
     with open(in_tped) as tped, open(out_derFreq_tsv, 'w') as out:
-        out.write('\t'.join(['chrom', 'snpId', 'pos', 'derFreq']) + '\n')
-        for line in tped:
-            chrom, snpId, genPos_cm, physPos_bp, alleles = line.strip().split(maxsplit=4)
-            n = [alleles.count(i) for i in ('0', '1')]
-            derFreq = n[0] / (n[0] + n[1])
-            out.write('\t'.join([chrom, snpId, physPos_bp, f'{derFreq:.2f}']) + '\n')
-
+        if compute_cond:
+            out.write('\t'.join(['chrom', 'snpId', 'pos', 'derFreq']) + '\n')
+            for line in tped:
+                chrom, snpId, genPos_cm, physPos_bp, alleles = line.strip().split(maxsplit=4)
+                n = [alleles.count(i) for i in ('0', '1')]
+                derFreq = n[0] / (n[0] + n[1])
+                out.write('\t'.join([chrom, snpId, physPos_bp, f'{derFreq:.2f}']) + '\n')
 
 
 def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
@@ -243,17 +243,20 @@ def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
     misc_utils.execute(f'bcftools index {out_vcf_basename}.vcf.gz')
 # end: def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
 
-def compute_isafe_scores(hapset_manifest_json_fname, sel_pop, isafe_extra_flags):
+def compute_isafe_scores(hapset_manifest_json_fname, sel_pop, isafe_extra_flags, hapset_dir, compute_cond):
     hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
     out_vcf_basename = f'{hapset_manifest_json_fname[:-5]}.{sel_pop}'
-    hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop)
-    misc_utils.execute(f'isafe --format vcf '
-                       f'--input {out_vcf_basename}.vcf.gz '
-                       f'--vcf-cont {out_vcf_basename}.vcf.gz '
-                       f'--sample-case {out_vcf_basename}.case.txt '
-                       f'--sample-cont {out_vcf_basename}.cont.txt '
-                       f'--region 1:{hapset_manifest["region_beg"]}-{hapset_manifest["region_end"]} '
-                       f'--output {out_vcf_basename} {isafe_extra_flags}')
+    hapset_to_vcf(hapset_manifest_json_fname, os.path.join(hapset_dir, out_vcf_basename), sel_pop)
+    if compute_cond:
+        misc_utils.execute(f'isafe --format vcf '
+                           f'--input {out_vcf_basename}.vcf.gz '
+                           f'--vcf-cont {out_vcf_basename}.vcf.gz '
+                           f'--sample-case {out_vcf_basename}.case.txt '
+                           f'--sample-cont {out_vcf_basename}.cont.txt '
+                           f'--region 1:{hapset_manifest["region_beg"]}-{hapset_manifest["region_end"]} '
+                           f'--output {out_vcf_basename} {isafe_extra_flags}', cwd=hapset_dir)
+    else:
+        misc_utils.execute(f'touch {hapset_dir}/{out_vcf_basename}.iSAFE.out')
 
 
 # * Parsing args
@@ -389,13 +392,15 @@ def compute_component_scores_for_one_hapset(*, args, hapset_haps_tar_gz, hapset_
             f' {fst_and_delDAF_out_fname}'
         execute_with_checkpoint(cmd=cmd, out_fname=f'{out_basename}.fst_and_delDAF.tsv', cwd=hapset_dir, checkpoint_file=checkpoint_file)
 
-    if 'derFreq' in args.components:
-        calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=f'{hapset_dir}/{out_basename}.derFreq.tsv')
+    calc_derFreq(in_tped=sel_pop_tped, out_derFreq_tsv=f'{hapset_dir}/{out_basename}.derFreq.tsv',
+                 compute_cond='derFreq' in args.components)
 
-    if 'iSAFE' in args.components:
-        compute_isafe_scores(hapset_manifest_json_fname=hapset_manifest_json_fname,
-                             sel_pop=args.sel_pop,
-                             isafe_extra_flags=component_computation_params.get('isafe_extra_flags', ''))
+    compute_isafe_scores(hapset_manifest_json_fname=hapset_manifest_json_fname,
+                         sel_pop=args.sel_pop,
+                         isafe_extra_flags=component_computation_params.get('isafe_extra_flags', ''),
+                         hapset_dir=hapset_dir,
+                         compute_cond='iSAFE' in args.components)
+
 
     exts = [".replicaInfo.json", ".ihs.out", ".nsl.out", ".ihh12.out", ".delihh.out", ".derFreq.tsv",
             ".iSAFE.out", ".vcf.gz", ".case.txt", ".cont.txt", ".xpehh.out", ".xpehh.log", ".fst_and_delDAF.tsv"]

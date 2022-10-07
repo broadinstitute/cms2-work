@@ -11,6 +11,7 @@ task compute_one_pop_cms2_components {
     Array[File]+ hapsets
     Pop sel_pop
     ComponentComputationParams component_computation_params
+    Array[String] components = ["ihs", "nsl", "ihh12", "delihh", "derFreq", "iSAFE"]
   }
   File script = "./compute_cms2_components.py"
   File misc_utils = "./misc_utils.py"  # !UnusedDeclaration
@@ -19,7 +20,7 @@ task compute_one_pop_cms2_components {
     set -ex -o pipefail
 
     python3 "~{script}" --hapsets @~{write_lines(hapsets)} \
-      --sel-pop ~{sel_pop.pop_id} --components ihs nsl ihh12 delihh derFreq iSAFE \
+      --sel-pop ~{sel_pop.pop_id} --components ~{sep=' ' components} \
       --component-computation-params "~{write_json(component_computation_params)}" \
       --checkpoint-file "checkpoint.tar"
   >>>
