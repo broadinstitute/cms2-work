@@ -144,11 +144,20 @@ workflow fetch_empirical_hapsets_wf {
     Array[Array[File]+]+ selection_hapsets_for_sel_pop = [fetch_selection_regions.empirical_hapsets]
   }
 
+  Int n_neutral_hapsets = select_first([empirical_hapsets_def.empirical_neutral_regions_use_max,
+                                        length(fetch_neutral_regions.empirical_hapsets)])
+  Int n_neutral_hapsets_capped = if (n_neutral_hapsets < length(fetch_neutral_regions.empirical_hapsets))
+         then n_neutral_hapsets else length(fetch_neutral_regions.empirical_hapsets)
+
+  scatter(neut_hapset_idx in range(n_neutral_hapsets_capped)) {
+    File neut_hapset = fetch_neutral_regions.empirical_hapsets[neut_hapset_idx]
+  }
+
   output {
     HapsetsBundle hapsets_bundle = object {
       hapsets_bundle_id: empirical_hapsets_def.empirical_hapsets_bundle_id,
       pops_info: pops_info_1KG,
-      neutral_hapsets: fetch_neutral_regions.empirical_hapsets,
+      neutral_hapsets: neut_hapset,
       neutral_hapsets_trim_margin_bp: slop_margin_bp,
       selection_hapsets: selection_hapsets_for_sel_pop
     }

@@ -5,6 +5,8 @@
 	"empirical_neutral_regions_bed": "./resources/woerner2018role.neutralome.bed",
 	"empirical_neutral_regions_slop_margin": 50000,
 
+	"empirical_neutral_regions_use_max": 20,
+
 	"empirical_selection_regions_bed": "./resources/pos_con_sorted.tier1-test4.hg19.bed" 
     }
 }

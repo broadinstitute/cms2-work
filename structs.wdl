@@ -122,6 +122,8 @@ struct EmpiricalHapsetsDef {
 
   Int? empirical_neutral_regions_slop_margin  # add margins of this size at ends of regions
 
+  Int? empirical_neutral_regions_use_max # use at most this many neutral regions
+
   File empirical_selection_regions_bed
 }
 
