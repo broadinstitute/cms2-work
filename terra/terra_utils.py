@@ -278,10 +278,16 @@ def do_list_submissions(args):
     misc_utils.write_json_and_org(safe_fname(f'{args.tmp_dir}/submissions.json'), **{'result': list(z.json())})
     tot_time = 0
     for submission_idx, s in enumerate(sorted(list(z.json()), key=operator.itemgetter('submissionDate'), reverse=True)):
-        _log.info(f'looking at submission from {s["submissionDate"]}')
+        _log.info(f'looking at submission from {s["submissionDate"]}: {s["submissionId"]=}')
         submission_date = s['submissionDate']
-        if not submission_date.startswith(args.submission_date): 
+        if args.submission_date == 'today':
+             args.submission_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        if args.submission_date and not submission_date.startswith(args.submission_date): 
             _log.info(f'skipping submission date {submission_date}')
+            continue
+        submission_id = s['submissionId']
+        if args.submission_id and args.submission_id not in submission_id:
+            _log.info(f'skipping submission id {submission_id}')
             continue
 
         _log.info('====================================================')
@@ -395,7 +401,8 @@ def parse_args():
     # def test(args):
     #     print(args)
 
-    @subcommand([argument('-s', '--submission-date', default=datetime.datetime.now().strftime('%Y-%m-%d'), help='submission date'),
+    @subcommand([argument('-s', '--submission-date', help='submission date'),
+                 argument('-i', '--submission-id', help='submission date'),
                  argument('--expand-subworkflows', action='store_true'),
                  argument('--method-config', help='only look at submissions where method config matches this')])
     def list_submissions(args):
