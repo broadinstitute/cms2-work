@@ -257,6 +257,9 @@ def compute_isafe_scores(hapset_manifest_json_fname, sel_pop, isafe_extra_flags,
                            f'--output {out_vcf_basename} {isafe_extra_flags}', cwd=hapset_dir)
     else:
         misc_utils.execute(f'touch {out_vcf_basename}.iSAFE.out')
+        misc_utils.execute(f'touch {out_vcf_basename}.case.txt')
+        misc_utils.execute(f'touch {out_vcf_basename}.cont.txt')
+        misc_utils.execute(f'touch {out_vcf_basename}.vcf.gz')
 
 
 # * Parsing args
