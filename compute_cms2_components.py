@@ -246,8 +246,8 @@ def hapset_to_vcf(hapset_manifest_json_fname, out_vcf_basename, sel_pop):
 def compute_isafe_scores(hapset_manifest_json_fname, sel_pop, isafe_extra_flags, hapset_dir, compute_cond):
     hapset_manifest = misc_utils.json_loadf(hapset_manifest_json_fname)
     out_vcf_basename = f'{hapset_manifest_json_fname[:-5]}.{sel_pop}'
-    hapset_to_vcf(hapset_manifest_json_fname, os.path.join(hapset_dir, out_vcf_basename), sel_pop)
     if compute_cond:
+        hapset_to_vcf(hapset_manifest_json_fname, os.path.join(hapset_dir, out_vcf_basename), sel_pop)
         misc_utils.execute(f'isafe --format vcf '
                            f'--input {out_vcf_basename}.vcf.gz '
                            f'--vcf-cont {out_vcf_basename}.vcf.gz '
