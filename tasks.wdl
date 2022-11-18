@@ -136,20 +136,24 @@ task compute_one_pop_bin_stats_for_normalization {
   command <<<
     set -ex -o pipefail
 
-    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(ihs_out)}" --trim_margin_bp ~{trim_margin_bp} --pos_col 2
-    norm --ihs --bins ~{n_bins_ihs} --files "@~{write_lines(ihs_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_ihs.dat" \
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(ihs_out)}" --trim_margin_bp ~{trim_margin_bp} \
+       --pos_col 2 --out_trimmed_tsvs_list ihs_trimmed.lst
+    norm --ihs --bins ~{n_bins_ihs} --files "@ihs_trimmed.lst" --save-bins "~{out_fnames_prefix}.norm_bins_ihs.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihs.log"
 
-    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(delihh_out)}" --trim_margin_bp ~{trim_margin_bp} --pos_col 2
-    norm --ihs --bins ~{n_bins_delihh} --files "@~{write_lines(delihh_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_delihh.dat" \
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(delihh_out)}" --trim_margin_bp ~{trim_margin_bp} \
+        --pos_col 2 --out_trimmed_tsvs_list delihh_trimmed.lst
+    norm --ihs --bins ~{n_bins_delihh} --files "@delihh_trimmed.lst" --save-bins "~{out_fnames_prefix}.norm_bins_delihh.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_delihh.log"
 
-    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(nsl_out)}" --trim_margin_bp ~{trim_margin_bp} --pos_col 2
-    norm --nsl --bins ~{n_bins_nsl} --files "@~{write_lines(nsl_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_nsl.dat" \
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(nsl_out)}" --trim_margin_bp ~{trim_margin_bp} \
+        --pos_col 2 --out_trimmed_tsvs_list nsl_trimmed.lst
+    norm --nsl --bins ~{n_bins_nsl} --files "@nsl_trimmed.lst" --save-bins "~{out_fnames_prefix}.norm_bins_nsl.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_nsl.log"
 
-    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(ihh12_out)}" --trim_margin_bp ~{trim_margin_bp} --pos_col 2 --has_header_line
-    norm --ihh12 --bins ~{n_bins_ihh12} --files "@~{write_lines(ihh12_out)}" --save-bins "~{out_fnames_prefix}.norm_bins_ihh12.dat" \
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(ihh12_out)}" --trim_margin_bp ~{trim_margin_bp} \
+        --pos_col 2 --has_header_line --out_trimmed_tsvs_list ihh12_trimmed.lst
+    norm --ihh12 --bins ~{n_bins_ihh12} --files "@ihh12_trimmed.lst" --save-bins "~{out_fnames_prefix}.norm_bins_ihh12.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihh12.log"
   >>>
 
@@ -201,10 +205,11 @@ task compute_two_pop_bin_stats_for_normalization {
   command <<<
     set -ex -o pipefail
 
-    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(xpehh_out)}" --trim_margin_bp ~{trim_margin_bp} --pos_col 2 --has_header_line
-    norm --xpehh --bins ~{n_bins_xpehh} --files "@~{write_lines(xpehh_out)}" --save-bins "~{norm_bins_xpehh_fname}" --only-save-bins \
+    python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(xpehh_out)}" --trim_margin_bp ~{trim_margin_bp} \
+        --pos_col 2 --has_header_line --out_trimmed_tsvs_list xpehh_trimmed.lst
+    norm --xpehh --bins ~{n_bins_xpehh} --files "@xpehh_trimmed.lst" --save-bins "~{norm_bins_xpehh_fname}" --only-save-bins \
         --log "~{norm_bins_xpehh_log_fname}"
-    norm --xpehh --xpehh-flip-pops --bins ~{n_bins_xpehh} --files "@~{write_lines(xpehh_out)}" \
+    norm --xpehh --xpehh-flip-pops --bins ~{n_bins_xpehh} --files "@xpehh_trimmed.lst" \
         --save-bins "~{norm_bins_flip_pops_xpehh_fname}" \
         --only-save-bins \
         --log "~{norm_bins_flip_pops_xpehh_log_fname}"

@@ -286,13 +286,14 @@ def parse_args():
     parser.add_argument('--trim_margin_bp', required=True, type=int, help='margin, in basepairs, to trim from each end of region')
     parser.add_argument('--pos_col', required=True, type=int, help='column number (1-based) of column giving the genomic position')
     parser.add_argument('--has_header_line', action='store_true', help='input has header line')
+    parser.add_argument('--out_trimmed_tsvs_list', required=True, help='list of output files corresponding to input files but trimmed')
     parser.add_argument('--tmp-dir', default='.', help='directory for temp files')
     return parser.parse_args()
 
 # * def do_trim_margins(args)
 def do_trim_margins(args):
-    for region_tsv in parse_file_list(args.region_tsvs):
-        trimmed_tsv_tmp = region_tsv + ".trimmed.tmp"
+    fixed_files_list = []
+    for fixed_file_num, region_tsv in enumerate(parse_file_list(args.region_tsvs)):
         beg_pos, end_pos, n_cols = None, None, None
         with open(region_tsv) as tsv_in:
             for line_num, line in enumerate(tsv_in):
@@ -310,6 +311,9 @@ def do_trim_margins(args):
                 end_pos = pos_here
 
         _log.info(f'{beg_pos=} {end_pos=} {n_cols=}')
+        trimmed_tsv_tmp = str(fixed_file_num) + "." + os.path.basename(region_tsv) + ".trimmed.tmp.tsv"
+        chk(not os.path.exists(trimmed_tsv_tmp), f'path already exists: {trimmed_tsv_tmp}')
+        fixed_files_list.append(trimmed_tsv_tmp)
         with open(region_tsv) as tsv_in, open(trimmed_tsv_tmp, 'w') as tsv_out:
             for line_num, line in enumerate(tsv_in):
                 if line_num == 0 and args.has_header_line: 
@@ -320,8 +324,12 @@ def do_trim_margins(args):
                 if pos_here < (beg_pos + args.trim_margin_bp): continue
                 if pos_here > (end_pos - args.trim_margin_bp): break
                 tsv_out.write(line)
-        os.remove(region_tsv)
-        os.rename(trimmed_tsv_tmp, region_tsv)
+        #os.remove(region_tsv)
+        #os.rename(trimmed_tsv_tmp, region_tsv)
+    # end: for fixed_file_num, region_tsv in enumerate(parse_file_list(args.region_tsvs)):
+    
+    dump_file(fname=args.out_trimmed_tsvs_list,
+              value='\n'.join(fixed_file_list) + '\n')
 
 
 if __name__=='__main__':
