@@ -329,7 +329,7 @@ def do_trim_margins(args):
     # end: for fixed_file_num, region_tsv in enumerate(parse_file_list(args.region_tsvs)):
     
     dump_file(fname=args.out_trimmed_tsvs_list,
-              value='\n'.join(fixed_file_list) + '\n')
+              value='\n'.join(fixed_files_list) + '\n')
 
 
 if __name__=='__main__':
