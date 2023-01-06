@@ -140,21 +140,25 @@ task compute_one_pop_bin_stats_for_normalization {
        --pos_col 2 --out_trimmed_tsvs_list ihs_trimmed.lst
     norm --ihs --bins ~{n_bins_ihs} --files "@ihs_trimmed.lst" --save-bins "~{out_fnames_prefix}.norm_bins_ihs.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihs.log"
+    tar cvzf ihs_save_trimmed.tar.gz `cat ihs_trimmed.lst`
 
     python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(delihh_out)}" --trim_margin_bp ~{trim_margin_bp} \
         --pos_col 2 --out_trimmed_tsvs_list delihh_trimmed.lst
     norm --ihs --bins ~{n_bins_delihh} --files "@delihh_trimmed.lst" --save-bins "~{out_fnames_prefix}.norm_bins_delihh.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_delihh.log"
+    tar cvzf delihh_save_trimmed.tar.gz `cat delihh_trimmed.lst`
 
     python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(nsl_out)}" --trim_margin_bp ~{trim_margin_bp} \
         --pos_col 2 --out_trimmed_tsvs_list nsl_trimmed.lst
     norm --nsl --bins ~{n_bins_nsl} --files "@nsl_trimmed.lst" --save-bins "~{out_fnames_prefix}.norm_bins_nsl.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_nsl.log"
+    tar cvzf nsl_save_trimmed.tar.gz `cat nsl_trimmed.lst`
 
     python3 "~{trim_margins_script}" --region_tsvs "@~{write_lines(ihh12_out)}" --trim_margin_bp ~{trim_margin_bp} \
         --pos_col 2 --has_header_line --out_trimmed_tsvs_list ihh12_trimmed.lst
     norm --ihh12 --bins ~{n_bins_ihh12} --files "@ihh12_trimmed.lst" --save-bins "~{out_fnames_prefix}.norm_bins_ihh12.dat" \
         --only-save-bins --log "~{out_fnames_prefix}.norm_bins_ihh12.log"
+    tar cvzf ihh12_save_trimmed.tar.gz `cat ihh12_trimmed.lst`
   >>>
 
   output {
@@ -167,6 +171,11 @@ task compute_one_pop_bin_stats_for_normalization {
     File norm_bins_ihh12_log = out_fnames_prefix + ".norm_bins_ihh12.log"
     File norm_bins_delihh_log = out_fnames_prefix + ".norm_bins_delihh.log"
     Pop sel_pop_used = sel_pop
+    Array[File] trimmed_lists = ["ihs_trimmed.lst", "delihh_trimmed.lst", "nsl_trimmed.lst", "ihh12_trimmed.lst"]
+    Array[File] trimmed_files_tar_gzs = [
+    "ihs_save_trimmed.tar.gz", "delihh_save_trimmed.tar.gz", "nsl_save_trimmed.tar.gz",
+    "ihh12_save_trimmed.tar.gz"
+    ]
   }
 
   runtime {
@@ -213,6 +222,7 @@ task compute_two_pop_bin_stats_for_normalization {
         --save-bins "~{norm_bins_flip_pops_xpehh_fname}" \
         --only-save-bins \
         --log "~{norm_bins_flip_pops_xpehh_log_fname}"
+    tar cvzf xpehh_save_trimmed.tar.gz `cat xpehh_trimmed.lst`
   >>>
 
   output {
@@ -227,6 +237,10 @@ task compute_two_pop_bin_stats_for_normalization {
 
     Pop flip_pops_sel_pop_used = alt_pop
     Pop flip_pops_alt_pop_used = sel_pop
+
+    File xpehh_trimmed_list = "xpehh_trimmed.lst"
+    File xpehh_save_trimmed_tar_gz = "xpehh_save_trimmed.tar.gz"
+    
   }
 
   runtime {
