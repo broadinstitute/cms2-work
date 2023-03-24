@@ -23,5 +23,3 @@ workflow cms2_empirical {
     Array[File] all_hapsets_component_stats_h5_blocks = compute_cms2_components_wf.all_hapsets_component_stats_h5_blocks
   }
 }
-
-
