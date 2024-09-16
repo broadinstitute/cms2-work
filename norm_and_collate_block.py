@@ -403,6 +403,13 @@ def normalize_and_collate_scores_orig(inps, inps_idx):
 
 # end: def normalize_and_collate_scores_orig(inps, inps_idx)
 
+# Added function to save data to TSV format
+def save_to_tsv(data, filename):
+    with open(filename, 'w') as f:
+        for key, value in data.items():
+            if isinstance(value, list):
+                value = '\t'.join(map(str, value))
+            f.write(f"{key}\t{value}\n")
 
 def normalize_and_collate_scores(args):
     inps_orig = _json_loadf(args.input_json)
@@ -427,5 +434,13 @@ def normalize_and_collate_scores(args):
         _log.info(f'calling normalize_and_collate_scores_orig {i}: {inps_i}')
         normalize_and_collate_scores_orig(inps=inps_i, inps_idx=i)
 
-if __name__=='__main__':
-  normalize_and_collate_scores(parse_args())
+ # Added lines to save the output to a TSV file
+        tsv_filename = f"output_{i}.tsv"
+        save_to_tsv(inps_i, tsv_filename)
+        _log.info(f'Saved output to {tsv_filename}')
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Normalize and collate scores.')
+    parser.add_argument('input_json', type=str, help='Path to the input JSON file.')
+    args = parser.parse_args()
+    normalize_and_collate_scores(args)
