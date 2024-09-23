@@ -153,10 +153,10 @@ def execute(action, **kw):
     finally:
         _log.debug('Returned from running command: succeeded=%s, command=%s', succeeded, action)
 
-SEL_NAMESPACE='um1-encode-y2s1'
-SEL_WORKSPACE='selection-sim'
+SEL_NAMESPACE='tianxia'
+SEL_WORKSPACE='Reillylab-cms2'
 TERRA_METHOD_NAME='test-cosi2-method-01'
 TERRA_CONFIG_NAME='dockstore-tool-cms2'
-TERRA_GS_BUCKET='fc-21baddbc-5142-4983-a26e-7d85a72c830b'
+TERRA_GS_BUCKET='fc-1d0ec63b-1daf-4ef2-9f9c-c69b9165dac6'
 GITHUB_REPO='dockstore-tools-cms2'
 
