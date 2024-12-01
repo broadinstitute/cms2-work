@@ -310,7 +310,7 @@ task collate_stats_and_metadata_for_sel_sims_block {
        --hapsets-metadata-tsv-gz-fname "~{hapsets_metadata_tsv_gz_fname}"
   >>>
   output {
-    File hapsets_component_stats_h5 = hapsets_component_stats_h5_fname
+    #File hapsets_component_stats_h5 = hapsets_component_stats_h5_fname
     File hapsets_component_stats_tsv_gz = hapsets_component_stats_tsv_gz_fname
     File hapsets_metadata_tsv_gz = hapsets_metadata_tsv_gz_fname
   }

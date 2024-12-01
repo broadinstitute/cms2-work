@@ -187,6 +187,11 @@ workflow run_sims_and_compute_cms2_components_wf {
     two_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_sel_pop_used,
     two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used
   }
+# ** Collate TSV.GZ files into one
+  call collate_tsv_gz_files {
+    input:
+    tsv_gz_files = flatten(component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks)
+  }
 
 # ** Workflow outputs
   output {
@@ -202,11 +207,23 @@ workflow run_sims_and_compute_cms2_components_wf {
     #Array[File?] sel_normed_and_collated = component_stats_for_sel_sims_wf.sel_normed_and_collated
     #Array[File?] sel_sim_region_haps_tar_gzs = component_stats_for_sel_sims_wf.sel_sim_region_haps_tar_gzs
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
-    Array[File] all_hapsets_component_stats_h5_blocks = 
-    component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5_blocks
-    Array[File] all_hapsets_component_stats_tsv_gz_blocks =
-    component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks
-    Array[File] all_hapsets_metadata_tsv_gz_blocks =
-    component_stats_for_sel_sims_wf.all_hapsets_metadata_tsv_gz_blocks
+    ### Array[File] all_hapsets_component_stats_h5_blocks = component_stats_for_sel_sims_wf.all_hapsets_component_stats_h5_blocks
+    Array[File] all_hapsets_component_stats_tsv_gz_blocks = component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks
+    Array[File] all_hapsets_metadata_tsv_gz_blocks = component_stats_for_sel_sims_wf.all_hapsets_metadata_tsv_gz_blocks
+    File collated_component_stats_tsv_gz = collate_tsv_gz_files.collated_tsv_gz
+  }
+}
+
+task collate_tsv_gz_files {
+  input {
+    Array[File] tsv_gz_files
+  }
+
+  command {
+    cat ~{sep=' ' tsv_gz_files} > collated_component_stats.tsv.gz
+  }
+
+  output {
+    File collated_tsv_gz = "collated_component_stats.tsv.gz"
   }
 }
