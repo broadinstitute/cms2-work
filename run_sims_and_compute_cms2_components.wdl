@@ -190,7 +190,7 @@ workflow run_sims_and_compute_cms2_components_wf {
 # ** Collate TSV.GZ files into one
   call collate_tsv_gz_files {
     input:
-    tsv_gz_files = flatten(component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks)
+    tsv_gz_files =flatten(flatten(component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks))
   }
 
 # ** Workflow outputs
