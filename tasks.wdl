@@ -51,8 +51,8 @@ task compute_one_pop_cms2_components {
     #docker: "quay.io/broad_cms_ci/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-aced0918ac0afd34f7cbb3031e3b044ac7e686cc"  # selscan=1.3.0a09
     preemptible: 3
-    memory: "16 GB"
-    cpu: 1
+    memory: "32 GB"
+    cpu: 8
     disks: "local-disk 50 HDD"
     checkpointFile: "checkpoint.tar"  # !UnknownRuntimeKey
   }
@@ -103,7 +103,7 @@ task compute_two_pop_cms2_components {
     # docker: "quay.io/broad_cms_ci/cms@sha256:fc4825edda550ef203c917adb0b149cbcc82f0eeae34b516a02afaaab0eceac6"  # selscan=1.3.0a09
     docker: "quay.io/broad_cms_ci/cms:cms2-docker-component-stats-aced0918ac0afd34f7cbb3031e3b044ac7e686cc"  # selscan=1.3.0a09
     preemptible: 3
-    memory: "8 GB"
+    memory: "16 GB"
     cpu: 8
     disks: "local-disk 50 HDD"
     checkpointFile: "checkpoint.tar"  # !UnknownRuntimeKey
