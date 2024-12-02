@@ -892,7 +892,7 @@ task collate_tsv_gz_files {
 
   runtime {
     docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
-    memory: "500 MB"
+    memory: "8 GB"
     cpu: 1
     disks: "local-disk 1 HDD"
   }

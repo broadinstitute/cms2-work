@@ -1,8 +1,8 @@
 {
-    "cms2_main.nreps_neutral": 512,
-    "cms2_main.nreps": 1024,
-    "cms2_main.numRepsPerBlock": 32,
-    "cms2_main.hapset_block_size": 32,
+    "cms2_main.nreps_neutral": 4,
+    "cms2_main.nreps": 4,
+    "cms2_main.numRepsPerBlock": 2,
+    "cms2_main.hapset_block_size": 2,
     "cms2_main.paramFile_demographic_model": "./jv_nulldefault_constantsize.par",
     "cms2_main.paramFile_neutral": "./test.neutral.cosiParams",
     "cms2_main.paramFiles_selection": "./sel1_origin1_recent.par",
