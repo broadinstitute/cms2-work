@@ -415,32 +415,32 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
 
     hapset_compstats_list = []
     #with pd.HDFStore(h5_fname, mode='w', complevel=9, fletcher32=True) as store:
-        for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
-            hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
-            hapset_id = hapset_compstats['hapset_id'].iat[0]
-            chk(len(hapset_id) < args.max_hapset_id_len, f'Hapset id too long: {hapset_id}')
-            hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
-            #hapset_dfs.append(hapset_compstats)
-            hapset_compstats_list.append(hapset_compstats)
-            #store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': args.max_hapset_id_len})
+    for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos']):
+        hapset_compstats = pd.read_table(hapset_compstats_tsv, low_memory=False)
+        hapset_id = hapset_compstats['hapset_id'].iat[0]
+        chk(len(hapset_id) < args.max_hapset_id_len, f'Hapset id too long: {hapset_id}')
+        hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
+        #hapset_dfs.append(hapset_compstats)
+        hapset_compstats_list.append(hapset_compstats)
+        #store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': args.max_hapset_id_len})
 
-            hapset_replica_info = _json_loadf(hapset_replica_info_json)
-            hapset_replica_info.update(hapset_id=hapset_id)
-            hapset_metadata_records.append(hapset_replica_info)
+        hapset_replica_info = _json_loadf(hapset_replica_info_json)
+        hapset_replica_info.update(hapset_id=hapset_id)
+        hapset_metadata_records.append(hapset_replica_info)
         # end: for hapset_compstats_tsv, hapset_replica_info_json in zip(inps['sel_normed_and_collated'], inps['replica_infos'])
 
-        hapsets_metadata = pd.json_normalize(hapset_metadata_records, sep='_')
+    hapsets_metadata = pd.json_normalize(hapset_metadata_records, sep='_')
 
         # make sure columns are not of mixed object types
-        for col, dtyp in zip(hapsets_metadata.columns,  hapsets_metadata.dtypes):
-            if str(dtyp) == 'object':
-               value_types = set([type(val) for idx, val in hapsets_metadata[col].iteritems()])
-               _log.warning(f'COLUMN {col=} has value types {value_types=}')
-               hapsets_metadata[col] = hapsets_metadata[col].astype(str)
-               value_types = set([type(val) for idx, val in hapsets_metadata[col].iteritems()])
-               _log.warning(f'COLUMN {col=} now has value types {value_types=}')
+    for col, dtyp in zip(hapsets_metadata.columns,  hapsets_metadata.dtypes):
+        if str(dtyp) == 'object':
+            value_types = set([type(val) for idx, val in hapsets_metadata[col].iteritems()])
+            _log.warning(f'COLUMN {col=} has value types {value_types=}')
+            hapsets_metadata[col] = hapsets_metadata[col].astype(str)
+            value_types = set([type(val) for idx, val in hapsets_metadata[col].iteritems()])
+            _log.warning(f'COLUMN {col=} now has value types {value_types=}')
 
-        hapsets_metadata = hapsets_metadata.set_index('hapset_id', verify_integrity=True)
+    hapsets_metadata = hapsets_metadata.set_index('hapset_id', verify_integrity=True)
 
         #try:
         #    store.put('hapset_metadata', hapsets_metadata.infer_objects(), dropna=False,
