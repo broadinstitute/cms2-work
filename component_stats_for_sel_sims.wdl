@@ -99,7 +99,7 @@ workflow component_stats_for_sel_sims_wf {
    # flatten(collate_stats_and_metadata_for_sel_sims_block.hapsets_component_stats_tsv_gz)
    # Array[File]+ all_hapsets_metadata_tsv_gz_blocks =
    # flatten(collate_stats_and_metadata_for_sel_sims_block.hapsets_metadata_tsv_gz)
-   Array[Array[File]] all_hapsets_component_stats_tsv_gz_blocks =
+    Array[Array[File]] all_hapsets_component_stats_tsv_gz_blocks =
     collate_stats_and_metadata_for_sel_sims_block.hapsets_component_stats_tsv_gz
     Array[Array[File]] all_hapsets_metadata_tsv_gz_blocks =
     collate_stats_and_metadata_for_sel_sims_block.hapsets_metadata_tsv_gz
