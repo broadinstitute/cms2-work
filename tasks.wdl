@@ -876,3 +876,25 @@ task construct_neutral_regions_list {
     preemptible: 1
   }
 }
+
+#task collate outputs into one tsv.gz file
+task collate_tsv_gz_files {
+  input {
+    Array[File] tsv_gz_files
+  }
+
+  command {
+    cat ~{sep=' ' tsv_gz_files} > collated_component_stats.tsv.gz
+  }
+
+  output {
+    File collated_tsv_gz = "collated_component_stats.tsv.gz"
+  }
+
+  runtime {
+    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+    memory: "500 MB"
+    cpu: 1
+    disks: "local-disk 1 HDD"
+  }
+}
