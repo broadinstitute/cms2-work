@@ -906,7 +906,7 @@ task filter_and_round_columns {
   command {
     mkdir -p filtered_outputs
     for file in ~{sep=' ' tsv_files}; do
-      awk 'BEGIN {FS=OFS="\t"} NR==1 {for (i=1; i<=NF; i++) col[$i] = i} NR>1 {print $col["hapset_id"], $col["pos"], $col["chrom"], $col["snpId"], $col["derFreq"], sprintf("%.2e", $col["ihs_ihsnormed"]), sprintf("%.2e", $col["delihh_delihhnormed"]), sprintf("%.2e", $col["nsl_nslnormed"]), sprintf("%.2e", $col["ihh12_normihh12"]), sprintf("%.2e", $col["max_xpehh"]), sprintf("%.2e", $col["mean_fst"]), sprintf("%.2e", $col["mean_delDAF"]), sprintf("%.2e", $col["iSAFE_iSAFE"]), sprintf("%.2e", $col["iSAFE_DAF"])}' $file > filtered_outputs/$(basename $file)
+      awk 'BEGIN {FS=OFS="\t"} NR==1 {for (i=1; i<=NF; i++) col[$i] = i} NR>1 {print $col["hapset_id"], $col["pos"], $col["chrom"], $col["snpId"], $col["derFreq"], sprintf("%.2e", $col[col["ihs_ihsnormed"]]), sprintf("%.2e", $col[col["delihh_delihhnormed"]]), sprintf("%.2e", $col[col["nsl_nslnormed"]]), sprintf("%.2e", $col[col["ihh12_normihh12"]]), sprintf("%.2e", $col[col["max_xpehh"]]), sprintf("%.2e", $col[col["mean_fst"]]), sprintf("%.2e", $col[col["mean_delDAF"]]), sprintf("%.2e", $col[col["iSAFE_iSAFE"]]), sprintf("%.2e", $col[col["iSAFE_DAF"]])}' $file > filtered_outputs/$(basename $file)
     done
   }
 
@@ -920,7 +920,6 @@ task filter_and_round_columns {
     cpu: 1
   }
 }
-# Added task to filter columns and round significant figures using actual column names
 
 task move_and_rename_outputs {
   input {
