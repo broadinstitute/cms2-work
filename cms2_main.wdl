@@ -2,7 +2,6 @@ version 1.0
 
 import "./structs.wdl"
 import "./run_sims_and_compute_cms2_components.wdl"
-import "./tasks.wdl"
 
 # * workflow run_sims_and_compute_cms2_components
 workflow cms2_main {
