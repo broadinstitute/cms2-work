@@ -92,11 +92,11 @@ workflow cms2_main {
     hapset_block_size=hapset_block_size
   }
 
-  scatter (tsv_gz_file, index in main_call.all_hapsets_component_stats_tsv_gz_blocks) {
+    scatter (tsv_gz_file in main_call.all_hapsets_component_stats_tsv_gz_blocks) {
         call keep_key_stats_round_sig_figs {
             input:
                 tsv_gz_file = tsv_gz_file,
-                block_number = index
+                block_number = index(tsv_gz_file)
         }
     }
 
@@ -105,6 +105,7 @@ workflow cms2_main {
             files = keep_key_stats_round_sig_figs.rounded_tsv_gz,
             out_basename = "final_outputs/collated_component_stats"
     }
+
 
 # ** Workflow outputs
   output {
