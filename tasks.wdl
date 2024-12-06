@@ -898,23 +898,54 @@ task construct_neutral_regions_list {
 #   }
 # }
 
-task keep_key_stats_round_sig_figs {
-    input {
-        File tsv_gz_file
-        Array[String] columns_to_keep = ["hapset_id", "pos", "chrom", "snpId", "derFreq", "ihs_ihsnormed", "delihh_delihhnormed", "nsl_nslnormed", "ihh12_normihh12", "max_xpehh", "mean_fst", "mean_delDAF", "iSAFE_iSAFE", "iSAFE_DAF"]
-        Int block_number
-    }
-    command <<<
-    set -ex -o pipefail
-    zcat ~{tsv_gz_file} | cut -f $(echo ~{sep=',' columns_to_keep}) | awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+(\\.[0-9]+)?$/) $i=sprintf("%.3e",$i)}1' | gzip > key_stats_rounded_block~{block_number}.tsv.gz
-    >>>
-    output {
-        File rounded_tsv_gz = "key_stats_rounded_block~{block_number}.tsv.gz"
-    }
-    runtime {
-        docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
-        memory: "4 GB"
-        cpu: 1
-        disks: "local-disk 10 HDD"
-    }
+task filter_and_round_columns {
+  input {
+    Array[File] tsv_files
+  }
+
+  command {
+    mkdir -p filtered_outputs
+    for file in ~{sep=' ' tsv_files}; do
+      awk 'BEGIN {FS=OFS="\t"} NR==1 {for (i=1; i<=NF; i++) col[$i] = i} NR>1 {print $col["hapset_id"], $col["pos"], $col["chrom"], $col["snpId"], $col["derFreq"], sprintf("%.2e", $col["ihs_ihsnormed"]), sprintf("%.2e", $col["delihh_delihhnormed"]), sprintf("%.2e", $col["nsl_nslnormed"]), sprintf("%.2e", $col["ihh12_normihh12"]), sprintf("%.2e", $col["max_xpehh"]), sprintf("%.2e", $col["mean_fst"]), sprintf("%.2e", $col["mean_delDAF"]), sprintf("%.2e", $col["iSAFE_iSAFE"]), sprintf("%.2e", $col["iSAFE_DAF"])}' $file > filtered_outputs/$(basename $file)
+    done
+  }
+
+  output {
+    Array[File] filtered_tsv_files = glob("filtered_outputs/*.tsv")
+  }
+
+  runtime {
+    docker: "ubuntu:latest"
+    memory: "2 GB"
+    cpu: 1
+  }
 }
+# Added task to filter columns and round significant figures using actual column names
+
+task move_and_rename_outputs {
+  input {
+    Array[File] tsv_files
+    Int sel_scen_idx
+    Int sel_blk_idx
+    String out_fnames_prefix
+  }
+
+  command {
+    mkdir -p final_outputs
+    for file in ~{sep=' ' tsv_files}; do
+      new_name="final_outputs/$(basename $file .tsv.gz)__block_~{sel_blk_idx}.tsv.gz"
+      mv $file $new_name
+    done
+  }
+
+  output {
+    Array[File] moved_tsv_files = glob("final_outputs/*.tsv.gz")
+  }
+
+  runtime {
+    docker: "ubuntu:latest"
+    memory: "2 GB"
+    cpu: 1
+  }
+}
+# Added task to move and rename output files to avoid overlapping naming

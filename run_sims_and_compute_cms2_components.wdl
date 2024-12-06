@@ -187,10 +187,20 @@ workflow run_sims_and_compute_cms2_components_wf {
     two_pop_bin_stats_sel_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_sel_pop_used,
     two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used
   }
-# ** Collate TSV.GZ files into one
-  call collate_tsv_gz_files {
+
+  ####### Added task to filter columns and round significant figures
+  call filter_and_round_columns {
     input:
-    tsv_gz_files =flatten(component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks)
+      tsv_files = component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks
+  }
+
+  ####### Added task to move and rename output files to avoid overlapping naming
+  call move_and_rename_outputs {
+    input:
+      tsv_files = filter_and_round_columns.filtered_tsv_files,
+      sel_scen_idx = 0, # Update this as needed
+      sel_blk_idx = 0, # Update this as needed
+      out_fnames_prefix = experimentId
   }
 
 # ** Workflow outputs
@@ -214,26 +224,5 @@ workflow run_sims_and_compute_cms2_components_wf {
     Array[File] all_hapsets_component_stats_tsv_gz_blocks = flatten(component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks)
     Array[File] all_hapsets_metadata_tsv_gz_blocks = flatten(component_stats_for_sel_sims_wf.all_hapsets_metadata_tsv_gz_blocks)
     File collated_component_stats_tsv_gz = collate_tsv_gz_files.collated_tsv_gz
-  }
-}
-
-task collate_tsv_gz_files {
-  input {
-    Array[File] tsv_gz_files
-  }
-
-  command {
-    cat ~{sep=' ' tsv_gz_files} > collated_component_stats.tsv.gz
-  }
-
-  output {
-    File collated_tsv_gz = "collated_component_stats.tsv.gz"
-  }
-
-  runtime {
- docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
-  memory: "500 MB"
-  cpu: 1
-  disks: "local-disk 1 HDD"
   }
 }

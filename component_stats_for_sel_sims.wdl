@@ -79,6 +79,15 @@ workflow component_stats_for_sel_sims_wf {
 	  }
        } # call tasks.normalize_and_collate_block
 
+call tasks.move_and_rename_outputs {
+  input:
+    normed_collated_stats = normalize_and_collate_block.normed_collated_stats,
+    sel_scen_idx = sel_scen_idx,
+    sel_blk_idx = sel_blk_idx,
+    out_fnames_prefix = out_fnames_prefix
+}
+# Added task to move and rename output files to avoid overlapping naming
+
        call tasks.collate_stats_and_metadata_for_sel_sims_block {
 	    input:
 	    inp = object {  # struct collate_stats_and_metadata_for_all_sel_sims_input
