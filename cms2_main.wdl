@@ -92,11 +92,13 @@ workflow cms2_main {
     hapset_block_size=hapset_block_size
   }
 
-    scatter (tsv_gz_file in main_call.all_hapsets_component_stats_tsv_gz_blocks) {
+    Array[Int] indices = range(length(main_call.all_hapsets_component_stats_tsv_gz_blocks))
+
+    scatter (i in indices) {
         call keep_key_stats_round_sig_figs {
             input:
-                tsv_gz_file = tsv_gz_file,
-                block_number = index(tsv_gz_file)
+                tsv_gz_file = main_call.all_hapsets_component_stats_tsv_gz_blocks[i],
+                block_number = i
         }
     }
 
