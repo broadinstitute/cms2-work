@@ -79,27 +79,6 @@ workflow component_stats_for_sel_sims_wf {
 	  }
        } # call tasks.normalize_and_collate_block
 
-call tasks.move_and_rename_outputs {
-  input:
-    normed_collated_stats = normalize_and_collate_block.normed_collated_stats,
-    sel_scen_idx = sel_scen_idx,
-    sel_blk_idx = sel_blk_idx,
-    out_fnames_prefix = out_fnames_prefix
-}
-# Added task to move and rename output files to avoid overlapping naming
-
-       call tasks.collate_stats_and_metadata_for_sel_sims_block {
-	    input:
-	    inp = object {  # struct collate_stats_and_metadata_for_all_sel_sims_input
-	      out_fnames_prefix: out_fnames_prefix + "__selscen_" + sel_scen_idx + "__selblk_" + sel_blk_idx,
-	      sel_normed_and_collated: normalize_and_collate_block.normed_collated_stats,
-	      replica_infos: normalize_and_collate_block.replica_info
-	    }
-	}  
-    }   # for each block of sel sims
-    #}  # if (sel_sim.left.succeeded) 
-  }  # end: scatter(sel_scen_idx in range(length(selection_sims)))
-
 
   output {
    # Array[File]+ all_hapsets_component_stats_h5_blocks =

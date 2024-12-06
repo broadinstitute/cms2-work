@@ -188,20 +188,6 @@ workflow run_sims_and_compute_cms2_components_wf {
     two_pop_bin_stats_alt_pop_used=compute_normalization_stats_wf.two_pop_bin_stats_alt_pop_used
   }
 
-  ####### Added task to filter columns and round significant figures
-  call filter_and_round_columns {
-    input:
-      tsv_files = component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks
-  }
-
-  ####### Added task to move and rename output files to avoid overlapping naming
-  call move_and_rename_outputs {
-    input:
-      tsv_files = filter_and_round_columns.filtered_tsv_files,
-      sel_scen_idx = 0, # Update this as needed
-      sel_blk_idx = 0, # Update this as needed
-      out_fnames_prefix = experimentId
-  }
 
 # ** Workflow outputs
   output {
@@ -223,6 +209,6 @@ workflow run_sims_and_compute_cms2_components_wf {
     #File collated_component_stats_tsv_gz = collate_tsv_gz_files.collated_tsv_gz
     Array[File] all_hapsets_component_stats_tsv_gz_blocks = flatten(component_stats_for_sel_sims_wf.all_hapsets_component_stats_tsv_gz_blocks)
     Array[File] all_hapsets_metadata_tsv_gz_blocks = flatten(component_stats_for_sel_sims_wf.all_hapsets_metadata_tsv_gz_blocks)
-    File collated_component_stats_tsv_gz = collate_tsv_gz_files.collated_tsv_gz
+    #File collated_component_stats_tsv_gz = collate_tsv_gz_files.collated_tsv_gz
   }
 }
