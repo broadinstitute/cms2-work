@@ -92,6 +92,20 @@ workflow cms2_main {
     hapset_block_size=hapset_block_size
   }
 
+  scatter (tsv_gz_file, index in main_call.all_hapsets_component_stats_tsv_gz_blocks) {
+        call keep_key_stats_round_sig_figs {
+            input:
+                tsv_gz_file = tsv_gz_file,
+                block_number = index
+        }
+    }
+
+    call create_tar_gz as move_final_outputs {
+        input:
+            files = keep_key_stats_round_sig_figs.rounded_tsv_gz,
+            out_basename = "final_outputs/collated_component_stats"
+    }
+
 # ** Workflow outputs
   output {
 # *** Bookkeeping outputs
@@ -108,7 +122,8 @@ workflow cms2_main {
    # Array[File] all_hapsets_component_stats_h5_blocks = main_call.all_hapsets_component_stats_h5_blocks
    # Array[File] all_hapsets_component_stats_tsv_gz_blocks = main_call.all_hapsets_component_stats_tsv_gz_blocks
    # Array[File] all_hapsets_metadata_tsv_gz_blocks = main_call.all_hapsets_metadata_tsv_gz_blocks
-    File collated_component_stats_tsv_gz = main_call.collated_component_stats_tsv_gz
+    #File collated_component_stats_tsv_gz = main_call.collated_component_stats_tsv_gz
+    Array[File] collated_component_stats_tsv_gz = keep_key_stats_round_sig_figs.rounded_tsv_gz
 
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }

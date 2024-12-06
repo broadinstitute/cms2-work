@@ -876,24 +876,45 @@ task construct_neutral_regions_list {
   }
 }
 
-#task collate outputs into one tsv.gz file
-task collate_tsv_gz_files {
-  input {
-    Array[File] tsv_gz_files
-  }
+# #task collate outputs into one tsv.gz file
+# task collate_tsv_gz_files {
+#   input {
+#     Array[File] tsv_gz_files
+#   }
 
-  command {
-    cat ~{sep=' ' tsv_gz_files} > collated_component_stats.tsv.gz
-  }
+#   command {
+#     cat ~{sep=' ' tsv_gz_files} > collated_component_stats.tsv.gz
+#   }
 
-  output {
-    File collated_tsv_gz = "collated_component_stats.tsv.gz"
-  }
+#   output {
+#     File collated_tsv_gz = "collated_component_stats.tsv.gz"
+#   }
 
-  runtime {
-    docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
-    memory: "8 GB"
-    cpu: 1
-    disks: "local-disk 1 HDD"
-  }
+#   runtime {
+#     docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+#     memory: "8 GB"
+#     cpu: 1
+#     disks: "local-disk 1 HDD"
+#   }
+# }
+
+task keep_key_stats_round_sig_figs {
+    input {
+        File tsv_gz_file
+        Array[String] columns_to_keep = ["hapset_id", "pos", "chrom", "snpId", "derFreq", "ihs_ihsnormed", "delihh_delihhnormed", "nsl_nslnormed", "ihh12_normihh12", "max_xpehh", "mean_fst", "mean_delDAF", "iSAFE_iSAFE", "iSAFE_DAF"]
+        Int block_number
+    }
+    command <<<
+    set -ex -o pipefail
+    zcat ~{tsv_gz_file} | cut -f $(echo ~{sep=',' columns_to_keep}) | awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+(\\.[0-9]+)?$/) $i=sprintf("%.3e",$i)}1' | gzip > key_stats_rounded_block~{block_number}.tsv.gz
+    >>>
+    output {
+        File rounded_tsv_gz = "key_stats_rounded_block~{block_number}.tsv.gz"
+    }
+    runtime {
+        docker: "quay.io/broad_cms_ci/cms:common-tools-2b4d477113c453dc9e957c002f6665be20fd56fd"
+        memory: "4 GB"
+        cpu: 1
+        disks: "local-disk 10 HDD"
+    }
 }
