@@ -109,7 +109,6 @@ workflow cms2_main {
     #Array[File] all_hapsets_component_stats_h5_blocks = main_call.all_hapsets_component_stats_h5_blocks
     Array[File] all_hapsets_component_stats_tsv_gz_blocks = main_call.all_hapsets_component_stats_tsv_gz_blocks
     Array[File] all_hapsets_metadata_tsv_gz_blocks = main_call.all_hapsets_metadata_tsv_gz_blocks
-    #File collated_component_stats_tsv_gz = main_call.collated_component_stats_tsv_gz
 
     #Array[CMS2_Components_Result?] sel_components_results = sel_components_result
   }
