@@ -401,7 +401,15 @@ Layout:
     with pd.HDFStore(out_hdf5, complevel=9) as store:
         store['data'] = hapsets_data
         store['metadata'] = hapsets_metadata
-    
+ 
+ # Function to round values to 3 significant figures and use scientific notation for values smaller than 0.001
+def round_values(value):
+    if isinstance(value, (int, float)):
+        if value < 0.001:
+            return f"{value:.2e}"
+        else:
+            return f"{value:.3g}"
+    return value   
 
 def collate_stats_and_metadata_for_all_sel_sims(args):
 
@@ -422,7 +430,7 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
         hapset_compstats = hapset_compstats.set_index(['hapset_id', 'pos'], verify_integrity=True)
         #hapset_dfs.append(hapset_compstats)
         hapset_compstats_list.append(hapset_compstats)
-        store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': args.max_hapset_id_len})
+        # store.append('hapset_data', hapset_compstats, min_itemsize={'hapset_id': args.max_hapset_id_len})
 
         hapset_replica_info = _json_loadf(hapset_replica_info_json)
         hapset_replica_info.update(hapset_id=hapset_id)
@@ -452,6 +460,9 @@ def collate_stats_and_metadata_for_all_sel_sims(args):
             
     metadata_fname = args.hapsets_metadata_tsv_gz_fname
     hapsets_metadata.to_csv(metadata_fname, na_rep='nan', sep='\t')
+
+# Apply rounding function to all numeric columns
+    hapset_compstats_list = [df.applymap(round_values) for df in hapset_compstats_list]
 
     pd.concat(hapset_compstats_list).to_csv(tsv_gz_fname, sep='\t', na_rep='nan')
 
