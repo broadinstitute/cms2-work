@@ -164,8 +164,8 @@ def parse_args():
 
     parser.add_argument('--input-json', required=True, help='inputs passed as json')
     parser.add_argument('--max-hapset-id-len', type=int, default=256, help='max length of hapset id')
-    parser.add_argument('--hapsets-component-stats-h5-fname', required=True,
-                        help='name of HDF5 file to which to save component stats and metadata')
+    # parser.add_argument('--hapsets-component-stats-h5-fname', required=True,
+    #                     help='name of HDF5 file to which to save component stats and metadata')
     parser.add_argument('--hapsets-metadata-tsv-gz-fname', required=True,
                         help='name of .tsv.gz file to which to save hapset metadata')
     parser.add_argument('--hapsets-component-stats-tsv-gz-fname', required=True,
